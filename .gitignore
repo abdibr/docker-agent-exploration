@@ -1,0 +1,25 @@
+# Dependencies & build artifacts
+node_modules/
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Local environment files — never commit real credentials (.env.example stays shareable)
+.env
+.env.*
+*.local
+!.env.example
+
+# Logs & caches
+*.log
+logs/
+.cache/
+__pycache__/
+.venv/
+.coverage
+
+# OS & editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
