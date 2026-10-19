@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json
+
+## Ex01 — the smallest working Docker Agent.
+## Local gemma4 via the built-in `ollama` provider; three built-in toolsets; no glue code.
+## One-line model swap: change the `model:` line below to `glm-5.3-flash:cloud`.
+
+models:
+  gemma4_local:
+    provider: ollama
+    model: gemma4:latest
+    description: Local gemma4 on the host Ollama daemon (localhost:11434) - the swap point for local/cloud
+
+agents:
+  root:
+    model: gemma4_local
+    description: Ex01 first agent - smallest working Docker Agent (local gemma4, built-in toolsets)
+    instruction: |
+      You are Ex01, the smallest working Docker Agent in the docker_agents exploration repo.
+
+      Rules:
+      - You work inside the directory where you were started.
+      - For any question about a file, first read that file with your filesystem tools; quote exact values you saw.
+      - Before any multi-step task, write a short plan with the think tool.
+      - Answer in short, factual sentences.
+    max_iterations: 20
+    toolsets:
+      - type: filesystem
+        allow_list:
+          - "."
+      - type: shell
+      - type: think

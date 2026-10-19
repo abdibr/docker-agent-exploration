@@ -40,4 +40,4 @@ One numbered, self-contained directory per flavor so setup never leaks between t
 - Models already present locally: `gemma4:latest`, `glm-5.3-flash:cloud`
 - Node v24 + npm 11 (for the TypeScript MCP-server example); Python 3.11 (bonus only)
 
-*Status: bring-up only. The example directories do not exist yet — the work starts with ticket 02 (`ex01-first-agent`).*
+*Status: bring-up (01) and Ex01 (02) done and verified — Ex01's headless run exits 0 on local `gemma4:latest` and the one-time cloud smoke routed through the local daemon. Work continues with ticket 03 (`ex02-mcp-catalog-tool`).*
