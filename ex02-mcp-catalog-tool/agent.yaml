@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json
+
+## Ex02 — the Ex01 agent pattern, now reaching outside itself.
+## The new toolset is an MCP server added by reference to a containerized entry from
+## Docker's MCP catalog (`docker:duckduckgo` — DuckDuckGo web search): Docker pulls and
+## runs the server in a container via the MCP gateway, so there is no local MCP server
+## install and no API key. One-line model swap: change the `model:` line below to
+## `glm-5.3-flash:cloud`.
+
+models:
+  gemma4_local:
+    provider: ollama
+    model: gemma4:latest
+    description: Local gemma4 on the host Ollama daemon (localhost:11434) - the swap point for local/cloud
+
+agents:
+  root:
+    model: gemma4_local
+    description: Ex02 MCP-client agent - web search through a containerized Docker MCP catalog server
+    instruction: |
+      You are Ex02, an agent in the docker_agents exploration repo that reaches outside
+      itself through MCP.
+
+      Rules:
+      - For any current-information question, first use your web-search MCP tool (search),
+        then answer only from what it returned.
+      - When you state a fact found by search, name the result it came from (title and URL).
+      - If the search tool errors or returns nothing usable, say so plainly instead of
+        inventing facts.
+      - Before any multi-step task, write a short plan with the think tool.
+      - Answer in short, factual sentences.
+    max_iterations: 20
+    toolsets:
+      - type: filesystem
+        allow_list:
+          - "."
+      - type: think
+      - type: mcp
+        ref: docker:duckduckgo   # containerized "Private Web Search" server from Docker's MCP catalog
+        tools:
+          - search
