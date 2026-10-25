@@ -56,6 +56,12 @@ calls (like this read-only filesystem access) are auto-approved, anything else i
 denied, and no human is prompted mid-run. `--yolo` / `--safety autonomous` auto-approve
 everything and stay reserved for deliberate one-shot commands.
 
+> **For CI, exit 0 is not enough.** A denied tool call still exits 0 — the denial only
+> shows up in the transcript (`Tool 'write_file' is denied by the restricted safety
+> mode…`). Assert on the answer content, not the exit code. Full details, plus every
+> other run surface (stdin, `--json`, config discovery, sandbox/worktree isolation, the
+> five `serve` surfaces): [`docs/notes/run-modes.md`](../docs/notes/run-modes.md).
+
 ## Local ↔ cloud swap (one line)
 
 The config stays identical except one line in the named models entry:

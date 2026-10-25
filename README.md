@@ -32,6 +32,7 @@ One numbered, self-contained directory per flavor so setup never leaks between t
 - **Issue tracker:** local markdown under `.scratch/<feature-slug>/` with a `Status:` triage line near the top of each issue — see `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md`.
 - **Domain docs:** `GLOSSARY.md` and `docs/adr/` are created lazily, only when terms or decisions actually resolve — see `docs/agents/domain.md`.
 - **Ignore rules:** build artifacts (`node_modules/`, `dist/`) and local env files (`.env*`) are never committed (`.env.example` deliberately stays shareable), while the `.scratch/` issue tracker stays tracked.
+- **Cross-cutting notes:** `docs/notes/` holds phase notes that outlive a single example — currently [`run-modes.md`](docs/notes/run-modes.md), the verified guide to every way of running a Docker Agent (TUI, headless `--exec`, stdin, `--json`, `--dry-run`, config discovery, safety modes, isolation, and the five `serve` surfaces).
 
 ## Prerequisites (recorded so failures are diagnosable in minutes)
 
