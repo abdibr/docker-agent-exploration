@@ -1,0 +1,3 @@
+# User starting point: no claimed Docker Agent knowledge; big-picture-first sequencing
+
+At the first teaching session (2026-11-13) the user chose "big picture first: mental model + map of the 7 flavors, then go hands-on" as the starting shape and claimed no Docker Agent knowledge. Implication: Lesson 001 is a low-difficulty knowledge-acquisition lesson (mental model, config anatomy, run surfaces, flavor decision map) closed with retrieval practice; hands-on running — which needs the Ollama daemon running — begins at Lesson 002. Comfort creating an HTML page may imply web-dev literacy, but that wasn't tested, so later lessons can lean on browser-viewable artifacts with minimal build tooling.

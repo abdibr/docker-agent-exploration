@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lessons · Docker Agent teaching workspace</title>
+<style>
+  :root{--paper:#faf8f4;--ink:#1d2a36;--muted:#5d6b7a;--line:#e4dfd6;--blue:#0b63c5;--blue-soft:#e8f1fb;--teal:#0a9279;--teal-soft:#e4f4ef;--amber:#a34e12;--amber-soft:#fbf0e4}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:780px;margin:0 auto;padding:0 20px 80px}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:46px 0 6px}
+  h1{font-size:2rem;margin:0 0 8px}
+  .sub{color:var(--muted);margin:0 0 6px;font-size:1.04rem}
+  a.lcard{display:block;color:inherit;text-decoration:none;border:1px solid var(--line);background:#fff;border-radius:14px;padding:18px 20px;margin:16px 0;transition:border-color .15s}
+  a.lcard:hover{border-color:var(--blue)}
+  .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .no{color:var(--blue);font-variant-numeric:tabular-nums;font-weight:800;font-size:1.12rem}
+  .lcard h2{margin:5px 0 7px;font-size:1.18rem;letter-spacing:-.01em}
+  .desc{margin:0;color:var(--muted);font-size:.93rem}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:2px 9px;white-space:nowrap}
+  .pill.done{background:var(--teal-soft);color:var(--teal)}
+  .pill.now{background:var(--blue-soft);color:var(--blue)}
+  .pill.plan{background:var(--amber-soft);color:var(--amber)}
+  .lcard.plan{opacity:.65;cursor:default}
+  .hint{font-size:.84rem;color:var(--muted);margin:0 0 14px}
+  code{font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.92em}
+  .note{color:var(--muted);font-size:.84rem;background:#f4f1ea;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:18px 0}
+  footer{margin-top:56px;border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:.84rem}
+</style>
+</head>
+<body><div class="wrap">
+<p class="kicker">Docker Agent teaching workspace</p>
+<h1>Lessons</h1>
+<p class="sub">Standalone, offline-friendly lessons — big picture first, then hands-on. Ground truth: this repo's
+verified examples (<code>ex01–ex07</code>) and the official Docker Agent docs, never model memory.</p>
+<p class="hint">Completion is stored in your browser (localStorage) and shows as <span class="pill done">✓ complete</span>.</p>
+
+<a class="lcard" href="0001-docker-agent-mental-model.html">
+  <div class="top"><span class="no">001</span><span class="pill now" id="st-0001">not completed</span></div>
+  <h2>The mental model &amp; the map of seven flavors</h2>
+  <p class="desc">What <code>docker agent</code> is in three sentences · the <code>ex01</code> YAML anatomy, click-to-match ·
+  run surfaces, the headless verification template, safety modes · the decisive map of <code>sub_agents</code>,
+  catalog MCP, custom MCP, <code>serve mcp/a2a/acp</code> · 9-question self-check.</p>
+</a>
+
+<a class="lcard" href="0002-ex01-hands-on.html">
+  <div class="top"><span class="no">002</span><span class="pill now" id="st-0002">next up</span></div>
+  <h2>Ex01 hands-on — run it, then judge it</h2>
+  <p class="desc">You drive: four pre-flight gates, the TUI demo, the free <code>--dry-run</code>, then the verification
+  template with <code>--safety restricted</code> — and the exit-0-versus-transcript discipline, practiced on real
+  transcript cases.</p>
+</a>
+
+<a class="lcard" href="0003-ex02-ex03-mcp-flavors.html">
+  <div class="top"><span class="no">003</span><span class="pill now" id="st-0003">not completed</span></div>
+  <h2>The MCP flavors — catalog ref vs your own server</h2>
+  <p class="desc">Catalog <code>ref: docker:…</code> vs a self-authored ~100-line MCP server · why verification flips to
+  <code>--safety autonomous</code> · <code>debug toolsets</code> introspection and the missing-toolset trap ·
+  3 transcript-judging drills · 9-question self-check.</p>
+</a>
+
+<a class="lcard" href="0004-ex04-ex07-subs-and-serve.html">
+  <div class="top"><span class="no">004</span><span class="pill now" id="st-0004">not completed</span></div>
+  <h2>Sub-agents &amp; the serving surfaces — ex04–ex07</h2>
+  <p class="desc">Delegation inside one config, then the serve family — <code>serve mcp</code> (Claude Code probe),
+  <code>serve a2a</code> (agent card, tasks), <code>serve acp</code> (Zed) — with the repo's recorded probe evidence ·
+  3 judge-the-wire drills · 9-question self-check.</p>
+</a>
+
+<a class="lcard" href="0005-capstone-choose-flavor.html">
+  <div class="top"><span class="no">005</span><span class="pill now" id="st-0005">not completed</span></div>
+  <h2>Capstone — choose the flavor for your own problem</h2>
+  <p class="desc">The decision path from <code>flavors.md</code>, 6 apply-it-yourself flavor drills naming the trade-off
+  each pick accepts, the honesty list of documented-but-unprobed surfaces — then the course-wide final.</p>
+</a>
+
+<p class="note">All five lessons are live and offline-friendly — grounded in the repo's verified
+<code>ex01–ex07</code>. The sequence stays the owner's to reshape.</p>
+
+<footer>
+  <p><b>Ground rules</b> · Ground truth = repo docs + official Docker docs · Local default
+  <code>gemma4:latest</code> via built-in <code>ollama</code> provider ·
+  <a href="../reference/glossary.html">Glossary</a> · <a href="../reference/ex-map.html">Example map</a> ·
+  <a href="../NOTES.md">Workspace notes</a> · <a href="../README.md">Repo home</a></p>
+</footer>
+</div>
+<script>
+(function () {
+  "use strict";
+  function mark(id, key, undone) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var done = false;
+    try { done = localStorage.getItem(key) === "1"; } catch (e) { /* private mode */ }
+    el.className = "pill " + (done ? "done" : "now");
+    el.textContent = done ? "✓ complete" : undone;
+  }
+  mark("st-0001", "lessons_complete_0001", "not completed");
+  mark("st-0002", "lessons_complete_0002", "not completed");
+  mark("st-0003", "lessons_complete_0003", "not completed");
+  mark("st-0004", "lessons_complete_0004", "not completed");
+  mark("st-0005", "lessons_complete_0005", "not completed");
+})();
+</script>
+</body></html>

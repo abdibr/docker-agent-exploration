@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossary · Docker Agent teaching workspace</title>
+<style>
+  :root{--paper:#faf8f4;--ink:#1d2a36;--muted:#5d6b7a;--line:#e4dfd6;--blue:#0b63c5;--teal:#0a9279;--teal-soft:#e4f4ef;--amber:#a34e12;--amber-soft:#fbf0e4}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px 70px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cef0}
+  a:hover{border-bottom-color:var(--blue)}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:40px 0 6px}
+  h1{font-size:2rem;margin:0 0 8px;line-height:1.25}
+  .sub{color:var(--muted);margin:0 0 8px}
+  h2{font-size:1.2rem;margin:34px 0 4px;padding-top:12px;border-top:1px solid var(--line)}
+  code,.mono{font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.9em;background:#fff;border:1px solid var(--line);border-radius:5px;padding:0 4px}
+  dl{margin:10px 0}
+  dt{font-weight:700;margin-top:13px;font-size:.98rem}
+  dt .ex{font-weight:600;font-size:.74rem;color:var(--teal);background:var(--teal-soft);border-radius:5px;padding:1px 6px;letter-spacing:.04em;margin-left:6px}
+  dd{margin:2px 0 0 0;color:var(--muted);font-size:.93rem}
+  .warnbox{background:var(--amber-soft);border-left:4px solid var(--amber);border-radius:10px;padding:12px 16px;margin:16px 0;font-size:.93rem}
+  footer{margin-top:50px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:.83rem}
+  @media print{body{background:#fff}.wrap{max-width:100%;padding:0}h2{break-after:avoid}dt,dd{break-inside:avoid}a{border:none;color:inherit}}
+</style>
+</head>
+<body><div class="wrap">
+<p class="kicker">Reference · print-friendly</p>
+<h1>Glossary — Docker Agent workspace</h1>
+<p class="sub">Every term below is grounded in this repo's <a href="../README.md">seven verified examples</a> and the
+official <a href="https://docs.docker.com/ai/cagent/" target="_blank">Docker Agent docs</a> — one line each, with the
+example that proves it. Companion page: <a href="ex-map.html">the example map</a>.</p>
+
+<h2>Core concepts</h2>
+<dl>
+  <dt>Docker Agent <span class="ex">ex01</span></dt>
+  <dd>Docker's open-source AI agent builder &amp; runtime. You author a declarative YAML config; the
+  <code>docker agent</code> CLI (a Docker Desktop 4.63+ plugin) runs it. No wrapper code, SDK, or client needed.</dd>
+  <dt>cagent</dt>
+  <dd>The same tool's old name (Docker Desktop 4.49–4.62). Why older tutorials and search hits say “cagent”.</dd>
+  <dt>Agent config (<code>agent.yaml</code>) <span class="ex">ex01</span></dt>
+  <dd>The whole program: model entries, agent definitions (role, instruction, tools), and connections. Key names are
+  pinned by the official <code>agent-schema.json</code>; validate with YAML language-server or <code>--dry-run</code>.</dd>
+  <dt>Transcript <span class="ex">ex01–03</span></dt>
+  <dd>The printed record of a run: every tool call, its args/result, then the final answer. <code>--exec</code> prints
+  it to stdout. This — never the exit code — is what you judge.</dd>
+  <dt>Exit-0 discipline <span class="ex">ex01–03</span></dt>
+  <dd>Failures (denied calls, missing toolsets, degenerate loops) still exit 0. Machine assertions must check the
+  transcript or the protocol surface, not return codes.</dd>
+  <dt>Verification seam <span class="ex">every ex</span></dt>
+  <dd>The repo's testing pattern: exactly one headless command per example, asserted on external behavior only.
+  Phased: config sanity → spend-y verify.</dd>
+  <dt>Model swap <span class="ex">ex01</span></dt>
+  <dd>Changing the model = editing one <code>model:</code> value in the named entry
+  (<code>gemma4:latest</code> ↔ <code>glm-5.3-flash:cloud</code>). Cloud use in this workspace only in
+  pre-approved smoke tests.</dd>
+</dl>
+
+<h2>Config keys (agent.yaml vocabulary)</h2>
+<dl>
+  <dt><code>models:</code> + named entry <span class="ex">ex01</span></dt>
+  <dd>A friendly name (e.g. <code>gemma4_local</code>) wrapping <code>provider:</code>, <code>model:</code>, and a
+  <code>description:</code>. Agents reference it by name, so models are swappable in one line.</dd>
+  <dt><code>provider:</code> <span class="ex">ex01</span></dt>
+  <dd>Which backend serves the model. This workspace pins the built-in <code>ollama</code> provider → the local
+  <a href="https://ollama.com" target="_blank">Ollama daemon</a> at <code>localhost:11434</code>. Daemon must be running.</dd>
+  <dt><code>agents:</code> / <code>root</code> <span class="ex">ex01</span></dt>
+  <dd>The agent you actually talk to (name is convention here: <code>root</code>). Extra named agents appear in Ex04 as
+  roles, in Ex05/06 as served metadata, in Ex07 as ACP sessions.</dd>
+  <dt><code>description:</code> <span class="ex">ex03·05·06</span></dt>
+  <dd>Not just docs: it surfaces as the MCP tool description (Ex05) and feeds the A2A agent card (Ex06).</dd>
+  <dt><code>instruction:</code> <span class="ex">ex01</span></dt>
+  <dd>The agent's prompt — role and behavioral rules, seen by the model every turn. Good rules make verification
+  deterministic (ex01: “read the file first; quote exact values”).</dd>
+  <dt><code>max_iterations:</code> <span class="ex">ex01·04</span></dt>
+  <dd>Turn budget, a runaway-loop fuse. ex01 uses 20; ex04's lead needs 12 because delegation costs turns.</dd>
+  <dt><code>toolsets:</code> <span class="ex">ex01·03</span></dt>
+  <dd>Declarative capabilities. Built-ins in this repo: <code>filesystem</code>, <code>shell</code>, <code>think</code>.
+  Wrong/missing toolsets are a classic silent failure — see <code>debug toolsets</code>.</dd>
+  <dt><code>allow_list:</code> <span class="ex">ex01</span></dt>
+  <dd>Restricts a toolset (filesystem sandboxed to <code>["."]</code> — its working directory). Restrictive only; the
+  default without it is unrestricted.</dd>
+  <dt><code>sub_agents:</code> <span class="ex">ex04</span></dt>
+  <dd>In-process role delegation inside one config — lead + specialists, zero protocol machinery. Context boundary is
+  the handoff: sub-agents see only what the lead forwards. Try this flavor first. MCP refs are root-only (a sub-agent
+  cannot carry MCP tool refs).</dd>
+</dl>
+
+<h2>Running (run surfaces)</h2>
+<dl>
+  <dt><code>docker agent run agent.yaml</code> <span class="ex">ex01+</span></dt>
+  <dd>Interactive TUI — terminal chat with your agent. For demos and exploration.</dd>
+  <dt><code>--exec "task"</code> <span class="ex">ex01+</span></dt>
+  <dd>Headless: runs one task non-interactively, prints the full transcript to stdout, exits when done. The
+  verification verb.</dd>
+  <dt><code>--json</code> <span class="ex">ex01+</span></dt>
+  <dd>NDJSON event stream instead of prose — one JSON object per line (~150 events for a trivial prompt). For
+  machine-readable evidence.</dd>
+  <dt>stdin pipe <span class="ex">ex01+</span></dt>
+  <dd><code>echo "task" | docker agent run cfg.yaml - --exec</code> — task via stdin instead of an argument. This
+  workspace's escape hatch for Windows PowerShell 5.1 quote-mangling.</dd>
+  <dt><code>--dry-run</code> <span class="ex">ex02+</span></dt>
+  <dd>Validates the config without touching a model — the free pre-flight gate before any spend.</dd>
+  <dt><code>debug config</code> / <code>debug toolsets</code> <span class="ex">ex03</span></dt>
+  <dd>Print the canonical effective config / the concrete tool list (this one starts toolsets and images). The Ex03
+  lessons: a missing tool image only shows here and in errors.</dd>
+  <dt><code>serve mcp|a2a|api|chat|acp</code></dt>
+  <dd>Expose the agent as a service — see <a href="ex-map.html">example map</a> and the five surfaces table below.</dd>
+</dl>
+
+<h2>Safety modes</h2>
+<dl>
+  <dt>Safety ladder</dt>
+  <dd><code>default | strict | balanced | restricted | autonomous</code> — session tool-call policy. Serving surfaces
+  announce their policy in a startup banner and default to <code>restricted</code>.</dd>
+  <dt><code>--safety restricted</code> <span class="ex">ex01+</span></dt>
+  <dd>Fail-closed unattended profile: obviously-safe calls auto-approve; the rest are <i>silently denied</i> — the
+  denial appears only as a transcript line, never a prompt. The repo's verification default.</dd>
+  <dt><code>--yolo</code> / <code>autonomous</code> <span class="ex">ex02·03</span></dt>
+  <dd>Auto-approve everything, one deliberate command at a time. The MCP examples verify this way because restricted
+  denies MCP calls.</dd>
+  <dt>ACP session modes <span class="ex">ex07</span></dt>
+  <dd>In an ACP session the editor negotiates and switches mode (and model) from its UI per session.</dd>
+</dl>
+
+<h2>Protocols &amp; serving</h2>
+<dl>
+  <dt>MCP <span class="ex">ex02·03·05</span></dt>
+  <dd>Model Context Protocol: standard JSON-RPC tool interface. The agent is the <b>client</b> in ex02/ex03 (it calls
+  tools); the <b>server</b> in ex05 (an MCP client consumes the agent as one tool). Moves synchronous tool calls —
+  not task handoff.</dd>
+  <dt>MCP catalog ref <span class="ex">ex02</span></dt>
+  <dd><code>ref: docker:duckduckgo</code> — a proven Docker-hardened tool from the public
+  <a href="https://docs.docker.com/ai/dhi/agent-catalog/" target="_blank">Agent Catalog</a>, run per-call in a
+  digest-pinned, egress-restricted container. Zero code, strongest isolation.</dd>
+  <dt>MCP custom server <span class="ex">ex03</span></dt>
+  <dd>Your own ~100-line MCP server, no SDK, containerized and tagged; started by Docker Agent per session
+  (<code>--rm</code> teardown). Use the <code>tools: allow</code> flag to pre-approve its calls.</dd>
+  <dt>A2A <span class="ex">ex06</span></dt>
+  <dd>Agent-to-Agent protocol: agents discover each other via an <b>agent card</b> and exchange <b>tasks</b> (state
+  machine + artifacts) over HTTP JSON-RPC on <code>127.0.0.1:8082</code>. 331–496 ms overhead beyond the model; task
+  state lives server-side (context/task IDs).</dd>
+  <dt>Agent card <span class="ex">ex06</span></dt>
+  <dd>A2A's discovery document (name, description from the config, skills, URLs). The <code>description:</code> you
+  wrote in the config ends up here.</dd>
+  <dt>ACP <span class="ex">ex07</span></dt>
+  <dd>Agent Client Protocol: the editor (Zed) <b>spawns</b> the agent as a subprocess speaking stdio JSON-RPC —
+  sessions, streaming, permission prompts in the editor. Zero serve flags; mode/model negotiated from the editor.</dd>
+</dl>
+
+<div class="warnbox"><b>Documented but never probed in this workspace:</b> <code>serve api</code> (REST/sessions +
+bearer auth, <code>127.0.0.1:8080</code>) and <code>serve chat</code> (OpenAI-compatible completions,
+<code>127.0.0.1:8083</code>). Excluded from every decision rule — don't teach them as verified.</div>
+
+<footer>
+  <p>Glossary · Docker Agent teaching workspace · ground truth: repo READMEs + <code>docs/notes/</code> +
+  official Docker docs · <a href="../lessons/0001-docker-agent-mental-model.html">Lesson 001</a> ·
+  <a href="ex-map.html">Example map</a> · <a href="../README.md">Repo home</a></p>
+</footer>
+</div></body></html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 005 · Capstone — choosing the flavor — Docker Agent</title>
+<style>
+  :root{
+    --paper:#faf8f4; --ink:#1d2a36; --muted:#5d6b7a; --line:#e4dfd6;
+    --blue:#0b63c5; --blue-soft:#e8f1fb; --teal:#0a9279; --teal-soft:#e4f4ef;
+    --amber:#a34e12; --amber-soft:#fbf0e4; --red:#b3362e; --red-soft:#faeae8;
+    --violet:#6a4bc4; --violet-soft:#efeafb;
+    --code-bg:#101a26; --code-ink:#dbe6f0;
+    --kw:#7fd1ff; --str:#8fe0b2; --com:#6b7f94; --key:#ffd487;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:17px/1.65 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cef0}
+  a:hover{border-bottom-color:var(--blue)}
+  code,.mono{font-family:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;font-size:.92em}
+  h1,h2,h3{line-height:1.25;letter-spacing:-.01em}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:46px 0 6px}
+  h1{font-size:2.1rem;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:1.06rem;margin:0 0 18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 8px}
+  .chip{font-size:.78rem;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .part{margin-top:52px}
+  .part>h2{font-size:1.45rem;margin:0 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+  .part>h2 .no{color:var(--blue);font-variant-numeric:tabular-nums;margin-right:10px}
+  .lede{color:var(--muted);margin:0 0 18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .card.blue{border-left:5px solid var(--blue);background:var(--blue-soft)}
+  .card.teal{border-left:5px solid var(--teal);background:var(--teal-soft)}
+  .card.amber{border-left:5px solid var(--amber);background:var(--amber-soft)}
+  .card.red{border-left:5px solid var(--red);background:var(--red-soft)}
+  .card.violet{border-left:5px solid var(--violet);background:var(--violet-soft)}
+  .card h3{margin:0 0 6px;font-size:1.02rem}
+  .card p{margin:6px 0}
+  .tagline{font-size:.9rem;color:var(--muted);font-style:italic}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.93rem;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f3efe7;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody tr:nth-child(even){background:#fbfaf7}
+  pre{margin:0;padding:16px 18px;background:var(--code-bg);color:var(--code-ink);border-radius:12px;overflow-x:auto;
+    font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.86rem;line-height:1.55}
+  pre .kw{color:var(--kw)} pre .str{color:var(--str)} pre .com{color:var(--com);font-style:italic} pre .key{color:var(--key)}
+  .codelabel{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 6px}
+  .cite{color:var(--muted);font-size:.84rem;background:#f4f1ea;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:16px 0}
+  .cite b{color:var(--ink)}
+  .flow{margin:12px 0 0;padding:0}
+  .flow li{padding:8px 0 8px 30px;border-bottom:1px dashed var(--line);font-size:.95rem}
+  .flow li::marker{color:var(--blue);font-weight:700}
+  .flow li:last-child{border-bottom:none}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:1px 7px;vertical-align:middle}
+  .pill.ex{background:var(--teal-soft);color:var(--teal)} .pill.warn{background:var(--red-soft);color:var(--red)}
+  details{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 16px}
+  summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  /* command box with copy */
+  .cmdbox{position:relative;margin:8px 0 4px}
+  .cmdbox pre{padding-right:92px}
+  .copybtn{position:absolute;top:10px;right:10px;border:1px solid #26374a;background:#16222f;color:var(--code-ink);
+    border-radius:8px;padding:5px 11px;font-size:.74rem;cursor:pointer;font-family:inherit}
+  .copybtn:hover{border-color:var(--kw)}
+  .copybtn.ok{border-color:var(--str);color:var(--str)}
+  /* pre-flight gates */
+  .gate{display:flex;gap:13px;align-items:flex-start;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;margin:10px 0}
+  .gate input{width:20px;height:20px;margin-top:3px;accent-color:var(--teal);flex:0 0 20px;cursor:pointer}
+  .gate .gt{font-weight:700;font-size:1rem}
+  .gate .gw{color:var(--muted);font-size:.88rem;margin:2px 0 4px}
+  .gate.done{border-color:var(--teal);background:var(--teal-soft)}
+  .gate .cmdbox pre{font-size:.8rem;padding:10px 12px;width:100%}
+  #gatedone{display:none;margin:14px 0;background:var(--teal-soft);border:1px solid var(--teal);color:var(--teal);
+    border-radius:10px;padding:10px 16px;font-size:.94rem;font-weight:700}
+  #gatedone.on{display:block}
+  /* transcript-judging simulator */
+  .simcase{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px 18px;margin:14px 0}
+  .simcase h3{margin:0 0 4px;font-size:1rem}
+  .simcase .ask{font-size:.9rem;color:var(--muted);margin:0}
+  .vrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .vbtn{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;font-size:.88rem;
+    cursor:pointer;font-family:inherit;transition:all .12s}
+  .vbtn:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .vbtn:disabled{cursor:default;opacity:.75}
+  .vbtn.v-ok{border-color:var(--teal);background:var(--teal-soft);color:var(--teal);font-weight:700;opacity:1}
+  .vbtn.v-bad{border-color:var(--red);background:var(--red-soft);color:var(--red);font-weight:700;opacity:1}
+  .vbtn.v-true{border-color:var(--teal);border-style:dashed}
+  .exp{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .exp.show{display:block}
+  .exp.ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .exp.no{background:var(--red-soft);border-left:4px solid var(--red)}
+  /* auto-graded quiz (same engine as Lesson 001) */
+  .quiz{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0}
+  .q{margin-top:28px}
+  .q .qq{font-size:1rem;font-weight:600;margin:0 0 12px}
+  .qfb{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .qfb.fb-ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .qfb.fb-bad{background:var(--red-soft);border-left:4px solid var(--red)}
+  .opt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;
+    padding:12px 16px;margin:9px 0;font-size:.95rem;cursor:pointer;font-family:inherit;transition:all .12s}
+  .opt:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .opt:disabled{cursor:default;opacity:.72}
+  .opt.opt-ok{border-color:var(--teal);background:var(--teal-soft);opacity:1}
+  .opt.opt-bad{border-color:var(--red);background:var(--red-soft);opacity:1}
+  .opt.opt-true{border-color:var(--teal);border-style:dashed}
+  #qreset{margin-top:16px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #qreset:hover{border-color:var(--blue)}
+  #markdone{border:none;background:var(--blue);color:#fff;font-weight:600;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #markdone:hover{filter:brightness(1.1)}
+  .qscore{text-align:center;padding:30px 10px;display:none}
+  .qscore .big{font-size:2.6rem;font-weight:800;color:var(--blue)}
+  .qscore p{color:var(--muted)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.85rem}
+  @media print{
+    body{background:#fff}.wrap{max-width:100%;padding:0}
+    .cmdbox .copybtn,.no-print,.simcase .vrow,.simcase .exp{display:none!important}
+    .card,pre,table,.gate,details{break-inside:avoid}
+    pre{background:#f2f4f7;color:#1d2a36}
+    pre .kw,pre .str,pre .key{color:inherit}pre .com{color:#666}
+    a{border-bottom:none;color:inherit}
+  }
+</style>
+</head>
+<body><div class="wrap">
+<main>
+
+<p class="kicker">Docker Agent workspace · Lesson 005 · capstone</p>
+<h1>Lesson 005 · Capstone — choose the flavor for a real problem</h1>
+<p class="sub">Lessons 001–004 built the vocabulary and the mechanics. This capstone is MISSION.md's item three:
+<i>decide, for a new problem, which flavor fits</i> — using the repo's decision rules, not vibes. The syllabus is the
+repo's flavor cheat-sheet; the practice is six invented owner problems; the exit is the repo's deliberate pause.</p>
+<div class="chips">
+  <span class="chip">capstone · mission item 3</span>
+  <span class="chip">syllabus: docs/notes/flavors.md</span>
+  <span class="chip">6 flavor drills + 9-question final</span>
+  <span class="chip">reading lesson — the drills are the hands-on</span>
+  <span class="chip">Windows 11 · PowerShell 5.1</span>
+</div>
+
+<section class="part" id="p1">
+  <h2><span class="no">01</span>The decision path — read it in order</h2>
+  <p class="lede">flavors.md answers <i>which seat do I want, and when</i>; run-modes.md answers <i>how do I run it</i>.
+  The repo's decision rules are an <b>ordered</b> list, and the order is a cost argument: structural before protocol,
+  borrowed before built. Six questions, six seats.</p>
+
+  <ol class="flow">
+    <li><b>Does the work split into ROLES — plan / review / compose?</b> → Native <code>sub_agents:</code>, reach it
+    <b>first</b>, before any protocol machinery: zero protocol machinery, one YAML file — the list hands the lead a
+    <code>transfer_task</code> tool. Accept the cost now: the highest of the built-ins, one task fans into ~5 model
+    chats.</li>
+    <li><b>Need a capability you DON'T own — proven tools like web search, no budget for code?</b> → Catalog MCP ref
+    (<code>type: mcp, ref: docker:…</code>): the fastest off-the-shelf path — the <code>ref</code> plus Docker's
+    catalog snapshot <i>is</i> the server. Bounded by the catalog; keyed entries need secrets, out of scope in the
+    no-secrets phase.</li>
+    <li><b>Need a tool you DO own and can test — deterministic, a repo artifact?</b> → Custom MCP server
+    (<code>type: mcp, command: docker run --rm -i &lt;img&gt;</code>): you build and tag the image; per-session
+    container with <code>--rm</code> teardown; ~deterministic. Transport follows consumption: spawning via
+    <code>command:</code> means stdio NDJSON.</li>
+    <li><b>Should someone else's MCP CLIENT call YOUR AGENT as one tool?</b> → <code>serve mcp</code>: one tool per
+    agent, named after the agent; the agent's <code>description:</code> steers the caller; no config change — the same
+    YAML, one serve verb.</li>
+    <li><b>Should another AGENT discover and consume yours over HTTP?</b> → <code>serve a2a</code>: an agent card at
+    <code>/.well-known/agent-card.json</code>; one <code>SendMessage</code> returns a whole task object
+    (<code>TASK_STATE_COMPLETED</code> + artifacts); CamelCase A2A v1.0 methods.</li>
+    <li><b>Should the HUMAN's EDITOR drive your agent?</b> → <code>serve acp</code>: stdio-only, no launch flags — the
+    editor spawns it like a language server; file and terminal capabilities arrive via the host's
+    <code>clientCapabilities</code> and <code>session/request_permission</code> prompts, not agent-side toolsets.</li>
+  </ol>
+
+  <div class="card blue">
+    <h3>The one-line mental model — keep all four lines in your head</h3>
+    <p><b>MCP wires tools into an agent</b> (or the agent out as one tool); <b>A2A delegates work between agents</b>
+    over a network, with discovery; <b><code>sub_agents</code> is multi-role work inside one config</b>; <b>ACP is the
+    editor-facing seat</b> — the human's tool is the peer.</p>
+    <p class="tagline">Verbatim from the flavor sheet, distilled from ex07-acp-editor/README.md's cross-flavor table.
+    If a drill answer below seems to contradict one of these lines, the drill is wrong — not the line.</p>
+  </div>
+
+  <table>
+    <thead><tr><th>Flavor</th><th>Isolation story</th><th>Cost you accept</th><th>Complexity</th><th>When to reach for it</th></tr></thead>
+    <tbody>
+      <tr><td><b>Native sub-agents</b> <code>sub_agents:</code> <span class="pill ex">Ex04</span></td>
+          <td>In-process: one config, one daemon; sub-agents get a <b>fresh view</b> — only what the lead forwards (the context boundary)</td>
+          <td>Highest of the built-ins: a task fans into ~5 model chats — hence Ex04's cloud default</td>
+          <td>Lowest: zero protocol machinery, one YAML file; the lead gets <code>transfer_task</code></td>
+          <td>Work splits into <i>roles</i>, lead composes the answer. Reach FIRST, before protocol machinery</td></tr>
+      <tr><td><b>MCP client · catalog ref</b> <code>ref: docker:…</code> <span class="pill ex">Ex02</span></td>
+          <td>Strongest: digest-pinned, egress-restricted container per call; nothing local persists</td>
+          <td>~40 s first call (gateway start + image pull) — an egress dependency at call time</td>
+          <td>Lowest possible: one toolset entry + optional <code>tools:</code> allowlist</td>
+          <td>Off-the-shelf capability, fast. Bounded by the catalog; keyed entries need secrets — no-secrets phase</td></tr>
+      <tr><td><b>MCP client · custom server</b> <code>command: docker run --rm -i &lt;img&gt;</code> <span class="pill ex">Ex03</span></td>
+          <td>You own it: build + tag the image; per-session container, <code>--rm</code> teardown</td>
+          <td>One-time 172 MB build; per-call spin-up, sub-second on a warm engine</td>
+          <td>Middle: server code + Dockerfile + image lifecycle yours; YAML stays one toolset entry</td>
+          <td>A tool the catalog lacks, or deterministic + testable behavior; <code>command:</code> spawn means stdio NDJSON</td></tr>
+      <tr><td><b>Agent as MCP server</b> <code>serve mcp</code> <span class="pill ex">Ex05</span></td>
+          <td>The served process is the boundary: stdio NDJSON default; stateless <code>--http</code> variant, default <code>127.0.0.1:8081</code></td>
+          <td>One full LLM chat per <code>tools/call</code> (~20 s local gemma4); serving free</td>
+          <td>Low: no config change; client work is someone else's</td>
+          <td>Your agent in someone else's toolbox (Claude Code, Inspector, VS Code). One tool per agent; write <code>description:</code> like a tool description</td></tr>
+      <tr><td><b>Agent over A2A</b> <code>serve a2a</code> <span class="pill ex">Ex06</span></td>
+          <td>HTTP peer at a port (default <code>127.0.0.1:8082</code>, <code>--listen</code> to move); task state lives server-side</td>
+          <td>One LLM round trip per task (331–496 ms overhead beyond the model on this build); serving free</td>
+          <td>Low config; the surface's complexity is the protocol's (A2A v1.0 CamelCase methods)</td>
+          <td>Agents <i>discover each other</i>, hand off tasks, follow task state over HTTP — the agent-to-agent seat</td></tr>
+      <tr><td><b>ACP</b> <code>serve acp</code> <span class="pill ex">Ex07</span></td>
+          <td>stdio-only child process (LSP/DAP shape); no flags at all — mode and model negotiated per session via <code>configOptions</code></td>
+          <td>Local models stream thoughts (~1 min of <code>agent_thought_chunk</code> before the answer on gemma4)</td>
+          <td>Low for the agent owner; the host/editor side is where the effort goes</td>
+          <td>The <b>human's editor</b> is the peer — persistent sessions, streaming, permission prompts, mid-session control</td></tr>
+      <tr><td><b>Documented, not built</b> <span class="pill warn">UNVERIFIED-ON-THIS-MACHINE</span></td>
+          <td colspan="2"><code>serve api</code> (default <code>127.0.0.1:8080</code>), <code>serve chat</code> (default <code>127.0.0.1:8083</code>), <code>docker agent share push</code>/<code>pull</code> (OCI artifact; needs a registry)</td>
+          <td>—</td>
+          <td>Documented as surfaces the CLI exposes, unverified on this machine — an owner next step if a use case needs them</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card violet">
+    <h3>🧩 Flavors stack — the YAML composes</h3>
+    <p>A toolset inside an agent that <i>also</i> declares <code>sub_agents:</code> is just composed YAML — a reading of
+    the docs' structure: Lesson 003's catalog toolset on Lesson 001's config shape; a Lesson 004-style team could carry
+    a catalog toolset in a member.</p>
+    <p class="tagline">Honest label: documented by the config grammar, verified piecewise — <b>no example ran a stacked
+    flavor end to end</b>. Drill 3 exercises the stacked reasoning.</p>
+  </div>
+
+  <p class="cite"><b>Ground truth for Part 01:</b> <a href="../docs/notes/flavors.md">docs/notes/flavors.md</a>
+  (comparison table, one-line mental model distilled from ex07-acp-editor/README.md, adjacent-surfaces section);
+  ports and flags from <a href="../docs/notes/run-modes.md">run-modes.md</a> §15 + §19.</p>
+</section>
+
+<section class="part" id="p2">
+  <h2><span class="no">02</span>Flavor drills — six owners' problems</h2>
+  <p class="lede">Reading a table is not yet deciding with it. The six scenarios below are <b>invented drill
+  prompts</b> — they sound like ownership work, but they are not; the flavor facts used to judge them are <i>not</i>
+  invented: every trade-off in the feedback traces to the flavor sheet, the phase notes, or an example README. One
+  drill is deliberately a composite, because in real ownership flavors stack.</p>
+
+  <p class="codelabel">The serve family you are choosing among (default addresses; run-modes.md §15 + §19)</p>
+  <div class="cmdbox no-print">
+<pre><span class="kw">docker agent serve</span> api  .\agent.yaml    <span class="com"># HTTP API            :8080 — documented, never probed this phase</span>
+<span class="kw">docker agent serve</span> mcp  .\agent.yaml    <span class="com"># MCP server          stdio default; --http → 127.0.0.1:8081</span>
+<span class="kw">docker agent serve</span> a2a  .\agent.yaml    <span class="com"># A2A server          :8082 — card at /.well-known/agent-card.json</span>
+<span class="kw">docker agent serve</span> chat .\agent.yaml    <span class="com"># OpenAI-compatible   :8083 — documented, never probed this phase</span>
+<span class="kw">docker agent serve</span> acp  .\agent.yaml    <span class="com"># ACP server          stdio; launched by an editor; accepts no flags</span></pre>
+    <button class="copybtn">Copy</button>
+  </div>
+  <div class="cmdbox no-print">
+<pre><span class="kw">docker agent</span> debug toolsets .\agent.yaml    <span class="com"># the model-free gate before any spend (Ex03's rule)</span></pre>
+    <button class="copybtn">Copy</button>
+  </div>
+  <p class="tagline">Copy the syntax if useful; deciding is the quiz.</p>
+
+  <div class="quiz">
+    <h3>🎯 Six drills — pick the seat, then name the trade-off you just accepted</h3>
+    <p class="tagline">Answers lock once chosen, like every lesson's quiz. The point is not the score — it is saying
+    the trade-off in one breath after the seat. Feedback cites the example and the repo document.</p>
+    <div id="quiz2"></div>
+    <div class="qscore" id="qscore2" style="display:none"></div>
+    <button id="qreset2" style="margin-top:16px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit">↺ Reset drills</button>
+  </div>
+</section>
+
+<section class="part" id="p3">
+  <h2><span class="no">03</span>The trade-off ledger — and the honesty list</h2>
+  <p class="lede">The flavor sheet's cost column is the honest part of its table; the phase notes sharpen it. Before the
+  drills commit you anywhere, read what each seat gives up — not disqualifications, just price tags you sign for.</p>
+
+  <div class="card">
+    <h3>🧮 sub_agents — you pay in model chats</h3>
+    <p>One task fans into ~5 model chats (lead turns + a full nested chat per sub-agent); hence Ex04's cloud default,
+    <code>glm-5.3-flash:cloud</code>, the one-line local swap for cheap iteration, and per-agent
+    <code>max_iterations</code> kept small (shipped split: lead 12 / subs 6). Isolation is real but in-process:
+    sub-agents see only what the lead forwards. The proof is transcript lines
+    (<code>transfer_task response</code>), not a protocol probe — there is no protocol.</p>
+  </div>
+
+  <div class="card">
+    <h3>📦 Catalog ref — you pay in pin stability and egress</h3>
+    <p>The <code>ref</code> carries <b>no version</b>: a newer catalog snapshot can move the digest pin — and the tool
+    schemas with it. Each call fetches an egress-restricted container at call time (~40 s first call). Bounded by the
+    catalog; keyed entries (brave, tavily, exa) need secrets — Ex02 chose DuckDuckGo to stay key-free. And the call is
+    not on the provably-safe list: under <code>restricted</code> it is auto-denied, so unattended verification runs
+    <code>--safety autonomous</code> deliberate one-shots.</p>
+  </div>
+
+  <div class="card">
+    <h3>🔨 Custom MCP server — you pay in artifact ownership</h3>
+    <p>Server code + Dockerfile + image lifecycle are yours: one-time 172 MB build on <code>node:24-alpine</code>,
+    image stays until <code>docker rmi</code>. Stdio discipline: stdout pure NDJSON, stderr the log channel. A missing
+    image fails almost silently and still exits 0 — <code>debug toolsets</code> is the model-free gate. Same safety row
+    as any MCP call: denied under <code>restricted</code>.</p>
+  </div>
+
+  <div class="card">
+    <h3>🧰 serve mcp — you pay in description-only steering</h3>
+    <p>The caller steers by your <code>description:</code> alone; annotations are generic
+    (<code>readOnlyHint: true</code> despite a full LLM chat — don't read safety into them). One full LLM chat per
+    <code>tools/call</code> (~20 s local gemma4). Serving defaults to <code>restricted</code> tool safety
+    (<code>Tool safety policy: restricted (source: serve default)</code> — observed live in Ex05/Ex06), comfortable
+    only because those configs declare <b>no toolsets</b>; a served agent with toolsets inherits the same fail-closed
+    denials. The stdio variant accepts no <code>--safety</code>/<code>--auth-token</code>; those exist only on the
+    stateless <code>--http</code> variant (default <code>127.0.0.1:8081</code>, auth required for non-loopback
+    binds).</p>
+  </div>
+
+  <div class="card">
+    <h3>🌐 serve a2a — you pay in protocol surface</h3>
+    <p>The discovery/protocol surface is yours to script safely against drift: the CLI moved
+    <code>v1.145.0 → v1.153.0</code> and the card grew <code>capabilities.pushNotifications:false</code>. This build
+    speaks A2A v1.0 CamelCase methods (<code>message/send</code>; a non-CamelCase method answers -32601); legacy
+    <code>agent.json</code> discovery is 404; the card's <code>name</code> is the <b>config file's stem</b>, not the
+    agent name. Serving itself free — one LLM round trip per task: 331–496 ms overhead beyond the model on this
+    build.</p>
+  </div>
+
+  <div class="card">
+    <h3>💻 serve acp — you pay in host dependency</h3>
+    <p>The host, not your config, brings file/terminal capabilities (<code>clientCapabilities</code> +
+    <code>session/request_permission</code> prompts) — the example config deliberately carries no toolsets. The host
+    must speak ACP v1 (<code>protocolVersion: 1</code> — the number; v2 only Draft). The wire <i>moved</i> between
+    plugin versions — update notifications grew an envelope, and a client pinned to the flat shape reads none of it
+    (how Ex07's first probe run went red). gemma4 streams thoughts: ~1 min of <code>agent_thought_chunk</code> before
+    the answer — keep the UI streaming. The in-editor session is the owner demo: <b>no ACP host was installed on this
+    machine</b> — editor steps stay <span class="pill warn">UNVERIFIED-ON-THIS-MACHINE</span>.</p>
+  </div>
+
+  <div class="card amber">
+    <h3>⚠ Environment honesty — costs you cannot see in any one row</h3>
+    <p><b>One model daemon, shared contention.</b> Every wall-clock number in this course was taken when runs did not
+    overlap; overlapping runs serialize on the same daemon/GPU and inflate every affected run's wall time
+    (phase notes §1).</p>
+    <p><b>Exit 0 is not success — everywhere.</b> Denied tool calls (Ex01–03), missing tool images (Ex03) and
+    degenerate tool loops (Ex01/02) all still exit 0. Serve surfaces change the proof's shape: their probes assert the
+    protocol surface itself, so the probe's exit is trustworthy by construction. One-sentence form
+    (run-modes.md §9): <i>exit 0 means the agent finished, not the task succeeded</i>.</p>
+    <p><b>The CLI moved underfoot once already</b> (<code>v1.145.0 → v1.153.0</code>): MCP <code>initialize</code>
+    dropped the <code>logging:{}</code> capability; ACP update notifications grew an envelope; the A2A card grew a
+    field. Script against field <i>presence and meaning</i>, not exact snapshots.</p>
+    <p><b>And on Windows:</b> PowerShell 5.1 mangles embedded double quotes in <code>--exec</code> text;
+    <code>serve</code> spawns a child <code>docker-agent.exe</code> that holds the listener — kill the tree
+    (<code>taskkill /pid &lt;pid&gt; /T /F</code>), not just the wrapper (Ex05–Ex07).</p>
+  </div>
+
+  <div class="card red">
+    <h3>🚧 The honesty list — documented, not built this phase</h3>
+    <p>None of these was exercised by an example this phase:</p>
+    <p>• <b>Headless CLI</b> (<code>run --exec</code>, <code>--json</code>, stdin) — not an interop flavor but the
+    phase's single verification seam: every example's machine-verification command is a headless run at this
+    boundary.</p>
+    <p>• <b><code>serve api</code></b> — default <code>127.0.0.1:8080</code>. Session-based REST
+    (<code>POST /api/sessions</code>, <code>--auth-token</code> bearer, <code>--session-workingdir-root</code> for
+    multi-user scoping). Documented from <code>--help</code> text; never probed.</p>
+    <p>• <b><code>serve chat</code></b> — default <code>127.0.0.1:8083</code>. OpenAI-compatible chat completions over
+    the agent. Documented from the port map; never probed.</p>
+    <p>• <b>OCI share</b> (<code>docker agent share push</code> / <code>pull</code>) — an agent config as an OCI
+    artifact; <code>sub_agents:</code> and serve surfaces accept OCI refs directly. Out of scope this phase (needs a
+    registry); closest verified behavior: a non-path argument to <code>run</code> is parsed as a registry
+    reference.</p>
+    <p><b>Those last three carry the honest label</b> — documented as surfaces the CLI exposes, <b>unverified on this
+    machine</b> — an owner next step if a use case needs them.</p>
+  </div>
+
+  <div class="card violet">
+    <h3>🛑 Stop here — the deliberate pause</h3>
+    <p>The spec's exit condition is met — examples 01–07 verified green, plus the flavor cheat-sheet. The exploration
+    phase ends here: <b>no real-problem work has been started</b>. Choosing the first real problem, and which
+    flavor(s) to build it on, belongs to the repo owner.</p>
+    <p>MISSION.md's success box asks the owner to <i>decide, for a new problem, which flavor fits (catalog MCP vs
+    custom MCP server vs sub-agents vs A2A vs ACP serve seat) using the repo's decision rules</i> — the Part 01 table
+    is that decision's map; Part 02 rehearsed it. The next move is yours; now you have the map to choose with.</p>
+  </div>
+</section>
+
+<section class="part" id="p4">
+  <h2><span class="no">04</span>Final recap — nine questions over the whole course</h2>
+  <p class="lede">Lessons 001–005 — mental model, hands-on discipline, MCP flavors, sub-agents and serve, this decision
+  path. Feedback points back at the lesson and the repo document carrying the fact.</p>
+
+  <div class="quiz">
+    <h3>🏁 Final recap</h3>
+    <p class="tagline">Same engine as Lessons 001–002, second instance of this lesson. The <a href="../reference/glossary.html">glossary</a> remains fair game.</p>
+    <div id="quiz"></div>
+    <div class="qscore" id="qscore" style="display:none"></div>
+    <button id="qreset">↺ Reset quiz</button>
+  </div>
+
+  <p class="codelabel" style="margin-top:30px">Five lines to keep</p>
+  <ol class="flow">
+    <li><b>The decision path is ordered.</b> Roles → <code>sub_agents</code> first; capability you don't own → catalog
+    ref; tool you own and can test → custom MCP server; someone's MCP client calls your agent → <code>serve mcp</code>;
+    another agent over HTTP → <code>serve a2a</code>; the human's editor → <code>serve acp</code>.</li>
+    <li><b>The comparison table is the syllabus.</b> One row per seat — isolation, cost, complexity, when-to-reach. When
+    two rows both fit, the row you pick <i>is</i> the trade-off you accept.</li>
+    <li><b>Flavors stack</b> — toolsets inside an agent that also declares <code>sub_agents:</code> is composed YAML
+    (a reading of the docs' structure; no example ran a stack end to end).</li>
+    <li><b>Judgment travels:</b> exit 0 (or a probe's exit) <i>plus</i> evidence — transcript, protocol assert, or side
+    effect; script against field <i>presence and meaning</i>, the CLI moved underfoot once already.</li>
+    <li><b><code>serve api</code>, <code>serve chat</code> and OCI share stay on the honesty list</b> — documented,
+    unverified on this machine. The deliberate pause ends the phase; the first real problem is the owner's move.</li>
+  </ol>
+
+  <div class="card teal no-print" style="margin-top:12px">
+    <h3>Course complete — this capstone is the last lesson</h3>
+    <p class="tagline">001 mental model → 002 Ex01 hands-on → 003 the MCP flavors → 004 sub-agents &amp; serve →
+    005 this decision drill. The lesson index is the exit; the offline reference pages and the workspace notes stay
+    where they are.</p>
+    <p class="cite" style="margin-top:8px"><button id="markdone">✓ Mark Lesson&nbsp;005 complete and open the lesson index</button></p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p><b>Ground rules</b> · Ground truth = this repo's docs (<a href="../docs/notes/flavors.md">flavors.md</a>,
+  <a href="../docs/notes/run-modes.md">run-modes.md</a>, <a href="../docs/notes/phase-notes.md">phase-notes.md</a>) and
+  the ex* example READMEs — never model memory. · Local default <code>gemma4:latest</code> via the built-in
+  <code>ollama</code> provider; cloud swap = edit one <code>model:</code> line, your spend. ·
+  <a href="../reference/glossary.html">Glossary</a> · <a href="../reference/ex-map.html">Example map</a> ·
+  <a href="../NOTES.md">Workspace notes</a> · <a href="index.html">Lessons</a> — previous:
+  <a href="0004-ex04-ex07-subs-and-serve.html">004 sub-agents &amp; serve ←</a> · the course ends here; index.html is
+  the way out.</p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- copy buttons ---- */
+  document.querySelectorAll(".copybtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      var text = pre ? pre.textContent : "";
+      function flash(ok) {
+        btn.textContent = ok ? "Copied ✓" : "Copy failed";
+        btn.classList.toggle("ok", !!ok);
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1400);
+      }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta); flash(ok);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { flash(true); }, fallback);
+      } else { fallback(); }
+    });
+  });
+
+  /* ---- drill quiz (#quiz2): the Lesson 002 quiz engine, duplicated ---- */
+  var DRILLS = [
+    { q: "Drill 1 · invented scenario — Every morning: a digest of what the web says about three competitors. Needed within a day, no budget for code, nobody to own an image. Which flavor?",
+      o: ["serve mcp — turn our agent into one tool on a client's palette",
+          "Native sub_agents — plan, research and compose as roles",
+          "MCP client, catalog ref (type: mcp, ref: docker:…)",
+          "MCP client, custom server — write the search tool ourselves",
+          "serve acp — prompt it from Zed each morning",
+          "serve api — a REST surface a scheduler could hit"],
+      a: 2,
+      f: "Borrowed capability, no code: the ref plus Docker's catalog snapshot IS the server (Ex02, Lesson 003; DuckDuckGo was picked over brave/tavily/exa to stay key-free). Accepted: the ref carries no version — a newer snapshot can move the digest pin and the tool schemas; each call fetches an egress-restricted container (~40 s first call); MCP calls are not on the provably-safe list, so unattended verification runs --safety autonomous deliberate one-shots. serve api is documented, never probed." },
+    { q: "Drill 2 · invented scenario — Invoice line-math must be deterministic and unit-testable; a model guessing is unacceptable. The catalog has nothing for it, and the domain logic is ours. Which flavor?",
+      o: ["Native sub_agents — a calculator role the lead consults",
+          "MCP client, custom server (type: mcp, command: docker run --rm -i <img>)",
+          "serve mcp — publish the agent that explains invoices",
+          "Catalog ref — accept whatever search-adjacent tool exists",
+          "serve a2a — let a math agent answer tasks over HTTP"],
+      a: 1,
+      f: "A tool you own and can test: ~100 lines, no SDK, a JSON-Schema inputSchema, a 6-line Dockerfile on node:24-alpine (Ex03's shape; the description is written as if prompting the model — because it is one). Accepted: you own the build/tag lifecycle — one-time 172 MB build, image stays until docker rmi; per-session container with --rm teardown; stdout pure NDJSON, stderr is the log channel; debug toolsets is the model-free gate. A sub-agent is still a model chat — what this problem rules out." },
+    { q: "Drill 3 · invented, deliberately composite — A weekly engineering report: the lead plans the outline, a reviewer role checks it, a composer role stitches it — and every draft must be grounded in fresh web research we neither own nor want to build. Best call?",
+      o: ["serve a2a — send each stage's task to a peer agent",
+          "Pure sub_agents — the researcher is simply another sub-agent role",
+          "They stack: the sub_agents config carries a catalog web-search toolset",
+          "A custom MCP search server, plus serve acp for the reviewer role",
+          "serve mcp — the lead invokes itself as one tool"],
+      a: 2,
+      f: "Roles first → sub_agents (reach for it FIRST, before any protocol machinery — the table's wording); the research gap is a borrowed capability → catalog ref. They stack as composed YAML — toolsets inside an agent that also declares sub_agents: — a reading of the docs' grammar, verified piecewise; no example ran the stack end to end. Accepted = both rows: ~5 model chats per task (per-agent max_iterations small — ex04 ships lead 12 / subs 6 — cheap/agentic model, Ex04's cloud default) plus the catalog snapshot's movable pin." },
+    { q: "Drill 4 · invented scenario — Claude Code should treat our release-notes agent as ONE tool on its palette. Zero client code, its UI makes the calls. Which flavor?",
+      o: ["MCP client, catalog ref — list our agent in Docker's catalog",
+          "serve acp — Claude Code spawns us like an editor subprocess",
+          "serve mcp — the agent as MCP server",
+          "serve a2a — Claude Code discovers us through the agent card",
+          "Native sub_agents — Claude Code becomes the lead"],
+      a: 2,
+      f: "Agent-as-tool in one verb (Ex05, Lesson 004; verified against live Claude Code ✓ Connected and a stdio probe): tools/list returns one tool per agent, named after it; input {message}, output {response}; the tool description IS the agent's description: — write it like a tool description. Accepted: the caller steers by the description alone; annotations are generic (readOnlyHint: true despite a full LLM chat); serving defaults to restricted tool safety, comfortable only because the served configs declare no toolsets. --safety/--auth-token live only on the stateless --http variant (127.0.0.1:8081)." },
+    { q: "Drill 5 · invented scenario — Two agent configs on two machines, a QA agent and a docs agent, should be discoverable peers: each finds the other's card, sends a task, follows task state, receives artifacts it can forward. Which flavor?",
+      o: ["serve a2a — agent card plus a JSON-RPC task lifecycle",
+          "Native sub_agents — one team config, two roles",
+          "serve mcp with --http — each agent one tool on the other's palette",
+          "serve acp — an editor drives both agents in sessions",
+          "MCP client, custom server — one agent consumes the other"],
+      a: 0,
+      f: "The agent-to-agent seat (Ex06): GET /.well-known/agent-card.json — the card name is the CONFIG file's stem, not the agent name — then one SendMessage returns a whole task object: TASK_STATE_COMPLETED, history[], artifacts[], contextId — an answer to forward, not text to display. Accepted: the discovery/protocol surface is yours to script against drift — the CLI moved v1.145.0 → v1.153.0 and the card grew capabilities.pushNotifications:false. CamelCase A2A v1.0 methods; legacy agent.json discovery is 404. sub_agents cannot cross machines — in-process, one YAML, one daemon." },
+    { q: "Drill 6 · invented scenario — The owner wants to prompt the agent inside Zed like any coding agent: file reads, terminal access, streamed replies, mid-session model switch — all from the editor's own UI, not from config edits. Which flavor?",
+      o: ["serve chat — OpenAI-compatible completions on 127.0.0.1:8083",
+          "serve api — POST /api/sessions and script the session",
+          "serve acp — the host spawns the agent over stdio",
+          "serve mcp with --http — register it as one more tool",
+          "serve a2a — Zed discovers the agent card"],
+      a: 2,
+      f: "The editor-facing seat (Ex07): serve acp is the fifth serve surface, the only stdio-only one — no --listen/--http/--safety/--auth flags; the host spawns it like a language server, and the peer is a person's tool. Accepted: the host must speak ACP v1 (protocolVersion: 1 — the number; v2 is Draft); the wire shape moved between plugin versions (flat → envelope — a pinned client reads none of it); file/terminal capabilities come via the host's clientCapabilities and session/request_permission prompts, not agent-side toolsets; an in-editor session is the owner demo — no ACP host installed here, so editor steps stay UNVERIFIED-ON-THIS-MACHINE." }
+  ];
+  var box2 = document.getElementById("quiz2");
+  var scoreBox2 = document.getElementById("qscore2");
+  function render2() {
+    box2.innerHTML = "";
+    scoreBox2.style.display = "none";
+    DRILLS.forEach(function (item, qi) {
+      var d = document.createElement("div"); d.className = "q";
+      var h = document.createElement("p"); h.className = "qq"; h.textContent = (qi + 1) + ". " + item.q; d.appendChild(h);
+      var fbq = document.createElement("div"); fbq.className = "qfb";
+      item.o.forEach(function (opt, oi) {
+        var b = document.createElement("button"); b.className = "opt"; b.textContent = opt;
+        b.addEventListener("click", function () {
+          if (d.dataset.answered) return;
+          d.dataset.answered = "1";
+          var ok = oi === item.a;
+          b.classList.add(ok ? "opt-ok" : "opt-bad");
+          if (!ok) { d.querySelectorAll(".opt")[item.a].classList.add("opt-true"); }
+          d.querySelectorAll(".opt").forEach(function (x) { x.disabled = true; });
+          fbq.textContent = (ok ? "✔ Correct — " : "✘ Not quite — ") + item.f;
+          fbq.classList.add(ok ? "fb-ok" : "fb-bad");
+          fbq.style.display = "block";
+          tally2();
+        });
+        d.appendChild(b);
+      });
+      d.appendChild(fbq);
+      box2.appendChild(d);
+    });
+  }
+  function tally2() {
+    var answered = box2.querySelectorAll(".q[data-answered]").length;
+    if (answered < DRILLS.length) return;
+    var right = box2.querySelectorAll(".opt-ok").length;
+    scoreBox2.textContent = right + " / " + DRILLS.length + (right === DRILLS.length
+      ? " — all six seats chosen with their trade-offs named. The map works."
+      : " — every miss is a row of the Part 01 table; reread the drill feedback above.");
+    scoreBox2.style.display = "block";
+  }
+  document.getElementById("qreset2").addEventListener("click", render2);
+  render2();
+
+
+  /* ---- final recap quiz (#quiz): the same engine, second instance ---- */
+  var QUIZ = [
+    { q: "The repo's one-line mental model — which pairing is right?",
+      o: ["A2A wires tools into an agent; MCP delegates work between agents over a network",
+          "MCP wires tools into an agent (or the agent out as one tool); A2A delegates work between agents over a network, with discovery",
+          "ACP delegates between agents; sub_agents is the editor seat",
+          "sub_agents wires tools over HTTP; ACP is an in-process YAML list"], a: 1,
+      f: "Verbatim from the flavor sheet (Part 01; distilled from ex07's cross-flavor table — Lesson 001 built it). The other pairings are exactly how the four seats get confused." },
+    { q: "Every lesson-run in this course assumed which local-first baseline?",
+      o: ["Docker Model Runner must be reachable first",
+          "An MCP gateway container must be running",
+          "Cloud first — gemma4:latest is just a swap",
+          "The Ollama daemon at localhost:11434 with gemma4:latest present; cloud glm-5.3-flash:cloud is a one-line model swap, your spend"], a: 3,
+      f: "Lessons 001–002's baseline: the built-in ollama provider talks to localhost:11434 with no API key; the cloud model appeared once, pre-approved, in Ex04's smoke." },
+    { q: "A headless run exits 0. When may you call the task successful?",
+      o: ["Whenever --dry-run also passed",
+          "Only when every tool call was approved",
+          "Never — headless runs cannot be judged",
+          "When exit 0 AND the expected transcript content (or protocol evidence, or side effect) hold — exit 0 means the agent finished, not that the task succeeded"], a: 3,
+      f: "Lesson 002's discipline (run-modes.md §9): denied calls, missing tool images and degenerate loops all exited 0 somewhere in ex01–ex03." },
+    { q: "Under --safety restricted: a catalog MCP search call, and transfer_task delegation — what happens?",
+      o: ["Both are auto-approved as proven-safe",
+          "Search prompts the user; transfer_task is denied",
+          "Search is auto-denied (MCP calls are not on the provably-safe list); transfer_task delegation IS auto-approved",
+          "Both sit pending until a human appears"], a: 2,
+      f: "Per-flavor safety (phase notes §3, verified in ex02/ex03/ex04): restricted auto-denies MCP calls — those templates run --safety autonomous deliberate one-shots; delegation is classified safe, so Ex04 keeps restricted." },
+    { q: "Catalog ref vs custom MCP server — the isolation stories, one line each?",
+      o: ["Both spawn a container per call from your own Dockerfile",
+          "The catalog one installs locally; the custom one runs remotely",
+          "Neither is isolated — that is why secrets stayed in scope",
+          "Catalog ref: a digest-pinned, egress-restricted container per call, nothing left behind. Custom: a per-session container from an image you built and tagged"], a: 3,
+      f: "Ex02 vs Ex03 (Lesson 003). The custom row adds ownership costs the catalog never has: one-time 172 MB build, image stays until docker rmi, stdout must stay pure NDJSON." },
+    { q: "In sub_agents, what does listing sub_agents: on the lead concretely hand it?",
+      o: ["An agent card listing its children",
+          "A transfer_task tool {agent, task, expected_output} — lead-only; the sub-agent's answer returns as the tool result",
+          "Open sockets to each sub-agent's daemon",
+          "A full copy of every sub-agent's context"], a: 1,
+      f: "Lesson 004: delegation is not a conversation handoff; each sub-agent gets a fresh view with only what the lead forwarded — the context boundary; the cost is the ~5-model-chat fan-out." },
+    { q: "Serving changes one safety fact by default. Which is it?",
+      o: ["Serving disables tool safety for convenience",
+          "serve mcp / serve a2a default to restricted tool safety (serve banner observed) — comfortable only because those configs declare no toolsets; with toolsets they inherit the same fail-closed denials",
+          "Safety is negotiated by the client on connect — and serve acp takes a --safety launch flag",
+          "serve acp accepts --safety; the other surfaces do not"], a: 1,
+      f: "Ex05/Ex06 observed Tool safety policy: restricted (source: serve default) live; Ex07 is the shape exception — safety is negotiated as session data (configOptions), and it accepts no launch flags at all." },
+    { q: "The repo's decision rules, step one: the work splits into ROLES — plan, review, compose — and the lead should compose the answer. First move?",
+      o: ["serve mcp — publish the lead as a tool",
+          "serve a2a — recruit peer agents",
+          "Native sub_agents — reach for it FIRST, before any protocol machinery",
+          "A custom MCP server — one tool per role"], a: 2,
+      f: "The comparison table's own words for the sub_agents row (Lesson 004). The seat you accept: the ~5-model-chat fan-out — keep per-agent max_iterations small and iterate cheap." },
+    { q: "And the honest label on serve api, serve chat and docker agent share push/pull?",
+      o: ["Verified green like every other example",
+          "Documented as surfaces the CLI exposes, unverified on this machine — an owner next step if a use case needs them",
+          "Blocked on this machine — same class as the doctor complaint",
+          "Deprecated; use --json instead"], a: 1,
+      f: "flavors.md's adjacent-surfaces section, near verbatim (Part 03). Drills 1 and 6 used them only as distractors — for exactly that status. Mission item 3 is yours to exercise now." }
+  ];
+  var box = document.getElementById("quiz");
+  var scoreBox = document.getElementById("qscore");
+  function render() {
+    box.innerHTML = "";
+    scoreBox.style.display = "none";
+    QUIZ.forEach(function (item, qi) {
+      var d = document.createElement("div"); d.className = "q";
+      var h = document.createElement("p"); h.className = "qq"; h.textContent = (qi + 1) + ". " + item.q; d.appendChild(h);
+      var fbq = document.createElement("div"); fbq.className = "qfb";
+      item.o.forEach(function (opt, oi) {
+        var b = document.createElement("button"); b.className = "opt"; b.textContent = opt;
+        b.addEventListener("click", function () {
+          if (d.dataset.answered) return;
+          d.dataset.answered = "1";
+          var ok = oi === item.a;
+          b.classList.add(ok ? "opt-ok" : "opt-bad");
+          if (!ok) { d.querySelectorAll(".opt")[item.a].classList.add("opt-true"); }
+          d.querySelectorAll(".opt").forEach(function (x) { x.disabled = true; });
+          fbq.textContent = (ok ? "✔ Correct — " : "✘ Not quite — ") + item.f;
+          fbq.classList.add(ok ? "fb-ok" : "fb-bad");
+          fbq.style.display = "block";
+          tally();
+        });
+        d.appendChild(b);
+      });
+      d.appendChild(fbq);
+      box.appendChild(d);
+    });
+  }
+  function tally() {
+    var answered = box.querySelectorAll(".q[data-answered]").length;
+    if (answered < QUIZ.length) return;
+    var right = box.querySelectorAll(".opt-ok").length;
+    scoreBox.textContent = right + " / " + QUIZ.length + (right === QUIZ.length
+      ? " — the whole course, decided. Mission item 3 is in hand."
+      : " — reread the feedback above; every line points back at a lesson and a repo document.");
+    scoreBox.style.display = "block";
+  }
+  document.getElementById("qreset").addEventListener("click", render);
+  render();
+
+
+  document.getElementById("markdone").addEventListener("click", function () {
+    try { localStorage.setItem("lessons_complete_0005", "1"); } catch (e) { /* private mode */ }
+    window.location.href = "index.html";
+  });
+})();
+</script>
+</div></body></html>

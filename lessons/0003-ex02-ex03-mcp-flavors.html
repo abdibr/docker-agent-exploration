@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 003 · The MCP flavors — catalog refs &amp; your own server (ex02, ex03) — Docker Agent</title>
+<style>
+  :root{
+    --paper:#faf8f4; --ink:#1d2a36; --muted:#5d6b7a; --line:#e4dfd6;
+    --blue:#0b63c5; --blue-soft:#e8f1fb; --teal:#0a9279; --teal-soft:#e4f4ef;
+    --amber:#a34e12; --amber-soft:#fbf0e4; --red:#b3362e; --red-soft:#faeae8;
+    --violet:#6a4bc4; --violet-soft:#efeafb;
+    --code-bg:#101a26; --code-ink:#dbe6f0;
+    --kw:#7fd1ff; --str:#8fe0b2; --com:#6b7f94; --key:#ffd487;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:17px/1.65 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cef0}
+  a:hover{border-bottom-color:var(--blue)}
+  code,.mono{font-family:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;font-size:.92em}
+  h1,h2,h3{line-height:1.25;letter-spacing:-.01em}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:46px 0 6px}
+  h1{font-size:2.1rem;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:1.06rem;margin:0 0 18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 8px}
+  .chip{font-size:.78rem;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .part{margin-top:52px}
+  .part>h2{font-size:1.45rem;margin:0 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+  .part>h2 .no{color:var(--blue);font-variant-numeric:tabular-nums;margin-right:10px}
+  .lede{color:var(--muted);margin:0 0 18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .card.blue{border-left:5px solid var(--blue);background:var(--blue-soft)}
+  .card.teal{border-left:5px solid var(--teal);background:var(--teal-soft)}
+  .card.amber{border-left:5px solid var(--amber);background:var(--amber-soft)}
+  .card.red{border-left:5px solid var(--red);background:var(--red-soft)}
+  .card.violet{border-left:5px solid var(--violet);background:var(--violet-soft)}
+  .card h3{margin:0 0 6px;font-size:1.02rem}
+  .card p{margin:6px 0}
+  .tagline{font-size:.9rem;color:var(--muted);font-style:italic}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.93rem;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f3efe7;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody tr:nth-child(even){background:#fbfaf7}
+  pre{margin:0;padding:16px 18px;background:var(--code-bg);color:var(--code-ink);border-radius:12px;overflow-x:auto;
+    font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.86rem;line-height:1.55}
+  pre .kw{color:var(--kw)} pre .str{color:var(--str)} pre .com{color:var(--com);font-style:italic} pre .key{color:var(--key)}
+  .codelabel{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 6px}
+  .cite{color:var(--muted);font-size:.84rem;background:#f4f1ea;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:16px 0}
+  .cite b{color:var(--ink)}
+  .flow{margin:12px 0 0;padding:0}
+  .flow li{padding:8px 0 8px 30px;border-bottom:1px dashed var(--line);font-size:.95rem}
+  .flow li::marker{color:var(--blue);font-weight:700}
+  .flow li:last-child{border-bottom:none}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:1px 7px;vertical-align:middle}
+  .pill.ex{background:var(--teal-soft);color:var(--teal)} .pill.warn{background:var(--red-soft);color:var(--red)}
+  details{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 16px}
+  summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  /* command box with copy */
+  .cmdbox{position:relative;margin:8px 0 4px}
+  .cmdbox pre{padding-right:92px}
+  .copybtn{position:absolute;top:10px;right:10px;border:1px solid #26374a;background:#16222f;color:var(--code-ink);
+    border-radius:8px;padding:5px 11px;font-size:.74rem;cursor:pointer;font-family:inherit}
+  .copybtn:hover{border-color:var(--kw)}
+  .copybtn.ok{border-color:var(--str);color:var(--str)}
+  /* pre-flight gates */
+  .gate{display:flex;gap:13px;align-items:flex-start;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;margin:10px 0}
+  .gate input{width:20px;height:20px;margin-top:3px;accent-color:var(--teal);flex:0 0 20px;cursor:pointer}
+  .gate .gt{font-weight:700;font-size:1rem}
+  .gate .gw{color:var(--muted);font-size:.88rem;margin:2px 0 4px}
+  .gate.done{border-color:var(--teal);background:var(--teal-soft)}
+  .gate .cmdbox pre{font-size:.8rem;padding:10px 12px;width:100%}
+  #gatedone{display:none;margin:14px 0;background:var(--teal-soft);border:1px solid var(--teal);color:var(--teal);
+    border-radius:10px;padding:10px 16px;font-size:.94rem;font-weight:700}
+  #gatedone.on{display:block}
+  /* transcript-judging simulator */
+  .simcase{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px 18px;margin:14px 0}
+  .simcase h3{margin:0 0 4px;font-size:1rem}
+  .simcase .ask{font-size:.9rem;color:var(--muted);margin:0}
+  .vrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .vbtn{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;font-size:.88rem;
+    cursor:pointer;font-family:inherit;transition:all .12s}
+  .vbtn:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .vbtn:disabled{cursor:default;opacity:.75}
+  .vbtn.v-ok{border-color:var(--teal);background:var(--teal-soft);color:var(--teal);font-weight:700;opacity:1}
+  .vbtn.v-bad{border-color:var(--red);background:var(--red-soft);color:var(--red);font-weight:700;opacity:1}
+  .vbtn.v-true{border-color:var(--teal);border-style:dashed}
+  .exp{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .exp.show{display:block}
+  .exp.ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .exp.no{background:var(--red-soft);border-left:4px solid var(--red)}
+  /* auto-graded quiz (same engine as Lesson 001) */
+  .quiz{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0}
+  .q{margin-top:28px}
+  .q .qq{font-size:1rem;font-weight:600;margin:0 0 12px}
+  .qfb{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .qfb.fb-ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .qfb.fb-bad{background:var(--red-soft);border-left:4px solid var(--red)}
+  .opt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;
+    padding:12px 16px;margin:9px 0;font-size:.95rem;cursor:pointer;font-family:inherit;transition:all .12s}
+  .opt:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .opt:disabled{cursor:default;opacity:.72}
+  .opt.opt-ok{border-color:var(--teal);background:var(--teal-soft);opacity:1}
+  .opt.opt-bad{border-color:var(--red);background:var(--red-soft);opacity:1}
+  .opt.opt-true{border-color:var(--teal);border-style:dashed}
+  #qreset{margin-top:16px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #qreset:hover{border-color:var(--blue)}
+  #markdone{border:none;background:var(--blue);color:#fff;font-weight:600;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #markdone:hover{filter:brightness(1.1)}
+  .qscore{text-align:center;padding:30px 10px;display:none}
+  .qscore .big{font-size:2.6rem;font-weight:800;color:var(--blue)}
+  .qscore p{color:var(--muted)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.85rem}
+  @media print{
+    body{background:#fff}.wrap{max-width:100%;padding:0}
+    .cmdbox .copybtn,.no-print,.simcase .vrow,.simcase .exp{display:none!important}
+    .card,pre,table,.gate,details{break-inside:avoid}
+    pre{background:#f2f4f7;color:#1d2a36}
+    pre .kw,pre .str,pre .key{color:inherit}pre .com{color:#666}
+    a{border-bottom:none;color:inherit}
+  }
+</style>
+</head>
+<body><div class="wrap">
+<main>
+
+<p class="kicker">Docker Agent workspace · Lesson 003 · the MCP flavors</p>
+<h1>Lesson 003 · The MCP flavors — catalog ref vs your own server</h1>
+<p class="sub">Lesson 002 had you run and judge Ex01. Now the same agent pattern reaches outside itself through MCP:
+two verified examples take the identical client seat by two entrances — Docker's catalog ref with zero server code
+(ex02) and your own ~100-line containerized server (ex03) — plus the safety-mode flip, the model-free gate, and the
+transcript traps both leave behind.</p>
+<div class="chips">
+  <span class="chip">ex02-mcp-catalog-tool</span>
+  <span class="chip">ex03-mcp-custom-server</span>
+  <span class="chip">~35 min</span>
+  <span class="chip">Windows 11 · PowerShell 5.1</span>
+  <span class="chip">prereq: Docker Desktop + Ollama (+ <code>docker build</code> for ex03)</span>
+</div>
+
+<section class="part" id="p1">
+  <h2><span class="no">01</span>Same seat, two entrances — MCP as client</h2>
+  <p class="lede">An agent that consumes tools sits in the MCP client seat. Ex02 and Ex03 occupy the identical seat;
+  what differs is the supplier. Exactly one new toolset type enters the config — <code>type: mcp</code> — and both
+  committed configs differ from Ex01 by roughly this one entry.</p>
+
+  <p>Grounding: run-modes.md §14 counts 27 built-in toolset types; Ex01 used three of them (<code>filesystem</code>,
+  <code>shell</code>, <code>think</code> — expanding to 11 concrete tools). The palette also lists
+  <code>mcp_catalog</code> — the gateway machinery behind catalog refs (<code>docker agent toolsets</code> lists it) —
+  but what an agent config actually contains is a plain <code>type: mcp</code> entry. Here are the two real toolsets,
+  verbatim from each <code>agent.yaml</code>:</p>
+
+  <p class="codelabel">ex02 — MCP by reference to Docker's catalog</p>
+<pre>toolsets:
+  - type: filesystem
+    allow_list:
+      - "."
+  - type: think
+  - type: mcp
+    ref: docker:duckduckgo   # containerized "Private Web Search" server from Docker's MCP catalog
+    tools:
+      - search</pre>
+
+  <p class="codelabel" style="margin-top:22px">ex03 — MCP by command: the agent spawns your own containerized server</p>
+<pre>toolsets:
+  - type: filesystem
+    allow_list:
+      - "."
+  - type: think
+  - type: mcp
+    command: docker      # the agent spawns this command itself; MCP over stdio
+    args:
+      - run
+      - --rm
+      - -i
+      - mcp-ex03-echo:local   # built by the README's docker build command
+    tools:               # allowlist: expose only the one tool this server has
+      - echo</pre>
+
+  <table>
+    <thead><tr><th></th><th>ex02 — catalog ref</th><th>ex03 — your own server</th></tr></thead>
+    <tbody>
+      <tr><td><b>The one new entry</b></td>
+          <td><code>type: mcp</code> + <code>ref: docker:duckduckgo</code> + <code>tools: [search]</code></td>
+          <td><code>type: mcp</code> + <code>command: docker</code> + <code>args: [run, --rm, -i,
+              mcp-ex03-echo:local]</code> + <code>tools: [echo]</code></td></tr>
+      <tr><td><b>Server code you write</b></td>
+          <td>None — the <code>ref</code> plus Docker's catalog snapshot <i>is</i> the whole server description</td>
+          <td><code>server.ts</code>: ~100 lines, no SDK, no package.json; a 6-line Dockerfile</td></tr>
+      <tr><td><b>Install / keys / build</b></td>
+          <td>No local MCP install, no API key, nothing to build — the gateway pulls the image on the first call</td>
+          <td>No npm install, no tsc, no MCP SDK; one <code>docker build</code> (172 MB image — needs no model or Ollama)</td></tr>
+      <tr><td><b>Who runs the container</b></td>
+          <td>Gateway-managed, per call, egress-restricted to <code>html.duckduckgo.com:443</code></td>
+          <td>The agent config itself spawns <code>docker run --rm -i</code> per session</td></tr>
+      <tr><td><b>What constrains you</b></td>
+          <td>The catalog: keyed entries (brave, tavily, exa) need secrets — out of scope; tool schemas fixed by
+              the snapshot</td>
+          <td>Only your own JSON Schema and description — deterministic behavior you design</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card teal">
+    <h3>What the catalog entrance provides — digest-pinned and key-free</h3>
+    <p><code>docker:duckduckgo</code> resolves to <i>Private Web Search</i> (community-maintained, not affiliated with
+    DuckDuckGo): image
+    <code style="word-break:break-all">mcp/duckduckgo@sha256:5617c4c60f48f47556c0735de7a73f6abd731c132c65ec8c720b511819c9f88f</code>
+    with egress restricted to <code>html.duckduckgo.com:443</code> (observed at this machine's 2026-10-25 catalog
+    snapshot — ex02 README). The first MCP call starts the MCP gateway and auto-pulls that image; nothing needs to be
+    installed or configured locally. Browse the catalog with <code>docker mcp catalog ls</code>.</p>
+    <p>DuckDuckGo was chosen over the catalog's brave/tavily/exa search entries precisely because it needs
+    <b>no API key</b> — the phase's no-secrets rule stays unbroken (keyed entries would need config-backed secrets
+    wired through <code>docker mcp</code>, deliberately out of scope until then). Cost of the seat: the first call
+    took ~40s (gateway start + image pull); reruns finish in well under a minute.</p>
+  </div>
+
+  <div class="card violet">
+    <h3>What the custom entrance provides — a server you can read</h3>
+    <p><b>MCP over stdio is newline-delimited JSON-RPC, learnable by writing one.</b> <code>server.ts</code> handles
+    <code>initialize</code> (echo back a <code>protocolVersion</code> + <code>serverInfo</code>),
+    <code>notifications/initialized</code> (a notification — no response may be sent), <code>tools/list</code>,
+    <code>tools/call</code>, and <code>ping</code> — that whole protocol surface is ~100 lines with no SDK.</p>
+    <p><b>The tool description is a prompt to the model.</b> The schema is a JSON Schema the server declares and it is
+    the <i>entire</i> contract the model sees: <code>inputSchema</code> (<code>message</code>, required) tells the
+    framework which arguments to enforce, while the description text — <i>Echoes back the given message prefixed with
+    ECHO:, plus the character count</i> — is what actually steers the model's calling behavior. Write that description
+    as if prompting the model — because it is one.</p>
+    <p><b>Transport follows consumption.</b> The agent spawns the server as a child process (<code>command: docker</code>,
+    <code>args: [run, --rm, -i, &lt;image&gt;]</code>), so the wire is stdin/stdout — not a URL. <code>stderr</code>
+    stays free for server logs (the <i>ready on stdio</i> banner lives there); keep <code>stdout</code> strictly
+    NDJSON — anything else pollutes the protocol stream.</p>
+    <p>Note there is no <code>image:</code> key, and no URL-style consumption for local servers — <code>docker run</code>
+    in <code>command</code>/<code>args</code> <i>is</i> the containerization path.</p>
+  </div>
+
+  <div class="card amber">
+    <h3>The inline shape vs the named shape</h3>
+    <p>Ex03 uses the inline shape (<code>type: mcp</code> + <code>command:</code>/<code>args:</code> on the agent).
+    An equivalent alternative — same <code>debug toolsets</code> output, proven during this machine's exploration
+    (ex03 README) — is a top-level named block plus a reference:</p>
+<pre>mcps:
+  echo-srv:
+    command: docker
+    args: [run, --rm, -i, mcp-ex03-echo:local]
+agents:
+  root:
+    toolsets:
+      - type: mcp
+        ref: echo-srv</pre>
+    <p class="tagline">Inline is chosen in ex03 because it keeps one agent's wiring next to that agent; the named
+    shape pays off once several agents share one server definition.</p>
+  </div>
+</section>
+
+<section class="part" id="p2">
+  <h2><span class="no">02</span>Why the safety mode flips to autonomous</h2>
+  <p class="lede">Ex01's verification ran <code>--safety restricted</code> because its read-only calls are classified
+  safe. Here that classification stops holding: <b>MCP calls — catalog or custom — are not on the provably-safe
+  list</b> (cross-flavor caution in <a href="../docs/notes/flavors.md">flavors.md</a>). One per-flavor fact reshapes
+  the template; each example's safety mode was checked empirically before committing, not assumed
+  (<a href="../docs/notes/phase-notes.md">phase-notes</a> §3).</p>
+
+  <div class="card amber">
+    <h3>The recorded proof — same mode, two flavors, one denial text</h3>
+    <p>Under <code>--safety restricted</code>, both examples' tool calls were auto-denied in the transcript. That is
+    <b>correct fail-closed behavior</b> — no approver exists in an unattended run:</p>
+<pre><span class="com"># ex02, catalog tool (Tool approvals — ex02 README):</span>
+Tool 'search' is denied by the restricted safety mode: the call is not
+classified safe, and the mode's fallback denies instead of asking for confirmation.
+
+<span class="com"># ex03, your own container (Tool approvals — ex03 README):</span>
+Tool 'echo' is denied by the restricted safety mode: the call is not
+classified safe, and the mode's fallback denies instead of asking for confirmation.</pre>
+    <p>After the denial, ex02's transcript showed <code>search response → "Tool 'search' is denied…"</code> and gemma4
+    correctly answered that it could not search — with exit 0. Identical verdicts: <i>what</i> serves the tool (a
+    catalog gateway or your own container) does not change the approval classification. The same caution's contrast:
+    delegation (<code>transfer_task</code>, Ex04) <i>is</i> classified safe, so its template keeps
+    <code>restricted</code>.</p>
+  </div>
+
+  <div class="card red">
+    <h3>Why not balanced — and why autonomous is deliberate</h3>
+    <p>run-modes.md §11 — <code>--safety &lt;mode&gt;</code> controls who approves tool calls:</p>
+    <table>
+      <thead><tr><th>Mode</th><th>Behaviour</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td><code>strict</code></td><td>ask for <b>everything</b></td><td>interactive exploration</td></tr>
+        <tr><td><code>balanced</code></td><td>auto-approve safe calls, ask for the rest</td><td>interactive with a light touch</td></tr>
+        <tr><td><code>restricted</code></td><td>auto-approve safe calls, <b>deny</b> the rest</td><td>unattended / CI</td></tr>
+        <tr><td><code>autonomous</code></td><td>approve everything</td><td>deliberate one-shot commands</td></tr>
+      </tbody>
+    </table>
+    <p><code>--yolo</code> is an alias for <code>--safety autonomous</code>. <b>Balanced would be worse than
+    restricted here:</b> with no human present, the pending call surfaces as
+    <code>The user rejected the tool call.</code> (ex02 README + run-modes §11 — observed). <code>autonomous</code>
+    auto-approves everything and stays reserved for deliberate one-shot commands whose blast radius you have read
+    first. The rule the phase converged on: <code>restricted</code> when the task's calls are safe-classified (Ex01,
+    Ex04), <code>autonomous</code> one-shots when the point of the example is a call that is not (Ex02, Ex03) —
+    <b>never balanced unattended</b>.</p>
+  </div>
+
+  <p class="codelabel">The model-free gate — before any model spend</p>
+  <p><code>docker agent debug toolsets .\agent.yaml</code> expands the config to the <b>concrete tool list the model
+  would see</b> — 11 tools for both configs here: 9 filesystem + <code>think</code> + the one MCP tool — and
+  <b>it actually starts toolsets</b> (phase-notes §7), so a resolved catalog ref or a built image shows its tool while
+  a missing one simply doesn't appear. For ex02 it is the fast proof that the <code>ref</code> resolved to the right
+  server; for ex03 it is the gate the missing-image lesson bought.</p>
+  <div class="cmdbox no-print"><pre>docker agent debug toolsets .\agent.yaml</pre><button class="copybtn">Copy</button></div>
+
+  <div class="card red">
+    <h3>⚠ The missing-image trap (ex03)</h3>
+    <p>Run ex03 before building and nothing screams. <code>debug toolsets</code> printed the usual filesystem/think
+    tools with <b>no</b> <code>echo</code> — exit 0. A real headless run printed
+    <code>⚠️ Some toolsets failed to initialize for agent 'root'</code> plus
+    <code>mcp(stdio cmd=docker ...) start failed: failed to initialize MCP client: connection closed: calling
+    "initialize": client is closing: EOF</code> (the container exits instantly; the MCP handshake reads EOF) —
+    <b>and still exited 0</b> while gemma4 answered honestly that the tool was unavailable.</p>
+    <p>Worse: small models can <i>believe</i> they called the missing tool — gemma4 reasoned <i>"I executed the echo
+    tool"</i> while the only echo truth in the transcript was
+    <code>echo response → "Tool 'echo' is not available…"</code>. Judge tool usage by the <code>response →</code>
+    transcript lines, never by the model's narrative (ex03 README gotchas).</p>
+    <p class="tagline">The red run also showed the default <code>resilient</code> lifecycle: the agent starts degraded
+    and loops on an unavailable tool rather than refusing to run. A <code>lifecycle: {profile: strict}</code>
+    refuse-to-start knob exists in the schema but is deliberately left <b>unverified on this machine</b>.</p>
+  </div>
+
+  <p class="codelabel">The gate sequence for ex03 — in this order</p>
+  <div class="cmdbox no-print"><pre><span class="kw">cd</span> ex03-mcp-custom-server
+docker build -t mcp-ex03-echo:local .</pre><button class="copybtn">Copy</button></div>
+  <p class="tagline">Bakes <code>server.ts</code> into a <code>node:24-alpine</code> image (172 MB; Node v24.22.3 — the
+  version that executes a <code>.ts</code> file directly via Node 24 type stripping). Needs no running model or Ollama.
+  Verified against <code>docker agent</code> v1.153.0 (Docker Engine 29.9.3), 2026-11-13 — ex03 README.</p>
+  <div class="cmdbox no-print"><pre>docker agent debug toolsets .\agent.yaml</pre><button class="copybtn">Copy</button></div>
+  <p class="tagline">Green means <b>11 tools</b> for this config, with <code>+ echo - Echoes back the given
+  message…</code> among them. That line is the gate: a list of 10 (no <code>echo</code>) means the image is missing,
+  whatever else a later run may claim.</p>
+
+  <p class="codelabel">The verification templates (headless — machine-verified; same shape as Ex01, different mode)</p>
+  <div class="cmdbox no-print">
+<pre><span class="com"># ex02 — from ex02-mcp-catalog-tool/</span>
+docker agent run .\agent.yaml --exec <span class="str">'Use your web-search MCP tool: search the web for Docker MCP Gateway GitHub repository. Then answer with exactly two lines. Line 1: the URL of the official GitHub repository from your search results. Line 2: the exact title shown for the top result.'</span> --safety autonomous</pre>
+    <button class="copybtn">Copy</button>
+  </div>
+  <p class="tagline">Task design (ex02 README): the two answer lines exist only if the search tool actually returned
+  results — a small model cannot reliably guess the exact title offline. The wording carries no embedded double
+  quotes: PowerShell 5.1 mangles those inside <code>--exec</code> text (same gotcha as Ex01). The snapshot also fixes
+  the tool schemas — <code>search</code> takes <code>query</code>, <code>max_results</code> (1–20, default 10),
+  optional <code>region</code>; gemma4 chose <code>max_results: 1</code> unprompted.</p>
+
+  <div class="cmdbox no-print">
+<pre><span class="com"># ex03 — from ex03-mcp-custom-server/</span>
+docker agent run .\agent.yaml --exec <span class="str">'Use the echo tool from your custom MCP server to echo exactly this text: round trip check 42. Then answer with exactly two lines. Line 1: the exact text the echo tool returned. Line 2: the character count it reported.'</span> --safety autonomous</pre>
+    <button class="copybtn">Copy</button>
+  </div>
+  <p class="tagline">Task design (ex03 README): both answer lines can only come from the tool round trip — the
+  <code>ECHO:</code> prefix and the character count (<i>round trip check 42</i> = 19 chars) are computed inside the
+  container by <code>server.ts</code>.</p>
+
+  <p class="codelabel" style="margin-top:24px">Shape of the passing runs (abridged — not literal full output)</p>
+<pre><span class="com"># ex02 · exit 0 · observed 2026-10-25, docker agent v1.145.0
+#   first call took ~40s (gateway start + image pull); reruns well under a minute:</span>
+search(max_results: 1, query: "Docker MCP Gateway GitHub repository", region: "wt-wt")
+<span class="com">#   → Found 1 search results: 1. Docker MCP Plugin and Docker MCP Gateway - GitHub
+#   / URL: https://github.com/docker/mcp-gateway /… — the answer repeats the two lines.</span>
+
+<span class="com"># ex03 · exit 0 · observed 2026-11-13, docker agent v1.153.0 · runs finish in under a minute:</span>
+Calling echo(message: "round trip check 42")
+echo response → "ECHO: round trip check 42 (19 chars)"
+<span class="com">#   → final answer: ECHO: round trip check 42 (19 chars) / 19 chars.</span></pre>
+
+  <div class="card violet no-print">
+    <h3>Optional awareness — the one-line model swap (README wording, no new advice)</h3>
+    <p class="tagline">Identical to Ex01/Ex02 — swap one line in the named models entry: <code>model:
+    gemma4:latest</code> → <code>glm-5.3-flash:cloud</code> (same daemon proxies to Ollama Cloud); the cloud swap
+    additionally needs the Ollama app signed in. The MCP toolset is model-agnostic: the same catalog ref / spawned
+    server works unchanged under whichever model drives the tool calls, and the cloud model is the better tool-caller
+    for multi-step chains. The committed configs stay on local gemma4.</p>
+  </div>
+</section>
+
+<section class="part" id="p3">
+  <h2><span class="no">03</span>Judge the transcript</h2>
+  <p class="lede">The contract hasn't changed since Ex01: <b>exit 0 <i>and</i> transcript content</b> — both halves.
+  What the MCP flavors changed is the failure zoo: a fail-closed denial that exits 0, a missing image that exits 0,
+  and a model that can narrate a call the framework rejected. Three real recorded situations follow — pick the
+  verdict for each. Answers lock once chosen, like the quiz.</p>
+
+  <div class="simcase" data-ok="0">
+    <h3>Case A — the round trip that proves the server (ex03)</h3>
+    <p class="ask">You ran ex03's verification template with <code>--safety autonomous</code>. Exit 0, run under a
+    minute. Transcript: <code>Calling echo(message: "round trip check 42")</code>, then
+    <code>echo response → "ECHO: round trip check 42 (19 chars)"</code>, then the final two lines quoting the exact
+    returned text and its character count.</p>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">✅ Success — trust it</button>
+      <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
+      <button class="vbtn" data-v="2">🛠 Setup problem — fix before spending</button>
+    </div>
+    <div class="exp">Both halves of the contract: exit 0 <b>and</b> a response line whose <code>ECHO:</code> prefix
+    and 19-char count could only have been computed inside the container by <code>server.ts</code> — a model cannot
+    guess them (ex03 README: both answer lines can only come from the tool round trip). Observed 2026-11-13,
+    <code>docker agent</code> v1.153.0. The transcript doubles as proof the container was spawned, handshaken, and
+    called.</div>
+  </div>
+
+  <div class="simcase" data-ok="1">
+    <h3>Case B — the denial that still exits 0 (ex02)</h3>
+    <p class="ask">You tried ex02's catalog verification under <code>--safety restricted</code> for an unattended
+    CI-style run. Exit 0. Transcript: <code>search response → "Tool 'search' is denied by the restricted safety
+    mode…"</code>; gemma4 replies plainly that it could not search.</p>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">✅ Success — trust it</button>
+      <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
+      <button class="vbtn" data-v="2">🛠 Setup problem — fix before spending</button>
+    </div>
+    <div class="exp">Not success — the failure hides <i>only</i> in the transcript; the exit code lied. The denial
+    itself is <b>correct fail-closed behavior</b>: no approver exists in an unattended run, and MCP calls are not on
+    the provably-safe list (flavors.md cross-flavor caution; exact denial line in the ex02 README — and the identical
+    verdict for ex03's custom <code>echo</code>: what serves the tool does not change the classification). Under
+    <code>balanced</code> it would instead read <i>The user rejected the tool call.</i> — <code>autonomous</code> is
+    the deliberate one-shot this template reserves. For CI: exit 0 is not enough; assert on transcript and answer
+    content.</div>
+  </div>
+
+  <div class="simcase" data-ok="2">
+    <h3>Case C — the believed call (ex03)</h3>
+    <p class="ask">You skip <code>docker build</code> and run anyway. Exit 0. Transcript:
+    <code>⚠️ Some toolsets failed to initialize for agent 'root'</code> plus the <code>initialize</code> handshake
+    closing with EOF; the model's reasoning narrates <i>"I executed the echo tool"</i>, yet the only echo line reads
+    <code>echo response → "Tool 'echo' is not available…"</code>.</p>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">✅ Success — trust it</button>
+      <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
+      <button class="vbtn" data-v="2">🛠 Setup problem — fix before spending</button>
+    </div>
+    <div class="exp">Setup problem — and a spend anyway. The image does not exist; the container exits instantly and
+    the handshake reads EOF, while the run exits 0 and the model's reasoning believes a call the framework rejected.
+    Only the <code>response →</code> transcript line is truth (ex03 README gotchas; the recorded run even had gemma4
+    answering honestly that the tool was unavailable — but its reasoning narrated the phantom call). Fix:
+    <code>docker build -t mcp-ex03-echo:local .</code> first, then the model-free gate — <code>debug toolsets</code>
+    must list 11 tools with <code>+ echo</code> among them.</div>
+  </div>
+
+  <div class="card teal">
+    <h3>Same MCP seat, different landlord — isolation &amp; lifecycle</h3>
+    <table>
+      <thead><tr><th></th><th>ex02 — gateway-managed</th><th>ex03 — yours</th></tr></thead>
+      <tbody>
+        <tr><td><b>The image</b></td>
+            <td>The catalog snapshot's digest pin (<code>mcp/duckduckgo@sha256:5617c4c6…</code>); the config
+                <code>ref</code> carries no version — a newer catalog release can move that pin, and the tool schemas
+                with it</td>
+            <td><code>mcp-ex03-echo:local</code>, built and tagged by you (172 MB image)</td></tr>
+        <tr><td><b>The container</b></td>
+            <td>Gateway runs the pinned image as a one-off container per call; egress-restricted to
+                <code>html.duckduckgo.com:443</code></td>
+            <td>The framework spawns <code>docker run --rm -i</code> per session; the short-lived container is
+                visible in <code>docker ps</code> during a run</td></tr>
+        <tr><td><b>After the run</b></td>
+            <td>No visible image or container remnants in <code>docker images</code> / <code>docker ps -a</code>
+                (observed) — pull, run and teardown are all gateway-managed</td>
+            <td>No leftover containers (<code>--rm</code>; <code>docker ps -a</code> shows none — observed); the
+                image stays until you <code>docker rmi</code> it</td></tr>
+        <tr><td><b>If a toolset fails</b></td>
+            <td>Gateway-managed end to end; a per-call start means a fresh container every time</td>
+            <td>Default <code>resilient</code> lifecycle keeps the agent degraded (the Case C shape);
+                <code>lifecycle: {profile: strict}</code> exists but is deliberately left unverified</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="part" id="p4">
+  <h2><span class="no">04</span>Carry forward</h2>
+  <ol class="flow">
+    <li><b>One new type, two entrances.</b> <code>type: mcp</code> is the only new toolset type —
+      <code>ref: docker:duckduckgo</code> (ex02) and your own <code>command:</code>/<code>args:</code> (ex03) occupy
+      the identical MCP-client seat; the named-block shape (<code>mcps:</code> + <code>ref:</code>) is the equivalent
+      write-up that pays off once several agents share one server definition.</li>
+    <li><b>The catalog's price is the catalog.</b> Zero code, zero install, zero keys for the ref seat (DuckDuckGo
+      over brave/tavily/exa precisely because no API key) — but the snapshot owns the digest pin and the tool schemas
+      (a newer release can move both), and keyed entries need secrets this phase deliberately left out of scope.</li>
+    <li><b>MCP calls are not on the provably-safe list.</b> <code>restricted</code> auto-denies them — correct
+      fail-closed behavior, and the denial text is identical for a catalog tool and your own container;
+      <code>balanced</code> with no human present surfaces <i>The user rejected the tool call.</i> So the unattended
+      MCP template is a deliberate <code>--safety autonomous</code> one-shot.</li>
+    <li><b>Build, then the model-free gate.</b> <code>docker build</code> first; <code>debug toolsets</code> must list
+      11 tools with <code>+ echo</code> (or <code>+ search</code>) among them — it starts toolsets and catches the
+      missing image that the run itself shrugs off (exit 0, ⚠️, EOF handshake).</li>
+    <li><b>The transcript is still the only judge.</b> Restricted denials, missing images and failed tool calls all
+      exit 0; the <code>response →</code> transcript lines are the truth and the model's narrative is not — small
+      models can believe they called a tool the framework rejected.</li>
+  </ol>
+
+  <div class="quiz no-print">
+    <h3>🎯 Self-check — nine questions</h3>
+    <p class="tagline">Feedback is immediate, answers lock, and everything is grounded in the repo's own records.
+    The <a href="../reference/glossary.html">glossary</a> remains fair game.</p>
+    <div id="quiz"></div>
+    <div class="qscore" id="qscore" style="display:none"></div>
+    <button id="qreset">↺ Reset quiz</button>
+  </div>
+
+  <div class="card teal no-print" style="margin-top:12px">
+    <h3>Next up — Lesson 004: sub-agents &amp; serve surfaces</h3>
+    <p class="tagline">Ex04–Ex07 hand the same agent new seats: native sub-agents, the agent as an MCP server, A2A,
+    and ACP for the editor seat. Finish the nine questions above, then mark this lesson done — the next lesson opens
+    automatically.</p>
+    <p class="cite" style="margin-top:8px"><button id="markdone">✓ Mark Lesson&nbsp;003 complete and open Lesson&nbsp;004</button></p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p><b>Ground rules</b> · Ground truth = this repo's docs (<a href="../docs/notes/run-modes.md">run-modes.md</a>,
+  <a href="../docs/notes/flavors.md">flavors.md</a>, <a href="../docs/notes/phase-notes.md">phase-notes.md</a>) and
+  <code>ex02-mcp-catalog-tool/README.md</code> / <code>ex03-mcp-custom-server/README.md</code> — never model memory;
+  unverified-on-this-machine claims stay labeled. · Local default <code>gemma4:latest</code> via built-in
+  <code>ollama</code> provider; cloud swap = edit one <code>model:</code> line, your spend. ·
+  <a href="../reference/glossary.html">Glossary</a> · <a href="../reference/ex-map.html">Example map</a> ·
+  <a href="../NOTES.md">Workspace notes</a> · <a href="index.html">Lessons</a> — previous:
+  <a href="0002-ex01-hands-on.html">002&nbsp;Ex01&nbsp;hands-on&nbsp;←</a> · next:
+  <a href="0004-ex04-ex07-subs-and-serve.html">004&nbsp;sub-agents&nbsp;&amp;&nbsp;serve&nbsp;→</a></p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- copy buttons ---- */
+  document.querySelectorAll(".copybtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      var text = pre ? pre.textContent : "";
+      function flash(ok) {
+        btn.textContent = ok ? "Copied ✓" : "Copy failed";
+        btn.classList.toggle("ok", !!ok);
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1400);
+      }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta); flash(ok);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { flash(true); }, fallback);
+      } else { fallback(); }
+    });
+  });
+
+  /* ---- transcript judging ---- */
+  document.querySelectorAll(".simcase").forEach(function (cs) {
+    var okv = cs.dataset.ok;
+    var exp = cs.querySelector(".exp");
+    cs.querySelectorAll(".vbtn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (cs.dataset.answered) return;
+        cs.dataset.answered = "1";
+        var right = b.dataset.v === okv;
+        b.classList.add(right ? "v-ok" : "v-bad");
+        if (!right) { cs.querySelectorAll(".vbtn")[okv].classList.add("v-true"); }
+        cs.querySelectorAll(".vbtn").forEach(function (x) { x.disabled = true; });
+        exp.textContent = (right ? "✔ Well judged — " : "✘ Not quite — ") + exp.textContent;
+        exp.classList.add(right ? "ok" : "no", "show");
+      });
+    });
+  });
+  /* ---- quiz: same engines as Lessons 001/002, new data ---- */
+
+  var QUIZ = [
+    { q: "Two entrances, one seat. Which pairing is right?",
+      o: ["Catalog ref (ref: docker:duckduckgo) for off-the-shelf capability with no server code, no install and no API key; command/args (command: docker, args: [run, --rm, -i, ...]) for your own deterministic, testable tool",
+          "Always write your own ~100-line server — catalog entries cannot be consumed through the agent config",
+          "command/args for web search, catalog refs for tools you authored — the ref points at your image",
+          "Both entrances require docker build first"],
+      a: 0,
+      f: "flavors.md's table: ex02 = off-the-shelf capability quickly, under Docker's isolation model, constrained by the catalog (keyed entries need secrets — out of scope); ex03 = a tool the catalog doesn't have, deterministic behavior, and an honest protocol education." },
+    { q: "Why does the ex02/ex03 verification template run --safety autonomous when Ex01 used --safety restricted?",
+      o: ["Autonomous skips the gateway handshake and the image pull",
+          "MCP calls — catalog or custom — are not on the provably-safe list, so restricted auto-denies them; autonomous is a deliberate one-shot whose blast radius you read first",
+          "Restricted blocks only write_file, and this task never writes",
+          "Autonomous is the documented default for --exec runs"],
+      a: 1,
+      f: "Phase-notes §3 and both READMEs' Tool-approvals sections: the identical denial text under restricted proves the classification is about MCP calls in general — not about which container serves them." },
+    { q: "And why is balanced the worst unattended choice here?",
+      o: ["It denies twice as hard as restricted",
+          "It requires an API key in the config",
+          "With no approver present, the pending call surfaces as 'The user rejected the tool call.'",
+          "It is not accepted by --exec at all"],
+      a: 2,
+      f: "run-modes §11 (observed) plus ex02's own record: a pending balanced call with nobody to approve reads as a rejection. The unattended rule the phase converged on: restricted for safe-classified calls, autonomous one-shots otherwise — never balanced unattended." },
+    { q: "Why keep tools: [search] / tools: [echo] in the config instead of skipping the allowlist?",
+      o: ["Without it, every server tool is exposed — and every tool description crowds the model's context; a one-entry allowlist keeps the surface exactly what the task needs, which matters for small local models",
+          "The gateway refuses servers with more than one tool",
+          "Allowlists speed up model downloads",
+          "The allowlist is what authenticates the catalog ref"],
+      a: 0,
+      f: "ex02 README: a tools: whitelist beats no whitelist — every tool a server exposes comes with its description, and descriptions eat context." },
+    { q: "You run ex03 before docker build. What does the machine actually show?",
+      o: ["A non-zero exit with 'No such image'",
+          "debug toolsets already lists 11 tools, then the run works from the image cache",
+          "Exit 0; '⚠️ Some toolsets failed to initialize for agent 'root'' plus an MCP initialize handshake that closes with EOF — while gemma4 narrates 'I executed the echo tool' anyway",
+          "Only a warning during the TUI demo, never in --exec"],
+      a: 2,
+      f: "ex03's red run: the container exits instantly, the handshake reads EOF, the run still exits 0 — and the small model believed it called the tool. The response → transcript line is the truth; the model's narrative is not." },
+    { q: "After each example's verified run, what remains in docker images / docker ps -a?",
+      o: ["Nothing in either — both are gateway-managed",
+          "ex02: no image or container remnants (pull, run, teardown all gateway-managed); ex03: no leftover containers (--rm), but the image stays until you docker rmi it",
+          "ex03 strips the image too; ex02 leaves the pinned image",
+          "Both leave containers — clean them with docker rm"],
+      a: 1,
+      f: "Ownership differs: the catalog snapshot's digest pin can move with a newer release; ex03's image is yours to build, tag and eventually rmi. (The schema's lifecycle: {profile: strict} refuse-to-start knob exists but was deliberately left unverified on this machine)." },
+    { q: "What does docker agent debug toolsets .\\agent.yaml actually prove?",
+      o: ["That the daemon serves the model",
+          "That the config parses — nothing more",
+          "The precise token cost of the next run",
+          "The concrete tool list the model will see (11 tools here) — and it actually starts toolsets, so a resolved catalog ref or a built image shows its tool, while a missing one simply doesn't appear"],
+      a: 3,
+      f: "Phase-notes §7: the third pre-gate, born from ex03's missing-image lesson. Green for these configs means 11 tools with '+ echo - Echoes back the given message…' (ex03) or the catalog 'search' tool (ex02) among them." },
+    { q: "Your custom MCP server banners 'echo: starting up…' on stdout before the handshake. Then?",
+      o: ["Nothing — stdout is free-form output",
+          "Non-JSON lines are dropped without a trace",
+          "It pollutes the NDJSON protocol stream and can break the MCP client — stdout is strictly newline-delimited JSON-RPC; banners and logs belong on stderr (the 'ready on stdio' banner lives there for exactly this reason)",
+          "Only the ping method breaks"],
+      a: 2,
+      f: "ex03 README: keep stdout strictly NDJSON — anything else pollutes the protocol stream; stderr stays free for server logs." },
+    { q: "Functionally, the description 'Echoes back the given message prefixed with ECHO:, plus the character count' is…",
+      o: ["A machine-enforced contract — the framework rejects calls that violate its wording",
+          "A prompt to the model: it is what actually steers calling behavior, while the JSON-Schema inputSchema enforces which arguments exist and are required",
+          "Documentation the model never sees",
+          "The exact string the tool returns on every call"],
+      a: 1,
+      f: "ex03 README: the schema tells the framework which arguments to enforce; the description steers the model. Write that description as if prompting the model — because it is one." }
+  ];
+  var box = document.getElementById("quiz");
+  var scoreBox = document.getElementById("qscore");
+  function render() {
+    box.innerHTML = "";
+    scoreBox.style.display = "none";
+    QUIZ.forEach(function (item, qi) {
+      var d = document.createElement("div"); d.className = "q";
+      var h = document.createElement("p"); h.className = "qq"; h.textContent = (qi + 1) + ". " + item.q; d.appendChild(h);
+      var fbq = document.createElement("div"); fbq.className = "qfb";
+      item.o.forEach(function (opt, oi) {
+        var b = document.createElement("button"); b.className = "opt"; b.textContent = opt;
+        b.addEventListener("click", function () {
+          if (d.dataset.answered) return;
+          d.dataset.answered = "1";
+          var ok = oi === item.a;
+          b.classList.add(ok ? "opt-ok" : "opt-bad");
+          if (!ok) { d.querySelectorAll(".opt")[item.a].classList.add("opt-true"); }
+          d.querySelectorAll(".opt").forEach(function (x) { x.disabled = true; });
+          fbq.textContent = (ok ? "✔ Correct — " : "✘ Not quite — ") + item.f;
+          fbq.classList.add(ok ? "fb-ok" : "fb-bad");
+          fbq.style.display = "block";
+          tally();
+        });
+        d.appendChild(b);
+      });
+      d.appendChild(fbq);
+      box.appendChild(d);
+    });
+  }
+  function tally() {
+    var answered = box.querySelectorAll(".q[data-answered]").length;
+    if (answered < QUIZ.length) return;
+    var right = box.querySelectorAll(".opt-ok").length;
+    scoreBox.textContent = right + " / " + QUIZ.length + (right === QUIZ.length
+      ? " — perfect. The exit-code discipline is yours; you're ready for real runs."
+      : " — reread the feedback above; every miss points at a Part in this lesson.");
+    scoreBox.style.display = "block";
+  }
+  document.getElementById("qreset").addEventListener("click", render);
+  render();
+
+  document.getElementById("markdone").addEventListener("click", function () {
+    try { localStorage.setItem("lessons_complete_0003", "1"); } catch (e) { /* private mode */ }
+    window.location.href = "0004-ex04-ex07-subs-and-serve.html";
+  });
+})();
+</script>
+</div></body></html>

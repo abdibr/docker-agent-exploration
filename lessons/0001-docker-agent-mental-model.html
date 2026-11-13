@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 001 · The mental model &amp; the map of seven flavors — Docker Agent</title>
+<style>
+  :root{
+    --paper:#faf8f4; --ink:#1d2a36; --muted:#5d6b7a; --line:#e4dfd6;
+    --blue:#0b63c5; --blue-soft:#e8f1fb; --teal:#0a9279; --teal-soft:#e4f4ef;
+    --amber:#a34e12; --amber-soft:#fbf0e4; --red:#b3362e; --red-soft:#faeae8;
+    --violet:#6a4bc4; --violet-soft:#efeafb;
+    --code-bg:#101a26; --code-ink:#dbe6f0;
+    --kw:#7fd1ff; --str:#8fe0b2; --com:#6b7f94; --key:#ffd487;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:17px/1.65 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cef0}
+  a:hover{border-bottom-color:var(--blue)}
+  code,.mono{font-family:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;font-size:.92em}
+  h1,h2,h3{line-height:1.25;letter-spacing:-.01em}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:46px 0 6px}
+  h1{font-size:2.1rem;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:1.06rem;margin:0 0 18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 8px}
+  .chip{font-size:.78rem;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .part{margin-top:52px}
+  .part>h2{font-size:1.45rem;margin:0 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+  .part>h2 .no{color:var(--blue);font-variant-numeric:tabular-nums;margin-right:10px}
+  .lede{color:var(--muted);margin:0 0 18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .card.blue{border-left:5px solid var(--blue);background:var(--blue-soft)}
+  .card.teal{border-left:5px solid var(--teal);background:var(--teal-soft)}
+  .card.amber{border-left:5px solid var(--amber);background:var(--amber-soft)}
+  .card.red{border-left:5px solid var(--red);background:var(--red-soft)}
+  .card.violet{border-left:5px solid var(--violet);background:var(--violet-soft)}
+  .card h3{margin:0 0 6px;font-size:1.02rem}
+  .card p{margin:6px 0}
+  .grid{display:grid;gap:12px}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.93rem;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f3efe7;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody tr:nth-child(even){background:#fbfaf7}
+  pre{margin:0;padding:16px 18px;background:var(--code-bg);color:var(--code-ink);border-radius:12px;overflow-x:auto;
+    font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.86rem;line-height:1.55}
+  pre .kw{color:var(--kw)} pre .str{color:var(--str)} pre .com{color:var(--com);font-style:italic} pre .key{color:var(--key)}
+  .codelabel{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 6px}
+  .cite{color:var(--muted);font-size:.84rem;background:#f4f1ea;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:16px 0}
+  .cite b{color:var(--ink)}
+  .roadmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+  .rm{border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 12px;font-size:.85rem;color:var(--muted)}
+  .rm b{display:block;color:var(--ink);font-size:.9rem;margin-bottom:2px}
+  .rm.now{background:var(--blue-soft);border-color:#b9cef0}
+  .rm.now b{color:var(--blue)}
+  details{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 16px}
+  summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  .tagline{font-size:.9rem;color:var(--muted);font-style:italic}
+  .flow{margin:12px 0 0;padding:0}
+  .flow li{padding:8px 0 8px 30px;border-bottom:1px dashed var(--line);font-size:.95rem}
+  .flow li::marker{color:var(--blue);font-weight:700}
+  .flow li:last-child{border-bottom:none}
+  .flow .n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:1px 7px;vertical-align:middle}
+  .pill.ex{background:var(--teal-soft);color:var(--teal)} .pill.warn{background:var(--red-soft);color:var(--red)}
+  .anatomy{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+  @media (max-width:760px){.anatomy{grid-template-columns:1fr}}
+  .yl{display:block;padding:0 10px;border-radius:6px;cursor:pointer;white-space:pre}
+  .yl:hover{background:rgba(255,255,255,.1)}
+  .yl.sel{outline:2px solid #ffd487;background:rgba(11,99,197,.2)}
+  .yl.hit{background:rgba(10,146,121,.32)}
+  .yl.miss{background:rgba(179,54,46,.4);animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+  .ymenu{display:flex;flex-direction:column;gap:8px}
+  .ybtn{border:1px solid #26374a;background:#16222f;border-radius:10px;padding:10px 12px;text-align:left;font-size:.88rem;cursor:pointer;font-family:inherit;transition:all .15s;color:var(--code-ink)}
+  .ybtn:hover{border-color:var(--kw)}
+  .ybtn.done{background:rgba(10,146,121,.25);border-color:var(--str);color:var(--str);cursor:default;text-decoration:line-through}
+  .ybtn.active{border-color:var(--key);box-shadow:0 0 0 3px rgba(255,212,135,.15)}
+  .yfb{min-height:44px;margin-top:10px;font-size:.9rem;padding:10px 12px;border-radius:10px;background:#16222f;border:1px solid #26374a;color:var(--code-ink)}
+  .yfb.ok{background:rgba(10,146,121,.18);border-color:var(--str)}
+  .yfb.no{background:rgba(179,54,46,.2);border-color:var(--red)}
+  .quiz{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0}
+  .qmeta{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .qbar{height:6px;background:#efece6;border-radius:99px;margin:8px 0 18px;overflow:hidden}
+  .qbar i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .3s}
+  .qq{font-size:1.08rem;font-weight:600;margin:0 0 14px}
+  .opt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 16px;margin:9px 0;font-size:.97rem;cursor:pointer;font-family:inherit;transition:all .12s}
+  .opt:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .opt:disabled{cursor:default;opacity:.72}
+  .opt.correct{border-color:var(--teal);background:var(--teal-soft);opacity:1}
+  .opt.wrong{border-color:var(--red);background:var(--red-soft);opacity:1}
+  .opt .mk{font-weight:700;margin-right:8px}
+  .qexp{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .qexp.show{display:block}
+  .qexp.ok{background:var(--teal-soft);border-left:4px solid var(--teal)} .qexp.no{background:var(--red-soft);border-left:4px solid var(--red)}
+  /* JS-rendered quiz + matcher feedback */
+  .q{margin-top:28px}
+  .q .qq{font-size:1rem}
+  .qfb{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .qfb.fb-ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .qfb.fb-bad{background:var(--red-soft);border-left:4px solid var(--red)}
+  .opt.opt-ok{border-color:var(--teal);background:var(--teal-soft);opacity:1}
+  .opt.opt-bad{border-color:var(--red);background:var(--red-soft);opacity:1}
+  .opt.opt-true{border-color:var(--teal);border-style:dashed}
+  .yl.miss{animation:shake .3s}
+  #qreset{margin-top:16px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #qreset:hover{border-color:var(--blue)}
+  #markdone{border:none;background:var(--blue);color:#fff;font-weight:600;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #markdone:hover{filter:brightness(1.1)}
+  .qnext{margin-top:14px;border:none;background:var(--blue);color:#fff;font-weight:600;border-radius:10px;padding:10px 22px;font-size:.95rem;cursor:pointer;display:none}
+  .qnext:hover{filter:brightness(1.1)}
+  .qscore{text-align:center;padding:30px 10px;display:none}
+  .qscore .big{font-size:2.6rem;font-weight:800;color:var(--blue)}
+  .qscore p{color:var(--muted)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.85rem}
+  footer li{margin:4px 0}
+  @media print{
+    body{background:#fff}.wrap{max-width:100%;padding:0}
+    .ybtn,.yfb,.no-print{display:none!important}
+    .card,pre,table,details{break-inside:avoid}
+    pre{background:#f2f4f7;color:#1d2a36}
+    pre .kw,pre .str,pre .key{color:inherit}pre .com{color:#666}
+    a{border-bottom:none;color:inherit}
+    .yl{white-space:pre-wrap}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="kicker">Docker Agent foundations · Lesson 001</p>
+  <h1>The mental model &amp; the map of seven flavors</h1>
+  <p class="sub">What <code>docker agent</code> is, how one YAML file becomes a working program, and which interop
+  flavor to reach for — grounded in this repo's seven verified examples.</p>
+  <div class="chips">
+    <span class="chip">⏱ ~25 min</span>
+    <span class="chip">💤 zero prerequisites</span>
+    <span class="chip">🧭 based on ex01–ex07 (all verified green)</span>
+    <span class="chip">🎯 ends with a 9-question retrieval quiz</span>
+  </div>
+</header>
+
+<div class="card blue">
+  <h3>Where you are on the mission</h3>
+  <p>You chose <b>big picture first, then hands-on</b> — so this lesson is pure map: no terminal required.
+  Lesson 002 is where you actually run your first agent and verify it the way this repo verifies everything.</p>
+  <div class="roadmap">
+    <div class="rm now"><b>001 · Mental model + flavor map</b>you are here — no prerequisites</div>
+    <div class="rm"><b>002 · Ex01 hands-on</b>run the smallest agent; verify it like the repo does</div>
+    <div class="rm"><b>003 · Ex02 — catalog MCP tools</b>borrow a containerized web-search tool</div>
+    <div class="rm"><b>004 · Ex03 — your own MCP server</b>write one, containerize it, consume it</div>
+    <div class="rm"><b>005 · Ex04 — sub-agent teams</b>planner + reviewer inside one config</div>
+    <div class="rm"><b>006 · Ex05+06 — serve mcp / serve a2a</b>your agent as a tool &amp; a discoverable peer</div>
+    <div class="rm"><b>007 · Ex07 — serve acp</b>the editor-facing seat in your IDE</div>
+    <div class="rm"><b>008 · Capstone</b>pick your first real problem — and its flavor</div>
+  </div>
+</div>
+<section class="part" id="p1">
+  <h2><span class="no">01</span>The mental model, in three sentences</h2>
+  <p class="lede">Read these carefully — everything else in this lesson hangs off them.</p>
+
+  <div class="card">
+    <p><b>1.</b> <b>Docker Agent is Docker's open-source AI agent builder and runtime.</b> You write a
+    declarative YAML file naming the <i>models</i>, the <i>agents</i> (role, instruction, tools), and how they
+    connect — and the <code>docker agent</code> CLI plugin turns that file into a running agent.
+    It ships inside Docker Desktop 4.63+; on 4.49–4.62 the same tool was called <code>cagent</code>, which is why
+    older tutorials use that name.</p>
+    <p><b>2.</b> <b>The config is the whole program.</b> No wrapper scripts, no client code, no SDK — the
+    YAML file alone runs the agent, interactively or headless. This is the "no glue code" philosophy on display
+    in <a href="../ex01-first-agent/README.md">ex01-first-agent/README.md</a>.</p>
+    <p><b>3.</b> <b>Every interop flavor is one config edit away.</b> External tools arrive via MCP (a catalog
+    reference or your own containerized server), extra roles via <code>sub_agents:</code>, and the same config
+    can be <i>served</i> over five different network/protocol surfaces. One file, seven flavors — exactly what
+    the seven examples in this repo prove, in order.</p>
+  </div>
+
+  <div class="cite"><b>Claim checks:</b> the definition, rename history, and OCI sharing come from the
+  <a href="https://docs.docker.com/ai/cagent/" target="_blank">official docs</a> and the
+  <a href="https://github.com/docker/docker-agent" target="_blank">docker/docker-agent repo</a> (whose README
+  bills it as "AI Agent Builder and Runtime by Docker Engineering"). The "config is the whole program" phrasing
+  and all run evidence come from <a href="../ex01-first-agent/README.md">ex01's README</a>, recorded from
+  verified runs on this machine.</div>
+
+  <div class="grid g3">
+    <div class="card teal">
+      <h3>🧩 Declarative &amp; versionable</h3>
+      <p class="tagline">Agents are YAML you can git-commit, diff, and review — like a Dockerfile for agents. One commit per example is how this whole repo was built.</p>
+    </div>
+    <div class="card teal">
+      <h3>🔌 Provider-agnostic</h3>
+      <p class="tagline">Named <code>models:</code> entries point at any provider. This repo pins the built-in <code>ollama</code> provider → local <code>gemma4:latest</code> on your own daemon, with a one-line local↔cloud swap.</p>
+    </div>
+    <div class="card teal">
+      <h3>🤝 Interop by construction</h3>
+      <p class="tagline">Built-in toolsets today (<code>filesystem</code>, <code>shell</code>, <code>think</code>); MCP for external tools; <code>sub_agents</code> for roles; five <code>serve</code> surfaces for client programs.</p>
+    </div>
+  </div>
+</section>
+
+<section class="part" id="p2">
+  <h2><span class="no">02</span>Anatomy of a real config — touch every part</h2>
+  <p class="lede">This is <b>ex01's actual <code>agent.yaml</code></b> — the smallest working Docker Agent in this repo.
+  Five pieces of it are labeled on the right. For each label, <b>click the matching line in the YAML</b>.</p>
+
+  <div class="anatomy no-print" style="margin:14px 0">
+    <pre class="yamlcard" id="yamlcard"><span class="com"># yaml-language-server: $schema=…/docker/docker-agent/main/agent-schema.json</span>
+<span class="yl" data-c="swap"><span class="kw">models:</span></span>
+<span class="yl" data-c="swap">  gemma4_local:</span>
+<span class="yl" data-c="swap">    <span class="key">provider:</span> <span class="str">ollama</span></span>
+<span class="yl" data-c="swap">    <span class="key">model:</span> <span class="str">gemma4:latest</span></span>
+<span class="yl" data-c="swap">    <span class="key">description:</span> <span class="str">Local gemma4 on the host Ollama daemon</span></span>
+<span class="yl" data-c="none"><span class="kw">agents:</span></span>
+<span class="yl" data-c="none">  root:</span>
+<span class="yl" data-c="ref">    <span class="key">model:</span> <span class="str">gemma4_local</span></span>
+<span class="yl" data-c="none">    <span class="key">description:</span> <span class="str">Ex01 first agent — smallest working Docker Agent</span></span>
+<span class="yl" data-c="instr">    <span class="key">instruction:</span> <span class="str">|</span></span>
+<span class="yl" data-c="instr">      You are Ex01, the smallest working Docker Agent in the docker_agents repo.</span>
+<span class="yl" data-c="instr">      - For any question about a file, first read that file; quote exact values.</span>
+<span class="yl" data-c="instr">      - Before any multi-step task, write a short plan with the think tool.</span>
+<span class="yl" data-c="cap">    <span class="key">max_iterations:</span> <span class="str">20</span></span>
+<span class="yl" data-c="none">    <span class="key">toolsets:</span></span>
+<span class="yl" data-c="fs">      - <span class="key">type:</span> <span class="str">filesystem</span></span>
+<span class="yl" data-c="fs">        <span class="key">allow_list:</span></span>
+<span class="yl" data-c="fs">          - <span class="str">"."</span></span>
+<span class="yl" data-c="none">      - <span class="key">type:</span> <span class="str">shell</span></span>
+<span class="yl" data-c="none">      - <span class="key">type:</span> <span class="str">think</span></span></pre>
+
+    <div class="ymenu">
+      <button class="ybtn" data-q="swap">① The named models entry — the one-line local↔cloud swap point</button>
+      <button class="ybtn" data-q="ref">② The agent's model reference — uses that entry by name</button>
+      <button class="ybtn" data-q="instr">③ The instruction — role and behavioral rules</button>
+      <button class="ybtn" data-q="cap">④ max_iterations — the turn budget before stopping</button>
+      <button class="ybtn" data-q="fs">⑤ The filesystem toolset — sandboxed to its working directory</button>
+      <div class="yfb"><span id="yfb">Pick a label on the right, then click its line in the YAML on the left.</span> <span id="ycount">0 of 5 found</span></div>
+    </div>
+  </div>
+
+  <div class="cite"><b>Source:</b> this is a lightly trimmed
+  <a href="../ex01-first-agent/agent.yaml">../ex01-first-agent/agent.yaml</a> — key names are pinned by the
+  <a href="https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json" target="_blank">official
+  agent-schema.json</a> that the first line references, and documented in the
+  <a href="https://docs.docker.com/ai/docker-agent/configuration/overview/" target="_blank">configuration reference</a>.</div>
+
+  <details open>
+    <summary>What each piece means (read after playing)</summary>
+    <ul>
+      <li><b>Named models entry</b> — a friendly name (<code>gemma4_local</code>) wrapping provider + model string.
+      Every agent references it by name, so changing the model is an edit in exactly one line — the repo's one-line
+      local↔cloud swap (<code>gemma4:latest</code> → <code>glm-5.3-flash:cloud</code>).</li>
+      <li><b>The agent entry</b> — <code>root</code> is the agent you actually talk to. Its
+      <code>description</code> isn't just documentation: later examples show it surfacing in protocol metadata
+      (in Ex05 it becomes the MCP tool's description; in Ex06 it feeds the A2A agent card).</li>
+      <li><b>The instruction</b> — this is the prompt. The model sees it on every turn; the repo's rule
+      ("first read the file, quote exact values") is what makes the verification answer <i>deterministic</i>.</li>
+      <li><b><code>max_iterations: 20</code></b> — the turn budget, a runaway-loop fuse. Ex04 needs 12 for its lead,
+      because delegation takes turns.</li>
+      <li><b>Toolsets</b> — capabilities attached declaratively. <code>filesystem</code> is sandboxed here with
+      <code>allow_list: ["."]</code>: the agent can only touch its working directory. <code>think</code> gives the
+      model a scratchpad (gemma4 reasons inline, so it rarely calls it — not an error).</li>
+    </ul>
+  </details>
+
+  <div class="card amber">
+    <h3>A real debugging moment from this config (recorded 2026-10-19)</h3>
+    <p>On first verification, gemma4 called <code>read_file</code> with
+    <code>limit: 0</code> and got back <code>invalid limit 0: limit must be &gt;= 1</code> — then <i>read the error,
+    corrected itself, and retried</i>. Lesson: small models trip on parameter corners, and clear tool errors are
+    enough for them to self-correct. That's also your first taste of the exit-code discipline in the next section —
+    the run still exited 0 either way.</p>
+  </div>
+</section>
+
+<section class="part" id="p3">
+  <h2><span class="no">03</span>One config, many ways to run it</h2>
+  <p class="lede">The config never changes shape — only the verb around it does. These are the run surfaces this
+  repo actually used, all verified in <a href="../docs/notes/run-modes.md">docs/notes/run-modes.md</a>.</p>
+
+  <table>
+    <thead><tr><th>Verb</th><th>What happens</th><th>Where the repo leans on it</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">docker agent run cfg.yaml</td><td>Interactive TUI — a terminal chat with your agent</td><td>Owner demos (every example's "run it" section)</td></tr>
+      <tr><td class="mono">… --exec "task"</td><td><b>Headless</b> run: prints the full transcript (tool calls + answer) to stdout, exits when done</td><td>The verification template — every example's single machine-checked command</td></tr>
+      <tr><td class="mono">… --json</td><td>NDJSON event stream (one JSON object per line, ~150 events per trivial prompt)</td><td>Machine-readable evidence in the notes</td></tr>
+      <tr><td class="mono">echo "task" | … - --exec</td><td>Task piped via stdin instead of an argument</td><td>Windows PowerShell quote-mangling escape hatch</td></tr>
+      <tr><td class="mono">… --dry-run</td><td>Validates the config <b>without touching a model</b></td><td>Pre-flight gate before any spend, from Ex02 on</td></tr>
+      <tr><td class="mono">debug config / debug toolsets</td><td>Canonical config view / the concrete tool list (this one starts toolsets!)</td><td>The missing-image and wrong-toolset lessons of Ex03</td></tr>
+    </tbody>
+  </table>
+
+  <p class="codelabel">The verification template every example reuses (from ex01's README)</p>
+  <pre><span class="com"># Run headless; the answer itself is the assertion — exit 0 PLUS these two lines:
+#   ollama gemma4:latest
+#   filesystem shell think</span>
+docker agent run .\agent.yaml --exec <span class="str">'Read agent.yaml in the current directory using your
+filesystem tools. Then answer with exactly two lines. Line 1: the provider and the
+model name you find under models. Line 2: the three toolset types listed for this agent.'</span> --safety restricted</pre>
+
+  <div class="cite"><b>Why this task is clever:</b> the answer lives entirely in a file the agent must read, so a
+  scripted run is simultaneously the test <i>and</i> the executor — read-only, deterministic, no scratch files.
+  Phases notes call this the "single verification seam": one headless command per example, asserted on external
+  behavior only (<a href="../docs/notes/phase-notes.md">phase-notes.md §7</a>).</div>
+
+  <div class="grid g3">
+    <div class="card violet">
+      <h3>🛡 <code>--safety restricted</code></h3>
+      <p class="tagline">Fail-closed unattended profile. Obviously-safe calls (this read) auto-approve; everything else is <i>silently denied</i> — the denial only shows in the transcript, never as a prompt. The repo's default for verification.</p>
+    </div>
+    <div class="card violet">
+      <h3>⚡ <code>--safety autonomous</code> / <code>--yolo</code></h3>
+      <p class="tagline">Auto-approve everything. Reserved for deliberate one-shot commands — the MCP examples (Ex02/Ex03) verify this way precisely because restricted denies MCP calls.</p>
+    </div>
+    <div class="card violet">
+      <h3>🎚 The full ladder</h3>
+      <p class="tagline"><code>default | strict | balanced | restricted | autonomous</code> (Ex07 exposes it as a switchable session mode). Serving surfaces default to <code>restricted</code> at startup.</p>
+    </div>
+  </div>
+
+  <div class="card red">
+    <h3>🚨 The single most important operating lesson: exit 0 is not success</h3>
+    <p>Denied tool calls, missing tool images, degenerate loops — all still exit 0. In Ex01–Ex03 the denial only
+    appears as a transcript line like <span class="mono">Tool 'write_file' is denied by the restricted safety
+    mode…</span>. Judge the <b>transcript</b> (or the protocol surface), never the exit code. Every gotcha list in
+    this repo repeats it: <a href="../docs/notes/phase-notes.md">phase-notes §4</a>.</p>
+  </div>
+
+  <p class="codelabel">Five serve surfaces — the same config, exposed to five kinds of client (port map verified in phase-notes §6)</p>
+  <table>
+    <thead><tr><th>Serve surface</th><th>Where</th><th>Consumed by</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">serve api</td><td class="mono">127.0.0.1:8080</td><td>REST / sessions + bearer auth <span class="pill warn">documented, never probed here</span></td><td>—</td></tr>
+      <tr><td class="mono">serve mcp</td><td class="mono">stdio · HTTP :8081 with --http</td><td>Any MCP client (Claude Code connected ✓ in Ex05)</td><td class="mono">ex05</td></tr>
+      <tr><td class="mono">serve a2a</td><td class="mono">127.0.0.1:8082</td><td>Other agents over HTTP JSON-RPC + agent-card discovery</td><td class="mono">ex06</td></tr>
+      <tr><td class="mono">serve chat</td><td class="mono">127.0.0.1:8083</td><td>OpenAI-compatible chat completions <span class="pill warn">documented, never probed here</span></td><td>—</td></tr>
+      <tr><td class="mono">serve acp</td><td class="mono">stdio only, zero flags</td><td>Your editor (spawns the agent as a subprocess)</td><td class="mono">ex07</td></tr>
+    </tbody>
+  </table>
+  <div class="cite">Shared behavior on every probed surface: stdout carries <b>protocol only</b>, all logging on
+  stderr; tool-safety policy is declared in a startup banner (defaults <code>restricted</code>) —
+  <a href="../docs/notes/run-modes.md">run-modes.md §15</a> and
+  <a href="../docs/notes/phase-notes.md">phase-notes §6</a>.</div>
+</section>
+
+<section class="part" id="p4">
+  <h2><span class="no">04</span>The map: seven examples, six interop flavors</h2>
+  <p class="lede">Ex01 is the baseline (no interop — just the agent itself). The other six slots test the
+  interop landscape. Distilled from <a href="../docs/notes/flavors.md">docs/notes/flavors.md</a>, the repo's
+  decision cheat-sheet. Memorize these four one-liners — they're the whole map:</p>
+
+  <div class="grid g3">
+    <div class="card blue"><h3>🔧 MCP</h3><p class="tagline">Wires <b>tools into</b> an agent — or exposes <b>the agent out</b> as one tool.</p></div>
+    <div class="card blue"><h3>🌐 A2A</h3><p class="tagline">Delegates work <b>between agents</b> over a network — with discovery and task state.</p></div>
+    <div class="card blue"><h3>🧩 <code>sub_agents</code></h3><p class="tagline">Multi-role work <b>inside one config</b> — delegation with zero protocol machinery.</p></div>
+    <div class="card blue"><h3>📝 ACP</h3><p class="tagline">The <b>editor-facing seat</b> — the human's tool is the peer.</p></div>
+  </div>
+
+  <table>
+    <thead><tr><th>Flavor</th><th>Ex</th><th>What it's for</th><th>Isolation story</th><th>Reach for it when…</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Native sub-agents</b><br><span class="mono">sub_agents:</span></td>
+        <td><a href="../ex04-sub-agents/README.md">04</a></td>
+        <td>Delegate <i>roles</i> (planner, reviewer…) and compose their answers; sub-agents see only what the lead forwards</td>
+        <td>All in-process, one config; context boundary is the handoff</td>
+        <td>Work splits into roles. Try this <b>first</b> — before any protocol machinery</td>
+      </tr>
+      <tr>
+        <td><b>MCP client — catalog</b><br><span class="mono">ref: docker:duckduckgo</span></td>
+        <td><a href="../ex02-mcp-catalog-tool/README.md">02</a></td>
+        <td>Proven containerized tools (web search…) — no server code, no local install, no key</td>
+        <td>Strongest: per-call digest-pinned container, egress-restricted, nothing persists</td>
+        <td>Off-the-shelf capability, quickly. Limited by the catalog contents</td>
+      </tr>
+      <tr>
+        <td><b>MCP client — custom server</b><br><span class="mono">command: docker run…</span></td>
+        <td><a href="../ex03-mcp-custom-server/README.md">03</a></td>
+        <td>Deterministic tools <i>you</i> wrote (~100 lines, no SDK); learn MCP from the server side</td>
+        <td>Yours: you build/tag the image; per-session container with <span class="mono">--rm</span> teardown</td>
+        <td>No catalog entry fits, and the job must be exact and testable</td>
+      </tr>
+      <tr>
+        <td><b>Agent as MCP server</b><br><span class="mono">serve mcp</span></td>
+        <td><a href="../ex05-agent-as-mcp-server/README.md">05</a></td>
+        <td>Flip the direction: standard MCP clients (Claude Code ✓) consume your agent as one tool</td>
+        <td>Config unchanged; serves over stdio or HTTP :8081; tool description = the agent's <span class="mono">description:</span></td>
+        <td>An existing MCP-native client should drive your agent</td>
+      </tr>
+      <tr>
+        <td><b>A2A — agent is a peer</b><br><span class="mono">serve a2a</span></td>
+        <td><a href="../ex06-a2a/README.md">06</a></td>
+        <td>Agents <i>discover</i> each other (agent card) and hand off whole tasks (state machine + artifacts)</td>
+        <td>HTTP on :8082; task state lives server-side (context/task IDs); 331–496 ms overhead beyond the model</td>
+        <td>Separate processes/teams of agents must find each other and exchange ongoing work</td>
+      </tr>
+      <tr>
+        <td><b>ACP — editor seat</b><br><span class="mono">serve acp</span></td>
+        <td><a href="../ex07-acp-editor/README.md">07</a></td>
+        <td>The editor (Zed etc.) spawns your agent over stdio JSON-RPC — sessions, streaming, permission prompts</td>
+        <td>No flags at all: mode + model are negotiated per session from the editor UI</td>
+        <td>The <i>human's tool</i> is the peer and the agent must feel native in the editor</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <details open>
+    <summary>The decision flow — six questions, in this order (flavors.md's rule order)</summary>
+    <ol class="flow">
+      <li><b>Can you split by role?</b> Delegate <i>tasks and roles</i> inside one config → <b>native <code>sub_agents</code></b> (Ex04). A lead + specialist beat any networked alternative on simplicity — try it first.</li>
+      <li><b>Who owns the work?</b> If the <i>agent must call out to an MCP client</i> for tools, next question is: does a <b>catalog entry</b> (Ex02) cover it? If yes, stop — you get the strongest isolation for free. If no…</li>
+      <li><b>…build a custom MCP server</b> (Ex03) when you need <i>deterministic, self-authored</i> tools and a container you tag. This is the "custom" slot when no catalog entry covers the capability.</li>
+      <li><b>Is the peer an MCP-native client?</b> Your agent's skills should appear as tools in Claude Code etc. → <b><code>serve mcp</code></b> (Ex05).</li>
+      <li><b>Do agents need discovery + whole-task handoff?</b> Separate processes exchanging stateful tasks → <b><code>serve a2a</code></b> (Ex06).</li>
+      <li><b>Is the peer the human's tool?</b> Editor should spawn the agent native-in-session → <b><code>serve acp</code></b> (Ex07).</li>
+    </ol>
+  </details>
+
+  <div class="grid g3 no-print">
+    <div class="card amber">
+      <h3>⚠ Cross-flavor caution #1</h3>
+      <p class="tagline"><b>MCP tool refs belong to the root agent only</b> — sub-<i>agents</i> in one config cannot carry them (flavors.md rule §4), and Ex02's catalog <code>ref:</code> sits only under <code>agents:.root</code>. Delegation is Ex04's <code>sub_agents</code>; MCP stays top-level.</p>
+    </div>
+    <div class="card amber">
+      <h3>⚠ Cross-flavor caution #2</h3>
+      <p class="tagline"><b>MCP ≠ A2A.</b> MCP moves <i>synchronous tool calls</i>; A2A moves <i>asynchronous whole tasks</i> with agent-card discovery. Don't bolt A2A on to fix an MCP gap.</p>
+    </div>
+    <div class="card amber">
+      <h3>⚠ Cross-flavor caution #3</h3>
+      <p class="tagline">Serving to remote peers is <b>network exposure</b> — Ex05's HTTP surface binds 0.0.0.0 by default. Local use stays fine on the loopback addresses we tested; lock remote peers down before sharing.</p>
+    </div>
+  </div>
+
+  <div class="cite"><b>Ground truth:</b> every claim here traces to repo docs —
+  <a href="../docs/notes/flavors.md">flavors.md</a> (table, isolation stories, cross-flavor rules),
+  example READMEs for what was verified — plus the public
+  <a href="https://docs.docker.com/ai/dhi/agent-catalog/" target="_blank">Agent Catalog</a> and
+  <a href="https://docs.docker.com/ai/integrations/mcp-gateway/" target="_blank">MCP Gateway</a> pages for Ex02/Ex03.
+  The two <span class="pill warn">documented, never probed</span> surfaces are excluded from every decision rule.</div>
+</section>
+
+<section class="part" id="p5">
+  <h2><span class="no">05</span>The five things to carry forward</h2>
+  <ol class="flow">
+    <li><b>Config is the whole program.</b> A YAML file alone runs the agent — interactive, headless, or served. If you can't express it in YAML, you're holding it wrong.</li>
+    <li><b>Five keys are the vocabulary.</b> <code>models:</code> entries (named, swappable), <code>agents:</code> with <code>instruction</code>/<code>description</code>, <code>max_iterations</code> as the fuse, <code>toolsets:</code> as capabilities, <code>allow_list</code> as the sandbox.</li>
+    <li><b>Run modes are verbs, not modes.</b> TUI for demos, <code>--exec</code> for transcribed checks, <code>--dry-run</code> to validate free. Pick the surface by what evidence you need.</li>
+    <li><b>Exit code lies; transcript tells the truth.</b> Restricted failures, broken toolsets, degenerate loops — all exit 0. Machine-check the transcript, then judge.</li>
+    <li><b>The map: try sub_agents first, catalog MCP first among protocols.</b> Custom MCP for exactness, serve mcp/a2a/acp when the <i>peer</i> picks the protocol. Catalog tools beat custom servers when they exist — free isolation.</li>
+  </ol>
+
+  <div class="quiz no-print">
+    <h3>🎯 Self-check — nine questions, auto-graded</h3>
+    <p class="tagline">Each shows its feedback immediately. A perfect score is 9/9 — the <a href="../reference/glossary.html">glossary</a> is fair game.</p>
+    <div id="quiz"></div>
+    <div class="qscore" id="qscore" style="display:none"></div>
+    <button id="qreset">↺ Reset quiz</button>
+  </div>
+
+  <div class="card teal no-print" style="margin-top:12px">
+    <h3>Next up — Lesson 002: Ex01 hands-on</h3>
+    <p class="tagline">You'll <b>check and run</b> <code>ex01-first-agent</code> yourself: Ollama daemon up,
+    <code>--dry-run</code>, then the verification command with <code>--safety restricted</code>. This time <i>you</i>
+    own the output and the exit-code discipline. Lesson 001's mental model becomes muscle memory.</p>
+    <p class="cite" style="margin-top:8px"><button id="markdone">✓ Mark Lesson&nbsp;001 complete and open Lesson&nbsp;002</button></p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p><b>Ground rules</b> · Ground truth = this repo's docs (<a href="../docs/notes/flavors.md">flavors.md</a>,
+  <a href="../docs/notes/run-modes.md">run-modes.md</a>, <a href="../docs/notes/phase-notes.md">phase-notes.md</a>)
+  and the official Docker Agent docs — never model memory. · Local default <code>gemma4:latest</code> via built-in
+  <code>ollama</code> provider; cloud swap = edit one <code>model:</code> line. ·
+  <a href="../reference/glossary.html">Glossary</a> · <a href="../reference/ex-map.html">Example map</a> ·
+  <a href="../NOTES.md">Workspace notes</a> · <a href="index.html">Lessons</a> — next:
+  <a href="0002-ex01-hands-on.html">002&nbsp;Ex01&nbsp;hands-on →</a></p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var current = null;
+  var found = { swap: 0, ref: 0, instr: 0, cap: 0, fs: 0 };
+  var total = 5;
+  var fb = document.getElementById("yfb");
+  var fbBox = fb.parentElement;
+  var cnt = document.getElementById("ycount");
+  var msgs = {
+    swap: "① Correct — the named entry. The one-line swap point is its value: gemma4:latest → glm-5.3-flash:cloud.",
+    ref: "② Correct — root references the entry by name. Note it also says model:, but here the value is an entry name.",
+    instr: "③ Correct — instruction: is the prompt, seen by the model on every turn. The rules inside make verification deterministic.",
+    cap: "④ Correct — the turn budget, a runaway-loop fuse. Ex04's lead needs 12, because delegation costs turns.",
+    fs: "⑤ Correct — the filesystem toolset, sandboxed to its working directory by allow_list: [\".\"] — allow_list only restricts; the default is unrestricted."
+  };
+  var misses = {
+    swap: "Not this line. The named entry lives between 'models:' and its own description — the swap point is one value inside it.",
+    ref: "Not this line. You are looking for where root *uses* the entry — the agents: block, not models:.",
+    instr: "Not this line. The prompt starts at instruction: — the keys above it are metadata.",
+    cap: "Not this line. Look for the budget key, a number of turns.",
+    fs: "Not this line. Find the toolset with the sandbox — filesystem and its allow_list."
+  };
+  function count() {
+    var n = 0; for (var k in found) n += found[k];
+    cnt.textContent = n + " of " + total + " found";
+  }
+  document.querySelectorAll(".ybtn").forEach(function (b) {
+    b.addEventListener("click", function () {
+      current = b.dataset.q;
+      document.querySelectorAll(".ybtn").forEach(function (x) { x.classList.remove("active"); });
+      b.classList.add("active");
+      fbBox.classList.remove("ok");
+    });
+  });
+  document.querySelectorAll("#yamlcard .yl").forEach(function (ln) {
+    ln.classList.add("clickable");
+    ln.addEventListener("click", function () {
+      if (ln.dataset.c === "none") { ln.classList.add("miss"); setTimeout(function () { ln.classList.remove("miss"); }, 350); return; }
+      if (!current) { fb.textContent = "Pick a label on the right first."; return; }
+      var n = 0; for (var k in found) n += found[k];
+      if (n >= total) return;
+      if (found[current]) { fb.textContent = "Already matched — pick the next label on the right."; return; }
+      if (ln.dataset.c === current) {
+        found[current] = 1; ln.classList.add("hit"); fb.textContent = msgs[current]; fbBox.classList.add("ok");
+        var btn = document.querySelector('.ybtn[data-q="' + current + '"]'); if (btn) { btn.classList.add("done"); btn.disabled = true; btn.classList.remove("active"); }
+      } else { fb.textContent = misses[current]; fbBox.classList.remove("ok"); }
+      count();
+      var m = 0; for (var k in found) m += found[k];
+      if (m >= total) { fb.textContent = "🎉 All five matched. Scroll on for what each piece means."; fbBox.classList.add("ok"); }
+    });
+  });
+})();
+</script>
+
+<script>
+(function () {
+  "use strict";
+  var QUIZ = [
+    { q: "In one sentence, what is Docker Agent?",
+      o: ["A declarative YAML agent builder and runtime — the config file is the whole program",
+          "A Docker-hosted, proprietary service for building agents in the cloud",
+          "An SDK you import into your application to script custom agents",
+          "The old name for Docker Sandbox, unrelated to cagent"], a: 0,
+      f: "Part 01: docker agent runs agent.yaml directly — no wrapper code. It ships in Docker Desktop 4.63+; on 4.49–4.62 it was called cagent." },
+    { q: "You need one machine-checkable command whose full transcript you can assert on. Which surface?",
+      o: ["docker agent run agent.yaml (interactive TUI)",
+          "docker agent serve mcp agent.yaml",
+          "docker agent run agent.yaml --exec <task>",
+          "docker agent debug toolsets"], a: 2,
+      f: "Part 03: --exec prints the whole transcript (tool calls + answer) to stdout and exits when done — the verification template. TUI is for demos; --dry-run validates without spending." },
+    { q: "A verification run exited 0. What do you actually know?",
+      o: ["The task succeeded", "All tool calls succeeded",
+          "Only baseline sanity — config parsed and the process ended; judge the transcript",
+          "Nothing — Docker Agent exit codes are random"], a: 2,
+      f: "Part 03, red card: denied calls, missing toolsets, degenerate loops all still exit 0. Read the transcript or the protocol surface." },
+    { q: "With --safety restricted, a denied tool call shows up as…",
+      o: ["A blocking approval prompt", "An immediate non-zero exit",
+          "A silent denial — visible only in the transcript, exit code still 0",
+          "An HTTP 500 on stdout"], a: 2,
+      f: "Part 03: restricted is fail-closed for unattended runs (auto-approves only obviously-safe calls); autonomous auto-approves all; ladder is default|strict|balanced|restricted|autonomous." },
+    { q: "ex01 swaps its local model to glm-5.3-flash:cloud. Which line changes?",
+      o: ["instruction: of the root agent", "The value of model: in the named models entry",
+          "max_iterations: 20", "allow_list: in the filesystem toolset"], a: 1,
+      f: "Part 02: agents reference the named entry (gemma4_local) — so the swap is exactly one value: the model: line under models:." },
+    { q: "No catalog entry produces the deterministic, self-authored tool you need. Which flavor fits?",
+      o: ["A2A (serve a2a)", "MCP custom server (Ex03)", "sub_agents: (Ex04)", "serve chat"], a: 1,
+      f: "Part 04: a ~100-line non-SDK MCP server in a tagged image, per-session --rm container. Try the catalog first (Ex02) — proven tools, strongest isolation, zero code." },
+    { q: "An existing MCP-native client such as Claude Code should drive your agent. Which serve surface?",
+      o: ["serve mcp", "serve a2a", "serve acp", "serve api"], a: 0,
+      f: "Part 04, Ex05: serve mcp exposes the agent as one tool, describable by its description: field — Claude Code connected in verification. A2A is agent↔agent; acp is editor-facing." },
+    { q: "Two separate agent processes must discover each other and hand off stateful tasks. What fits?",
+      o: ["sub_agents: — they run inside one process, so no",
+          "A2A (serve a2a) — agent-card discovery and whole-task exchange with state",
+          "MCP catalog refs — they support peer discovery",
+          "serve acp — it accepts TCP clients"], a: 1,
+      f: "Part 04, Ex06: A2A is agent↔agent (agent card, context/task IDs, artifacts, :8082). sub_agents is in-process role delegation with no protocol; MCP moves sync tool calls, not tasks." },
+    { q: "The repo's free pre-flight gate before any verification spend is…",
+      o: ["--json", "debug toolsets", "--dry-run", "--yolo"], a: 2,
+      f: "Part 03: --dry-run validates the config without touching a model. debug toolsets introspects real capability (the Ex03 missing-toolset check); --json formats events after a run." }
+  ];
+
+  var box = document.getElementById("quiz");
+  var scoreBox = document.getElementById("qscore");
+  function render() {
+    box.innerHTML = "";
+    scoreBox.style.display = "none";
+    QUIZ.forEach(function (item, qi) {
+      var d = document.createElement("div"); d.className = "q";
+      var h = document.createElement("p"); h.className = "qq"; h.textContent = (qi + 1) + ". " + item.q; d.appendChild(h);
+      var fbq = document.createElement("div"); fbq.className = "qfb";
+      item.o.forEach(function (opt, oi) {
+        var b = document.createElement("button"); b.className = "opt"; b.textContent = opt;
+        b.addEventListener("click", function () {
+          if (d.dataset.answered) return;
+          d.dataset.answered = "1";
+          var ok = oi === item.a;
+          b.classList.add(ok ? "opt-ok" : "opt-bad");
+          if (!ok) { d.querySelectorAll(".opt")[item.a].classList.add("opt-true"); }
+          d.querySelectorAll(".opt").forEach(function (x) { x.disabled = true; });
+          fbq.textContent = (ok ? "✔ Correct — " : "✘ Not quite — ") + item.f;
+          fbq.classList.add(ok ? "fb-ok" : "fb-bad");
+          fbq.style.display = "block";
+          tally();
+        });
+        d.appendChild(b);
+      });
+      d.appendChild(fbq);
+      box.appendChild(d);
+    });
+  }
+  function tally() {
+    var answered = box.querySelectorAll(".q[data-answered]").length;
+    if (answered < QUIZ.length) return;
+    var right = box.querySelectorAll(".opt-ok").length;
+    scoreBox.textContent = right + " / " + QUIZ.length + (right === QUIZ.length
+      ? " — perfect. You own the mental model; Lesson 002 is waiting."
+      : " — reread the feedback above; every miss points to its lesson part.");
+    scoreBox.style.display = "block";
+  }
+  document.getElementById("qreset").addEventListener("click", render);
+  render();
+
+  document.getElementById("markdone").addEventListener("click", function () {
+    try { localStorage.setItem("lessons_complete_0001", "1"); } catch (e) { /* private mode */ }
+    window.location.href = "0002-ex01-hands-on.html";
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example map · Docker Agent teaching workspace</title>
+<style>
+  :root{--paper:#faf8f4;--ink:#1d2a36;--muted:#5d6b7a;--line:#e4dfd6;--blue:#0b63c5;--blue-soft:#e8f1fb;--teal:#0a9279;--teal-soft:#e4f4ef;--amber:#a34e12;--amber-soft:#fbf0e4;--red:#b3362e;--red-soft:#faeae8;--violet:#6a4bc4;--violet-soft:#efeafb}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 70px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cef0}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:40px 0 6px}
+  h1{font-size:2rem;margin:0 0 8px;line-height:1.25}
+  .sub{color:var(--muted);margin:0 0 8px}
+  h2{font-size:1.15rem;margin:30px 0 4px;padding-top:12px;border-top:1px solid var(--line)}
+  code,.mono{font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.88em}
+  .m{font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.84em;background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 5px;white-space:nowrap}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:.86rem;background:#fff}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f3efe7;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .ex{display:inline-block;font-weight:700;font-size:.7rem;border-radius:5px;padding:1px 6px;letter-spacing:.04em;background:var(--teal-soft);color:var(--teal)}
+  .ex.p{background:var(--violet-soft);color:var(--violet)}
+  .ex.n{background:var(--amber-soft);color:var(--amber)}
+  .box{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px 18px;margin:14px 0;font-size:.93rem}
+  .box.amber{background:var(--amber-soft);border-left:4px solid var(--amber)}
+  .box.blue{background:var(--blue-soft);border-left:4px solid var(--blue)}
+  footer{margin-top:50px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:.83rem}
+  @media print{body{background:#fff}.wrap{max-width:100%;padding:0}table{font-size:.78rem}a{border:none;color:inherit}th,td{break-inside:avoid}}
+</style>
+</head>
+<body><div class="wrap">
+<p class="kicker">Reference · print-friendly</p>
+<h1>The seven examples, mapped</h1>
+<p class="sub"><span class="ex">green</span> = interop flavor built &amp; verified ·
+<span class="ex p">purple</span> = serving surface probed · <span class="ex n">amber</span> = documented only, never
+probed here. Verified claims live in each example's README; distilled rules in
+<a href="../docs/notes/flavors.md">flavors.md</a>. Companion: <a href="glossary.html">glossary</a>.</p>
+
+<h2>ex01 → ex07</h2>
+<table>
+  <thead><tr><th>Ex</th><th>Proves</th><th>Key config delta</th><th>Verified via</th></tr></thead>
+  <tbody>
+    <tr><td><b>ex01-first-agent</b></td><td>Baseline: a YAML file <i>is</i> the whole program</td><td>Named model entry (<code>gemma4_local</code>), one root agent, 3 toolsets, <code>max_iterations</code></td><td class="m">--exec + --safety restricted</td></tr>
+    <tr><td><b>ex02-mcp-catalog-tool</b></td><td>MCP <i>client</i>, catalog tool (zero code)</td><td><code>ref: docker:duckduckgo</code> under root's toolsets only</td><td class="m">--exec --yolo (MCP denied under restricted)</td></tr>
+    <tr><td><b>ex03-mcp-custom-server</b></td><td>Deterministic <i>self-authored</i> MCP tools</td><td>Agent-side <code>mcp:</code> client → containerized server (<span class="m">docker run --rm</span>) + <code>tools: allow</code></td><td class="m">--exec --yolo + debug toolsets</td></tr>
+    <tr><td><b>ex04-sub-agents</b></td><td>In-process multi-role, no protocol</td><td><code>sub_agents:</code> (planner/reviewer…), <code>max_iterations: 12</code>, no MCP for sub-agents</td><td class="m">--exec (delegation transcript)</td></tr>
+    <tr><td><b>ex05-agent-as-mcp-server</b></td><td>Agent <i>out</i> as one MCP tool</td><td>Config unchanged; <code>serve mcp</code>; config description = tool description</td><td class="m">stdio probe + Claude Code HTTP :8081</td></tr>
+    <tr><td><b>ex06-a2a</b></td><td>Agent ↔ agent via HTTP</td><td><code>serve a2a</code>: agent card, tasks, artifacts on <span class="m">127.0.0.1:8082</span></td><td class="m">card fetch + task submit (JSON-RPC)</td></tr>
+    <tr><td><b>ex07-acp-editor</b></td><td>Agent inside the editor</td><td><code>serve acp</code> — <i>zero flags</i>; mode/model negotiated per session</td><td class="m">Zed session (streaming, prompts)</td></tr>
+  </tbody>
+</table>
+
+<h2>Where things run — port map (all 127.0.0.1)</h2>
+<table>
+  <thead><tr><th>Surface</th><th>Port / mode</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="m">serve api</td><td class="m">:8080</td><td><span class="ex n">documented, never probed</span></td></tr>
+    <tr><td class="m">serve mcp</td><td class="m">stdio · :8081 with --http</td><td><span class="ex p">probed</span> ex05</td></tr>
+    <tr><td class="m">serve a2a</td><td class="m">:8082</td><td><span class="ex p">probed</span> ex06</td></tr>
+    <tr><td class="m">serve chat</td><td class="m">:8083</td><td><span class="ex n">documented, never probed</span></td></tr>
+    <tr><td class="m">serve acp</td><td class="m">stdio (editor-spawned)</td><td><span class="ex p">probed</span> ex07</td></tr>
+  </tbody>
+</table>
+<p>Shared rule: stdout carries protocol only; logs go to stderr; a startup banner declares the tool-safety policy
+(default <code>restricted</code>).</p>
+
+<div class="box amber"><b>Decide in this order:</b> roles in one config → <b>sub_agents</b> (ex04); catalog tool fits →
+<b>catalog MCP</b> (ex02); need exact self-authored tools → <b>custom MCP server</b> (ex03); peer is an MCP client →
+<b>served MCP</b> (ex05); agents must discover &amp; hand off tasks → <b>A2A</b> (ex06); peer is the human's editor →
+<b>ACP</b> (ex07). <b>Never</b>: MCP refs on sub-agents (root only); MCP ≠ A2A; remote serving = network exposure.</div>
+
+<div class="box blue"><b>Model note:</b> every example runs on the built-in <code>ollama</code> provider →
+<code>gemma4:latest</code> on the local daemon. Cloud <code>glm-5.3-flash:cloud</code> appears only in pre-approved
+smoke runs — the swap is one <code>model:</code> line.</div>
+
+<footer>
+  <p>Example map · Docker Agent teaching workspace · ground truth: repo READMEs + <code>docs/notes/</code> +
+  official Docker docs · <a href="glossary.html">Glossary</a> ·
+  <a href="../lessons/0001-docker-agent-mental-model.html">Lesson 001</a> · <a href="../README.md">Repo home</a></p>
+</footer>
+</div></body></html>

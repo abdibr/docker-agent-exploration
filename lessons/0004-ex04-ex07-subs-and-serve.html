@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 004 · Sub-agents &amp; the serving surfaces (ex04–ex07) — Docker Agent</title>
+<style>
+  :root{
+    --paper:#faf8f4; --ink:#1d2a36; --muted:#5d6b7a; --line:#e4dfd6;
+    --blue:#0b63c5; --blue-soft:#e8f1fb; --teal:#0a9279; --teal-soft:#e4f4ef;
+    --amber:#a34e12; --amber-soft:#fbf0e4; --red:#b3362e; --red-soft:#faeae8;
+    --violet:#6a4bc4; --violet-soft:#efeafb;
+    --code-bg:#101a26; --code-ink:#dbe6f0;
+    --kw:#7fd1ff; --str:#8fe0b2; --com:#6b7f94; --key:#ffd487;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:17px/1.65 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cef0}
+  a:hover{border-bottom-color:var(--blue)}
+  code,.mono{font-family:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;font-size:.92em}
+  h1,h2,h3{line-height:1.25;letter-spacing:-.01em}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:46px 0 6px}
+  h1{font-size:2.1rem;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:1.06rem;margin:0 0 18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 8px}
+  .chip{font-size:.78rem;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .part{margin-top:52px}
+  .part>h2{font-size:1.45rem;margin:0 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+  .part>h2 .no{color:var(--blue);font-variant-numeric:tabular-nums;margin-right:10px}
+  .lede{color:var(--muted);margin:0 0 18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .card.blue{border-left:5px solid var(--blue);background:var(--blue-soft)}
+  .card.teal{border-left:5px solid var(--teal);background:var(--teal-soft)}
+  .card.amber{border-left:5px solid var(--amber);background:var(--amber-soft)}
+  .card.red{border-left:5px solid var(--red);background:var(--red-soft)}
+  .card.violet{border-left:5px solid var(--violet);background:var(--violet-soft)}
+  .card h3{margin:0 0 6px;font-size:1.02rem}
+  .card p{margin:6px 0}
+  .tagline{font-size:.9rem;color:var(--muted);font-style:italic}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.93rem;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f3efe7;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody tr:nth-child(even){background:#fbfaf7}
+  pre{margin:0;padding:16px 18px;background:var(--code-bg);color:var(--code-ink);border-radius:12px;overflow-x:auto;
+    font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.86rem;line-height:1.55}
+  pre .kw{color:var(--kw)} pre .str{color:var(--str)} pre .com{color:var(--com);font-style:italic} pre .key{color:var(--key)}
+  .codelabel{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 6px}
+  .cite{color:var(--muted);font-size:.84rem;background:#f4f1ea;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:16px 0}
+  .cite b{color:var(--ink)}
+  .flow{margin:12px 0 0;padding:0}
+  .flow li{padding:8px 0 8px 30px;border-bottom:1px dashed var(--line);font-size:.95rem}
+  .flow li::marker{color:var(--blue);font-weight:700}
+  .flow li:last-child{border-bottom:none}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:1px 7px;vertical-align:middle}
+  .pill.ex{background:var(--teal-soft);color:var(--teal)} .pill.warn{background:var(--red-soft);color:var(--red)}
+  details{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 16px}
+  summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  /* command box with copy */
+  .cmdbox{position:relative;margin:8px 0 4px}
+  .cmdbox pre{padding-right:92px}
+  .copybtn{position:absolute;top:10px;right:10px;border:1px solid #26374a;background:#16222f;color:var(--code-ink);
+    border-radius:8px;padding:5px 11px;font-size:.74rem;cursor:pointer;font-family:inherit}
+  .copybtn:hover{border-color:var(--kw)}
+  .copybtn.ok{border-color:var(--str);color:var(--str)}
+  /* pre-flight gates */
+  .gate{display:flex;gap:13px;align-items:flex-start;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;margin:10px 0}
+  .gate input{width:20px;height:20px;margin-top:3px;accent-color:var(--teal);flex:0 0 20px;cursor:pointer}
+  .gate .gt{font-weight:700;font-size:1rem}
+  .gate .gw{color:var(--muted);font-size:.88rem;margin:2px 0 4px}
+  .gate.done{border-color:var(--teal);background:var(--teal-soft)}
+  .gate .cmdbox pre{font-size:.8rem;padding:10px 12px;width:100%}
+  #gatedone{display:none;margin:14px 0;background:var(--teal-soft);border:1px solid var(--teal);color:var(--teal);
+    border-radius:10px;padding:10px 16px;font-size:.94rem;font-weight:700}
+  #gatedone.on{display:block}
+  /* transcript-judging simulator */
+  .simcase{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px 18px;margin:14px 0}
+  .simcase h3{margin:0 0 4px;font-size:1rem}
+  .simcase .ask{font-size:.9rem;color:var(--muted);margin:0}
+  .vrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .vbtn{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;font-size:.88rem;
+    cursor:pointer;font-family:inherit;transition:all .12s}
+  .vbtn:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .vbtn:disabled{cursor:default;opacity:.75}
+  .vbtn.v-ok{border-color:var(--teal);background:var(--teal-soft);color:var(--teal);font-weight:700;opacity:1}
+  .vbtn.v-bad{border-color:var(--red);background:var(--red-soft);color:var(--red);font-weight:700;opacity:1}
+  .vbtn.v-true{border-color:var(--teal);border-style:dashed}
+  .exp{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .exp.show{display:block}
+  .exp.ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .exp.no{background:var(--red-soft);border-left:4px solid var(--red)}
+  /* auto-graded quiz (same engine as Lesson 001) */
+  .quiz{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0}
+  .q{margin-top:28px}
+  .q .qq{font-size:1rem;font-weight:600;margin:0 0 12px}
+  .qfb{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .qfb.fb-ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .qfb.fb-bad{background:var(--red-soft);border-left:4px solid var(--red)}
+  .opt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;
+    padding:12px 16px;margin:9px 0;font-size:.95rem;cursor:pointer;font-family:inherit;transition:all .12s}
+  .opt:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .opt:disabled{cursor:default;opacity:.72}
+  .opt.opt-ok{border-color:var(--teal);background:var(--teal-soft);opacity:1}
+  .opt.opt-bad{border-color:var(--red);background:var(--red-soft);opacity:1}
+  .opt.opt-true{border-color:var(--teal);border-style:dashed}
+  #qreset{margin-top:16px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #qreset:hover{border-color:var(--blue)}
+  #markdone{border:none;background:var(--blue);color:#fff;font-weight:600;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #markdone:hover{filter:brightness(1.1)}
+  .qscore{text-align:center;padding:30px 10px;display:none}
+  .qscore .big{font-size:2.6rem;font-weight:800;color:var(--blue)}
+  .qscore p{color:var(--muted)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.85rem}
+  @media print{
+    body{background:#fff}.wrap{max-width:100%;padding:0}
+    .cmdbox .copybtn,.no-print,.simcase .vrow,.simcase .exp{display:none!important}
+    .card,pre,table,.gate,details{break-inside:avoid}
+    pre{background:#f2f4f7;color:#1d2a36}
+    pre .kw,pre .str,pre .key{color:inherit}pre .com{color:#666}
+    a{border-bottom:none;color:inherit}
+  }
+</style>
+</head>
+<body><div class="wrap">
+<main>
+
+<p class="kicker">Docker Agent workspace · Lesson 004 · delegation &amp; the serving surfaces</p>
+<h1>Lesson 004 · Sub-agents &amp; the serve family — delegation, MCP/A2A/ACP seats</h1>
+<p class="sub">One flavor needs no wire at all: ex04's <code>sub_agents:</code> delegation lives inside one YAML
+file. Then the direction flips — <code>serve mcp</code> (ex05), <code>serve a2a</code> (ex06), <code>serve acp</code>
+(ex07) put the same declarative config on a protocol seat. Learn the roles, the ports, and how to judge each wire.</p>
+<div class="chips">
+  <span class="chip">ex04 sub_agents</span>
+  <span class="chip">ex05 serve mcp</span>
+  <span class="chip">ex06 serve a2a</span>
+  <span class="chip">ex07 serve acp</span>
+  <span class="chip">verified on v1.153.0 · 2026-11-13</span>
+  <span class="chip">Windows 11 · PowerShell 5.1</span>
+</div>
+
+<section class="part" id="p1">
+  <h2><span class="no">01</span>One config, three agents — delegation without protocols</h2>
+  <p class="lede">One YAML file builds a <b>three-agent team</b>: a lead plus a planner and a reviewer, wired with
+  Docker Agent's built-in <code>sub_agents:</code> mechanism — still no server code, no protocols, no glue; the
+  config is the whole program (ex04 README). Declaring sub-agents changes exactly one thing: <b>the lead gets a
+  dedicated <code>transfer_task</code> tool</b>, and nothing else changes.</p>
+
+  <div class="card blue">
+    <h3>What one list buys</h3>
+    <p><code>sub_agents:</code> is an array of <i>names of sibling <code>agents:</code> entries</i> (it also accepts
+    OCI refs). Listing them is what hands the lead its delegation tool.</p>
+    <p><b>Lead-only, by the toolsets.</b> The planner and reviewer get <code>think</code> only — the proof is below.
+    A sub-agent would need its own <code>sub_agents:</code> entry to delegate further (nested hierarchies).</p>
+    <p><b>Required arguments.</b> The tool signature is exactly <code>{agent, task, expected_output}</code> — the
+    tool description the model sees demands <code>task</code> <i>and</i> <code>expected_output</code>. Weak prompts
+    may show the model inventing an <code>expected_output</code>; harmless, but worth reading in the transcript.</p>
+    <p><b>Not a conversation handoff.</b> The sub-agent's answer arrives back as tool-result <i>data</i>; the lead
+    stays in control and composes the final answer.</p>
+  </div>
+
+  <p class="codelabel">The real ex04 team — verbatim from ex04-sub-agents/agent.yaml (the models: entry kept above
+  as a comment; lead 12, subs 6 iterations)</p>
+<div class="cmdbox"><pre><span class="com"># models:
+#   cloud_agentic:
+#     provider: ollama
+#     model: glm-5.3-flash:cloud     # ← swap to: gemma4:latest (same daemon, app sign-in not needed)</span>
+
+agents:
+  lead:
+    model: cloud_agentic
+    description: Ex04 lead coordinator - delegates planning and review to its sub-agents
+    instruction: |
+      You are Ex04, the lead coordinator in the docker_agents exploration repo. Your
+      team solves every task by delegation, not by you:
+
+      - transfer_task once to the planner: give the planner the planning part of the
+        task, phrased as one clear goal.
+      - transfer_task once to the reviewer: hand over the exact plan text you received
+        from the planner and ask the reviewer for a verdict on it.
+      - Combine the two outputs in your final answer: first the plan you received from
+        the planner, then the verdict you received from the reviewer.
+      - Never write plan steps or the verdict yourself; if a sub-agent returns nothing
+        usable, say so plainly instead of inventing content.
+    max_iterations: 12
+    toolsets:
+      - type: think
+    sub_agents:
+      - planner
+      - reviewer
+  planner:
+    model: cloud_agentic
+    description: Planning specialist - turns a goal into a short numbered plan
+    instruction: |
+      You are the planner. Return exactly the plan requested: numbered steps, one line
+      each, no preamble, no commentary, no alternatives.
+    max_iterations: 6
+    toolsets:
+      - type: think
+  reviewer:
+    model: cloud_agentic
+    description: Review specialist - checks a plan and returns a two-line verdict
+    instruction: |
+      You are the reviewer. You receive a plan text. Judge it and return a verdict of
+      exactly two lines: line 1 the word Approved or the word Revise, line 2 the single
+      reason. No preamble.
+    max_iterations: 6
+    toolsets:
+      - type: think</pre><button class="copybtn">Copy</button></div>
+
+  <div class="card violet">
+    <h3>The context boundary — why the reviewer is trustworthy</h3>
+    <p>Each sub-agent gets its own chat, its own instruction, its own tool surface — and, crucially for the
+    reviewer, a <b>fresh view that contains only what the lead forwarded</b> (here: the plan text, not the lead's
+    framing of the task). That context isolation, tailored instructions per role, and a transcript that shows
+    <i>exactly who produced what</i> is what plain tools cannot give you.</p>
+  </div>
+
+  <div class="card">
+    <h3>The model-free gate — prove the split before any token is spent</h3>
+    <div class="cmdbox"><pre>docker agent debug toolsets .\agent.yaml</pre><button class="copybtn">Copy</button></div>
+    <p>Expected: <code>lead → think, transfer_task</code> · <code>planner → think</code> ·
+    <code>reviewer → think</code> — the same introspection gate Ex02/Ex03 added to the verification template; it
+    catches a mis-wired team before any model spend.</p>
+  </div>
+
+  <p class="codelabel">The verification template (headless, from ex04-sub-agents/ — task text carries no quotes or
+  apostrophes, so the same string works from PowerShell 5.1 and cmd.exe)</p>
+<div class="cmdbox"><pre>docker agent run .\agent.yaml --exec 'Delegate immediately. First use transfer_task once to send the planner sub-agent this task: produce a numbered three-step plan for safely renaming the git branch main to trunk in a git repository. Then use transfer_task once to send the reviewer sub-agent the plan you received and ask it to approve the plan or flag a missing step. Then answer with exactly two labeled parts. Part 1: the numbered plan you received from the planner. Part 2: the reviewer verdict you received.' --safety restricted</pre><button class="copybtn">Copy</button></div>
+
+  <p class="codelabel">The observed transcript, in order (2026-11-13, docker agent v1.153.0 — exit 0, about a minute)</p>
+<pre><span class="com"># 1 — the lead delegates to the planner:</span>
+Calling transfer_task( agent: "planner", expected_output: "A numbered list of exactly three steps…",
+  task: "Produce a numbered three-step plan for safely renaming the git branch main to trunk in a git repository." )
+<span class="com"># 2 — the planner's full nested chat returns as the tool result (it even used its own think tool):</span>
+transfer_task response → "1. Confirm the working tree is clean and no work is lost (`git status`)…"
+<span class="com"># 3 — the lead forwards the exact plan text to the reviewer:</span>
+Calling transfer_task( agent: "reviewer", task: the planner's plan verbatim )
+<span class="com"># 4 — the verdict comes back as tool-result data:</span>
+transfer_task response → "Revise" + the reason: the plan omits updating references to `main` …
+<span class="com"># 5 — the lead composes: Part 1 = planner's three steps verbatim; Part 2 = reviewer's Revise verdict verbatim
+# exit code: 0</span></pre>
+  <p class="tagline">Both <code>transfer_task</code> blocks and both response lines are the machine-checkable
+  evidence — exit 0 alone proves nothing (Ex01's rule).</p>
+
+  <div class="card amber">
+    <h3>Cost fan-out: one task ≈ 5 model chats</h3>
+    <p>A one-user-task run fans out into <b>~5 model chats</b> — one lead turn set plus a full nested chat per
+    sub-agent — so token spend multiplies; each agent is bounded by its own <code>max_iterations:</code> (lead 12,
+    subs 6 here). That fan-out is <b>why ex04 defaults to <code>glm-5.3-flash:cloud</code></b>: delegation
+    choreography (plan → forward → review → compose) is multi-hop reasoning. The README's recorded billing:
+    ~$0.15 per 1M input / $0.50 per 1M output tokens — a fraction of a cent per five-chat run.</p>
+    <p>The committed config <b>stays on the cloud model by default</b>; the local swap is a one-line edit for cheap
+    iteration on the team shape: <code>model: gemma4:latest</code> (no app sign-in needed). The README's record: the
+    same verification task did complete on local gemma4 in a rehearsal run here — <i>correctly, if verbosely,
+    several minutes versus about a minute on cloud</i>; a small model can fumble the choreography (dropping a
+    delegation, inventing the plan or verdict, looping). The <code>cloud_agentic</code> key is cosmetic after a
+    swap.</p>
+  </div>
+
+  <div class="card teal">
+    <h3>Delegation is classified safe — the opposite of arbitrary MCP calls</h3>
+    <p>Under <code>--safety restricted</code> — the fail-closed unattended profile — <b>every
+    <code>transfer_task</code> call was auto-approved</b> on the verified run (checked empirically with a free
+    local-gemma4 rehearsal before the cloud run; zero denials in the transcript). Contrast Ex02: the catalog MCP
+    <code>search</code> call was <i>denied</i> under the same mode. Delegating to a <i>declared</i> sub-agent is
+    classified safe; an arbitrary containerized MCP tool is not — so ex04's one verification command keeps the
+    strict profile. <span style="font-size:.9rem;color:var(--muted)">Hold that thought — Part 02 shows what the
+    serve family does with the same restricted default.</span></p>
+  </div>
+
+  <div class="card red">
+    <h3>Naming trap</h3>
+    <p>Do <b>not</b> name a sub-agent like a built-in tool (<code>think</code>, …) and do not duplicate an agent
+    name — agent names feed the tool surface when the config is served. And remember that sub-agent chats run with
+    the sub-agent's <i>own</i> toolsets: both subs used their <code>think</code> tool inside their nested chats.
+    A sub-agent with write tools is a sub-agent that will use them — keep toolsets minimal per role.</p>
+  </div>
+
+  <div class="cite"><b>Provenance:</b> ex04-sub-agents README + agent.yaml, verified 2026-11-13 on
+  <code>docker agent</code> v1.153.0 (exit 0, about a minute). Default-path prerequisite: Ollama daemon running and
+  the Ollama app signed in — <code>ollama list</code> must show <code>glm-5.3-flash:cloud</code>. A future plugin
+  version could change what restricted approves — cross-check the classification finding above if the CLI updates.</div>
+</section>
+
+<section class="part" id="p2">
+  <h2><span class="no">02</span>The serve family — five seats for the same YAML (ex05–ex07)</h2>
+  <p class="lede">Ex04 kept everything in one process. The serve family flips the agent's <i>side</i> with a single
+  verb — the config stays declarative throughout, and ex05/ex06/ex07 add no toolsets <i>on purpose</i>
+  (run-modes.md §15; phase-notes.md §6).</p>
+
+  <p class="codelabel">The whole family, verbatim from run-modes.md §19 quick reference</p>
+<div class="cmdbox"><pre>docker agent serve api  .\agent.yaml    # HTTP API          default 127.0.0.1:8080
+docker agent serve mcp  .\agent.yaml    # MCP server        default 127.0.0.1:8081 (stdio by default)
+docker agent serve a2a  .\agent.yaml    # A2A server        default 127.0.0.1:8082
+docker agent serve chat .\agent.yaml    # OpenAI-compatible chat completions   default 127.0.0.1:8083
+docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button class="copybtn">Copy</button></div>
+
+  <table>
+    <thead><tr><th>Surface</th><th>Default address</th><th>Flags that exist</th><th>Probed on this machine?</th></tr></thead>
+    <tbody>
+      <tr><td><code>serve mcp</code></td><td>stdio (no port); <code>127.0.0.1:8081</code> with <code>--http</code></td>
+        <td><code>--http</code>, <code>--listen</code>, <code>--tool-name</code>/<code>-a</code> (single agent);
+        <code>--safety</code>/<code>--auth-token</code> <b>only with --http</b> — stdio accepts neither; no
+        <code>--session-db</code> — pin the global <code>--data-dir</code> (default <code>~/.cagent</code>)</td>
+        <td><span class="pill ex">verified</span> probe + Claude Code live</td></tr>
+      <tr><td><code>serve a2a</code></td><td><code>127.0.0.1:8082</code></td>
+        <td><code>-l/--listen</code> to move it (the ex06 probe passes <code>127.0.0.1:8383</code> explicitly)</td>
+        <td><span class="pill ex">verified</span> probe run twice (331 / 496 ms)</td></tr>
+      <tr><td><code>serve acp</code></td><td>stdio (no port)</td>
+        <td><b>None</b> of <code>--listen</code>/<code>--http</code>/<code>--safety</code>/<code>--auth</code> — mode
+        and model are per-session <code>configOptions</code></td>
+        <td><span class="pill ex">verified</span> probe · editor steps <span class="pill warn">UNVERIFIED-ON-THIS-MACHINE</span></td></tr>
+      <tr><td><code>serve api</code></td><td><code>127.0.0.1:8080</code></td>
+        <td><code>--auth-token</code> (bearer; empty = no auth), <code>--max-request-size</code> (413 above 1 MiB),
+        <code>--session-workingdir-root</code>, <code>--pull-interval</code></td>
+        <td><span class="pill warn">documented — never probed</span></td></tr>
+      <tr><td><code>serve chat</code></td><td><code>127.0.0.1:8083</code></td>
+        <td>—</td>
+        <td><span class="pill warn">documented in the port map — never probed</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="card">
+    <h3>serve mcp — your agent is one tool in someone else's toolbox (ex05)</h3>
+    <p><b>One tool per agent, named after the agent.</b> <code>tools/list</code> returns exactly one tool for a
+    single-agent config: <code>name: root</code>; a multi-agent config like ex04's team would surface every agent as
+    its own tool, and omitting <code>--agent</code> exposes every agent. <code>--tool-name</code> overrides, only
+    when exposing a single agent. Input schema: a required <code>{message}</code>; output schema promises
+    <code>{response}</code>. <b>The tool's <code>description</code> is the agent's <code>description:</code>
+    field</b> — the calling model reads it to decide when to invoke your agent, so write it like a tool
+    description.</p>
+    <p><b>Annotations are generic, not semantic.</b> The observed tool carries <code>readOnlyHint: true</code> even
+    though a call runs a full LLM chat — do not read "no side effects" into them.</p>
+    <p><b>The answer travels twice.</b> Text <code>content</code> came back as the JSON <i>string</i> of the answer
+    while <code>structuredContent.response</code> was the typed value — prefer the typed field when your client
+    supports structured output; fall back to text otherwise.</p>
+    <p><b>The HTTP variant is stateless per MCP 2026-07-28</b> (<code>serve mcp --http</code>, default
+    <code>127.0.0.1:8081</code>): POST-only at path-agnostic endpoints (<code>/</code> and <code>/mcp</code> both
+    answer), SSE-wrapped responses, notifications acknowledged with a bare 202, <b>no <code>Mcp-Session-Id</code></b>
+    issued, GET/DELETE → 405. <code>--auth-token</code> is required for non-loopback binds unless
+    <code>--insecure-no-auth</code>.</p>
+    <p class="tagline">Verified live (2026-11-13, v1.153.0 — ex05 README): <code>node .\probe-mcp.mjs</code> asserted
+    <code>serverInfo {"name":"docker agent","version":"v1.153.0"}</code>, protocolVersion 2025-06-18, the single
+    <code>root</code> tool with the agent.yaml description, and <code>tools/call</code> of "Reply with the single
+    word: pong" → <code>structuredContent: {"response":"pong"}</code> — ~20 s end to end. Claude Code 2.1.101
+    connected live (<code>claude mcp add ex05-agent -- docker agent serve mcp …</code> → <code>✓ Connected</code>).
+    The probe's own red lesson: <code>serve mcp</code> rejects <code>--session-db</code> (unknown flag) — pin the
+    global <code>--data-dir</code> to a throwaway dir instead.</p>
+  </div>
+
+  <div class="card">
+    <h3>serve a2a — your agent is a discoverable peer (ex06)</h3>
+    <p><b>Discovery.</b> <code>GET /.well-known/agent-card.json</code> returns an A2A v1.0 card: it names the
+    interface (<code>{"url":"…/invoke","protocolBinding":"JSONRPC","protocolVersion":"1.0"}</code>), advertises
+    <code>capabilities.streaming:true</code> (unexercised here), auto-generates <code>skills[0]</code> with tags
+    <code>["llm","docker agent"]</code>, and its <code>version</code> is the serving <b>CLI version</b>, not a
+    config field. The legacy <code>/.well-known/agent.json</code> is <b>dead → 404</b> (re-verified on v1.153.0) —
+    old-bookmark tooling looks "deployed" while discovering nothing.</p>
+    <p><b>CamelCase methods only.</b> This build embeds A2A v1.0: <code>SendMessage</code>,
+    <code>SendStreamingMessage</code>, <code>GetTask</code>, <code>ListTasks</code>, <code>CancelTask</code>,
+    <code>SubscribeToTask</code>, <code>GetExtendedAgentCard</code>. The v0.2-style <code>message/send</code> is
+    rejected, as are <code>message:send</code>, <code>send_message</code> and <code>invoke</code> — sending a
+    message IS <code>SendMessage</code>.</p>
+    <p><b>One SendMessage returns a whole task object, not a string</b>: <code>status.state</code> →
+    <code>TASK_STATE_COMPLETED</code>, <code>history[]</code> echoing the user message, <code>artifacts[]</code>
+    carrying the answer, <code>contextId</code> tying the conversation, <code>metadata</code> showing cagent's
+    google-ADK extension (<code>adk_app_name</code> = the config filename). An answer to <i>forward</i>, not just
+    text to display.</p>
+<div class="cmdbox"><pre><span class="com"># Read the LAST artifact — the FIRST one is cosmetic:</span>
+#   artifacts[0]     → metadata {adk_partial: true}, parts [{data:{}, …}]   ← no text, ignore it
+#   artifacts[last]  → parts [{text: "A2A OK"}]                             ← the answer
+<span class="com"># Verbatim fields from the observed task response: status.state = TASK_STATE_COMPLETED
+# (timestamp 2026-11-13T06:08:44.2329583-08:00), contextId = 01a1d53d-4182-760f-8c22-0d63287da1eb,
+# metadata = {adk_app_name: "agent", adk_session_id: "…", adk_user_id: "A2A_USER_…"}</span></pre><button class="copybtn">Copy</button></div>
+    <p class="tagline">Verified (2026-11-13, v1.153.0 — ex06 README): round trips 331 ms / 496 ms; artifact text
+    exactly "A2A OK"; the card says <code>"name":"agent"</code> while the agent block is named <code>root</code> —
+    the card name is the <b>config file's stem</b>, not the agent name (<code>-a/--agent</code> does not change it).
+    Between v1.145.0 and v1.153.0 the card grew <code>capabilities.pushNotifications:false</code> — script against
+    field presence and meaning, not exact snapshots.</p>
+  </div>
+
+  <div class="card">
+    <h3>serve acp — your agent is an editor citizen (ex07)</h3>
+    <p><b>stdio only, and the only serve surface with no flags at all</b> — no <code>--listen</code>,
+    <code>--http</code>, <code>--safety</code> or <code>--auth</code> (observed on both plugin versions): an ACP
+    host (an editor such as Zed) spawns the agent as a subprocess and drives it over JSON-RPC 2.0 NDJSON with a
+    session lifecycle and streamed updates — the same shape as LSP/DAP integrations. Docker Agent speaks
+    <b>ACP v1</b> (the stable line; v2 exists only as Draft).</p>
+    <p><b>The handshake, machine-verified on the wire</b> (2026-11-13, v1.153.0 — ex07 README):</p>
+    <ol class="flow">
+      <li><code>initialize</code> with <code>protocolVersion: 1</code> → negotiates <b>the number 1</b> (send the
+      number, not the string "1"), <code>agentInfo: "docker agent v1.153.0"</code>,
+      <code>authMethods: ["host-credentials"]</code> — no interactive auth, because the config names its
+      <code>ollama</code> model provider.</li>
+      <li><code>session/new</code> → a real <code>sessionId</code> (UUID) plus cagent
+      <b><code>configOptions</code></b>: the editor can switch the tool-safety mode
+      (<code>default|strict|balanced|restricted|autonomous</code>) and the <b>per-agent model</b> from inside its
+      UI, mid-session — the local↔cloud swap surfaces as data, not a flag.</li>
+      <li><code>session/prompt</code> → streamed <code>session/update</code> notifications
+      (<code>available_commands_update</code>, <code>config_option_update</code>, <code>current_mode_update</code>,
+      <code>agent_message_chunk</code>) → resolves with <code>{stopReason: "end_turn"}</code>. Observed round trip:
+      exactly <code>{"type":"text","text":"pong"}</code>, messageChunks=1, thoughtChunks=0.</li>
+    </ol>
+    <p><b>The envelope-shape lesson (the probe's red→green story).</b> v1.145.0 carried update notifications
+    <i>flat</i> on the params (<code>params.sessionUpdate</code> + <code>params.content</code>); v1.153.0 wraps
+    them in an envelope — <code>params.update.{sessionUpdate, content, …}</code> — and adds new kinds. The first
+    probe run was <b>red</b>: the reply <code>pong</code> was already on the wire while the probe read the wrong
+    envelope — a client pinned to the flat shape sees the reply bytes but reads none of them. Parse both shapes.</p>
+    <p><b>Editor steps carry the <span class="pill warn">UNVERIFIED-ON-THIS-MACHINE</span> label.</b> No ACP host
+    was installed on this machine, so the Zed walkthrough (Agent Settings → External Agents → <i>Add Custom
+    Agent</i>; an <code>agent_servers</code> entry whose <code>command</code> is <code>"docker"</code> with
+    <code>args</code> including <code>agent, serve, acp</code> plus the absolute config path — quoted verbatim from
+    Zed's external-agents documentation as captured in the exploration notes) is the owner demo. VS Code 1.143.1
+    does not speak ACP (third-party host extensions are documented; none installed or attempted). Claude Code
+    2.1.101 is an <i>MCP</i> client, not an ACP host. For your own runs: local models stream thoughts — gemma4 can
+    emit about a minute of <code>agent_thought_chunk</code> before the first <code>agent_message_chunk</code>;
+    render chunks by their <code>sessionUpdate</code> kind or a waiting client looks hung while the model thinks.</p>
+  </div>
+
+  <div class="card amber">
+    <h3>The honest rows — and the shared machinery underneath</h3>
+    <p><b><code>serve api</code> (default <code>127.0.0.1:8080</code>)</b> — session-based REST
+    (<code>POST /api/sessions</code>) — and <b><code>serve chat</code> (default <code>127.0.0.1:8083</code>)</b> —
+    OpenAI-compatible chat completions — are documented from <code>--help</code> text and the port map and
+    <b>never probed</b> (the phase's label: "documented surfaces, unverified on this machine," flavors.md). OCI
+    share (<code>docker agent share push|pull</code>) is out of scope this phase — it needs a registry.</p>
+    <p><b>Shared behavior, observed on every probed surface.</b> The startup banner declares the policy:</p>
+<div class="cmdbox"><pre>Tool safety policy: restricted (source: serve default)</pre><button class="copybtn">Copy</button></div>
+    <p>…<b>stdout carries protocol NDJSON only</b> (all logging on stderr — the split that makes standard SDK stdio
+    transports work untouched), and on Windows cleanup must <b>kill the process tree</b>: the listener is the
+    <code>docker-agent.exe</code> <i>child</i> of the <code>docker</code> wrapper — wrapper-kill can orphan it with
+    the port squatted.</p>
+<div class="cmdbox"><pre>taskkill /pid &lt;pid&gt; /T /F</pre><button class="copybtn">Copy</button></div>
+    <p class="tagline">The probes made the gotcha an assertion: ex06's kills the tree (with a <code>netstat -ano</code>
+    fallback to the port owner) and <i>proves the port re-binds</i> before exiting 0 — a leaked tree fails the run
+    instead of haunting the next one; 8081 stays occupied until the tree is gone.</p>
+  </div>
+
+  <div class="card teal">
+    <h3>The config stays declarative — and deliberately tool-free</h3>
+    <p>ex05/ex06/ex07's agent.yaml keeps the ex01 shape (a named <code>gemma4_local</code> entry on the built-in
+    <code>ollama</code> provider) with <b>no toolsets — on purpose</b>. From ex05's config comment: "this round trip
+    needs no tools at all, and a tool-free agent never runs into serve's default restricted tool-safety mode." ACP
+    goes further: an editor brings capabilities with it — fs reads/writes and terminal access arrive through the
+    client's <code>clientCapabilities</code> and <code>session/request_permission</code>, not agent-side toolsets.</p>
+    <p>Add toolsets to a served agent and you inherit the fail-closed behavior Ex02 documented (restricted denies
+    unattended calls); ex06's README adds the escape — tasks that must write or run commands need
+    <code>--safety autonomous</code> on the serve command, a deliberate one-shot with the blast radius read first.</p>
+    <p><b>The version lesson across the family</b> (v1.145.0 → v1.153.0 auto-update mid-phase): MCP
+    <code>initialize</code> dropped the <code>logging:{}</code> capability; the A2A card gained
+    <code>capabilities.pushNotifications:false</code>; ACP updates gained the envelope. Core surfaces proved stable.</p>
+  </div>
+</section>
+
+<section class="part" id="p3">
+  <h2><span class="no">03</span>Judge the wire — three surfaces, three verdicts</h2>
+  <p class="lede">The Lesson 002 skill, one layer out: the transcript is now a protocol exchange, and exit codes
+  still lie — the repo's serve probes assert the wire itself (handshake fields, round-trip payload, task state, port
+  re-bound) precisely because the serve process's exit code is not trusted. Answers lock in once chosen.</p>
+
+  <div class="simcase" data-ok="1">
+    <h3>Case A — the snake_case caller</h3>
+    <p class="ask">Your A2A client POSTs to <code>/invoke</code> with <code>"method":"message/send"</code> (the
+    v0.2-era name from an old tutorial). The server answers, verbatim shape:</p>
+    <pre>{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"method not found","data":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","domain":"a2a-protocol.org","reason":"METHOD_NOT_FOUND"}]}}</pre>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">✅ Success — the server answered you, move on</button>
+      <button class="vbtn" data-v="1">🚫 Not success — wrong method casing on the wire</button>
+      <button class="vbtn" data-v="2">🧰 Setup problem — port, config or firewall</button>
+    </div>
+    <div class="exp">-32601 is "method not found", and this build speaks A2A v1.0 with CamelCase methods only. The ex06
+    README records that message/send, message:send, send_message and invoke are all rejected with -32601 (observed
+    live in the exploration notes and re-verified on v1.153.0). The correct method is SendMessage — this is not a
+    server misconfiguration; it is a naming bug in your client.</div>
+  </div>
+
+  <div class="simcase" data-ok="2">
+    <h3>Case B — the artifact that came up empty</h3>
+    <p class="ask">A consuming integration reads <code>artifacts[0].parts[0].text</code> to display the answer. The
+    task reads <code>TASK_STATE_COMPLETED</code> and the artifacts array is non-empty — but the text is empty. The
+    task object did arrive; the serve process is healthy.</p>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">✅ Success — a completed task has no more to give</button>
+      <button class="vbtn" data-v="1">🧰 Setup problem — the serve process dropped artifacts</button>
+      <button class="vbtn" data-v="2">🚫 Not success — artifacts[0] is cosmetic; read the LAST artifact's parts[].text</button>
+    </div>
+    <div class="exp">The ex06 README gotcha, verbatim in spirit: a cosmetic first artifact (metadata adk_partial:true, empty
+    data) precedes the real answer — consuming code that grabs artifacts[0] gets nothing; take the last artifact that has
+    parts[].text. On the verified run the answer "A2A OK" lived in artifacts[1] while artifacts[0] carried the adk_partial
+    marker with no text at all.</div>
+  </div>
+
+  <div class="simcase" data-ok="0">
+    <h3>Case C — the reassuring annotation</h3>
+    <p class="ask">In a design review someone reads <code>tools/list</code> from your served agent and points at
+    <code>readOnlyHint: true</code>: "My data is safe — the tool declares itself read-only. And with serve defaulting
+    to restricted, anything it didn't like would be routed to a human for approval before running."</p>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">🚫 Wrong on both counts — annotations are generic, and restricted denies instead of asking</button>
+      <button class="vbtn" data-v="1">✅ Right — readOnlyHint is a binding promise of no side effects</button>
+      <button class="vbtn" data-v="2">🧰 Half-right — add toolsets and restricted will prompt a human automatically</button>
+    </div>
+    <div class="exp">Two claims, both wrong. One: annotations are generic, not semantic (ex05 README) — readOnlyHint:true was
+    observed even though a call runs a full LLM chat; an agent with write toolsets would still act. Two: restricted is fail-closed —
+    the mode's fallback denies instead of asking for confirmation (Ex02's exact denial text). What keeps ex05's round trip safe is
+    that the committed config declares no toolsets at all: nothing to approve, nothing to deny.</div>
+  </div>
+
+  <div class="cite"><b>Where each verdict comes from:</b> Case A — ex06 README "Method casing" gotcha; Case B — ex06
+  README "Read the LAST artifact" gotcha; Case C — ex05 README "Annotations are generic" + the serve-default
+  restricted note. All observed 2026-11-13 on <code>docker agent</code> v1.153.0.</div>
+</section>
+
+<section class="part" id="p4">
+  <h2><span class="no">04</span>Carry forward</h2>
+  <ol class="flow">
+    <li><b>Roles before protocols.</b> Work that splits into roles → <code>sub_agents:</code> first: an array of
+      sibling entry names under the lead, lead-only <code>transfer_task</code>
+      (<code>{agent, task, expected_output}</code>), sub-answers back as tool-result data, reviewer starting from a
+      fresh view. But plan for the fan-out: one task ≈ 5 model chats, bounded only by per-agent
+      <code>max_iterations:</code> (12 / 6 / 6 in ex04) — which is why ex04 ships on
+      <code>glm-5.3-flash:cloud</code>.</li>
+    <li><b>One verb, five seats.</b> <code>docker agent serve &lt;mode&gt;</code>: mcp (tool seat — stdio default,
+      <code>--http</code> becomes stateless 8081), a2a (peer seat — 8082, card + task lifecycle), acp (editor seat —
+      stdio, no launch flags at all), plus api (8080) and chat (8083) — those two documented, never probed.</li>
+    <li><b>Dress the wire for its reader.</b> MCP: one tool per agent, named after it, described by the agent's
+      <code>description:</code> field — annotations are generic, not semantic. A2A: CamelCase
+      <code>SendMessage</code>, card at <code>/.well-known/agent-card.json</code>, read the LAST artifact. ACP:
+      negotiate the <i>number</i> 1, stream <code>session/update</code>, tolerate both envelope shapes.</li>
+    <li><b>Serving defaults to restricted — safe only because the configs are tool-free.</b> The banner says so
+      (<code>source: serve default</code>); add toolsets and unattended calls fail closed. stdout = protocol NDJSON
+      only, stderr = logs; on Windows kill the tree, not the wrapper.</li>
+    <li><b>The probe's exit code is trustworthy by construction.</b> It asserts the protocol surface and never
+      trusts the serve process's own exit code — then <code>taskkill /pid &lt;pid&gt; /T /F</code>s the tree and,
+      in ex06, proves the port re-binds before calling it green.</li>
+  </ol>
+
+  <div class="quiz no-print">
+    <h3>🎯 Self-check — nine questions</h3>
+    <p class="tagline">Feedback is immediate, answers lock, and every claim is grounded in the ex04–ex07 READMEs and
+    the repo's notes. The <a href="../reference/glossary.html">glossary</a> remains fair game.</p>
+    <div id="quiz"></div>
+    <div class="qscore" id="qscore" style="display:none"></div>
+    <button id="qreset">↺ Reset</button>
+  </div>
+
+  <div class="card teal no-print" style="margin-top:12px">
+    <h3>Next up — Lesson 005: the capstone — choose the flavor</h3>
+    <p class="tagline">ex01–ex07 are verified green and the phase deliberately paused; the next move — a real
+    problem and its flavor(s) — belongs to the owner. Lesson 005 is that decision.</p>
+    <p class="cite" style="margin-top:8px"><button id="markdone">✓ Mark Lesson&nbsp;004 complete and open the capstone</button></p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p><b>Ground rules</b> · Ground truth = this repo's docs (<a href="../docs/notes/run-modes.md">run-modes.md</a>,
+  <a href="../docs/notes/flavors.md">flavors.md</a>, <a href="../docs/notes/phase-notes.md">phase-notes.md</a>) and
+  the ex04–ex07 READMEs — never model memory. · Local default <code>gemma4:latest</code>; the cloud swap stays a
+  one-line <code>model:</code> edit, your spend. · <a href="../reference/glossary.html">Glossary</a> ·
+  <a href="../reference/ex-map.html">Example map</a> · <a href="../NOTES.md">Workspace notes</a> ·
+  <a href="index.html">Lessons</a> — previous: <a href="0003-ex02-ex03-mcp-flavors.html">003 · MCP flavors&nbsp;←</a> ·
+  next: <a href="0005-capstone-choose-flavor.html">005 · capstone&nbsp;→</a></p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  /* ---- copy buttons ---- */
+  document.querySelectorAll(".copybtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      var text = pre ? pre.textContent : "";
+      function flash(ok) {
+        btn.textContent = ok ? "Copied ✓" : "Copy failed";
+        btn.classList.toggle("ok", !!ok);
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1400);
+      }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta); flash(ok);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { flash(true); }, fallback);
+      } else { fallback(); }
+    });
+  });
+
+  /* ---- transcript judging ---- */
+  document.querySelectorAll(".simcase").forEach(function (cs) {
+    var okv = cs.dataset.ok;
+    var exp = cs.querySelector(".exp");
+    cs.querySelectorAll(".vbtn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (cs.dataset.answered) return;
+        cs.dataset.answered = "1";
+        var right = b.dataset.v === okv;
+        b.classList.add(right ? "v-ok" : "v-bad");
+        if (!right) { cs.querySelectorAll(".vbtn")[okv].classList.add("v-true"); }
+        cs.querySelectorAll(".vbtn").forEach(function (x) { x.disabled = true; });
+        exp.textContent = (right ? "✔ Well judged — " : "✘ Not quite — ") + exp.textContent;
+        exp.classList.add(right ? "ok" : "no", "show");
+      });
+    });
+  });
+
+  /* ---- quiz: same engine as Lesson 001 ---- */
+  var QUIZ = [
+    { q: "Your task splits into roles — plan, review, compose. Which seat does the repo reach for first?",
+      o: ["A catalog MCP toolset (type: mcp, ref: docker:…)", "sub_agents: sibling agents: entries declared under the lead", "serve a2a so other agents discover it via a card", "serve acp so an editor drives sessions"], a: 1,
+      f: "flavors.md's rule: sub_agents is multi-role work inside one config — reach for it first, before any protocol machinery. Listing the names hands the lead transfer_task." },
+    { q: "Who gets transfer_task, and what must a call supply?",
+      o: ["Every agent in the config; a task only", "Only sub-agents; agent plus expected_output", "The lead only; it requires agent, task AND expected_output", "Whichever agent declares lead: true"], a: 2,
+      f: "debug toolsets shows it model-free: the lead exposes think + transfer_task; planner and reviewer expose think only. The tool description demands task AND expected_output; subs delegate further only with their own sub_agents." },
+    { q: "Which statement about serve defaults is true?",
+      o: ["serve mcp listens on 127.0.0.1:8081 by default", "serve acp defaults to port 8084", "serve a2a defaults to 127.0.0.1:8082, and serve acp accepts no --listen/--http/--safety/--auth flags at all", "All five serve surfaces share the default port 8080"], a: 2,
+      f: "run-modes §15/§19 and phase-notes §6: mcp is stdio by default (--http for 8081); a2a is 8082; chat is 8083; acp is stdio-only, launched by an editor as a subprocess." },
+    { q: "A v0.2-era A2A client wakes up and points at your served agent. What happens?",
+      o: ["Discovery at /.well-known/agent.json succeeds and message/send works", "Discovery at /.well-known/agent-card.json works; message/send is rejected with -32601 — only CamelCase SendMessage exists", "Discovery needs --auth-token even on loopback", "Nothing — the card must be renamed to agent.json first"], a: 1,
+      f: "ex06 README: agent.json is dead → 404 (re-verified on v1.153.0); message/send, message:send, send_message, invoke all → -32601. A2A v1.0 CamelCase only." },
+    { q: "In serve mcp, what tells the calling model when it should invoke your agent as a tool?",
+      o: ["The readOnlyHint annotation on the tool", "The inputSchema {message}", "The agent's description: field from agent.yaml", "The models: entry's description"], a: 2,
+      f: "The tool's description is the agent's description: — write it like a tool description, because a model reads it. Annotations are generic, not semantic." },
+    { q: "You add a filesystem toolset to ex05's served config. Under the serve default (restricted), what happens on an unattended call?",
+      o: ["Denied — fail-closed; that is why the committed served configs declare no toolsets", "Reads are auto-approved; writes prompt a human", "serve silently upgrades itself to autonomous", "Nothing — MCP clients bypass the safety profile"], a: 0,
+      f: "flavors.md's cross-flavor caution: serving defaults to restricted and is only comfortable because those configs declare no toolsets; a served agent with toolsets inherits the same fail-closed denial Ex02 documented (ex06's escape: --safety autonomous as a deliberate one-shot)." },
+    { q: "The ACP probe's red run: the reply pong was already on the wire. Why did the probe fail anyway?",
+      o: ["protocolVersion moved from 1 to 2 between plugin builds", "session/new stopped returning a sessionId", "Update notifications moved from flat params (v1.145.0) into a params.update envelope (v1.153.0) — the probe read the wrong shape", "stopReason changed from end_turn to done"], a: 2,
+      f: "ex07's red→green story: a client pinned to the flat shape sees the reply bytes but reads none of them. Parse both envelope shapes." },
+    { q: "Why is probe-acp.mjs's exit 0 trustworthy, when a serve process's own exit code is not?",
+      o: ["The probe runs everything twice", "It asserts the protocol surface itself — handshake fields, reply payload, stopReason — and never trusts the serve process's exit code", "It compares output against --yolo runs", "The editor signs off on the run"], a: 1,
+      f: "ex07: trustworthy by construction — the probe asserts wire evidence, not process completion; ex06's probe also proves the port re-binds before exiting 0." },
+    { q: "Windows: the serve process looks dead but 127.0.0.1:8081 still refuses to bind. What happened?",
+      o: ["You killed the docker wrapper, but the listener is the docker-agent.exe child — kill the tree: taskkill /pid <pid> /T /F", "Port 8081 is permanently reserved by Docker Desktop", "Only a Docker Desktop restart clears a serve listener", "A stale listener means the config must change ports"], a: 0,
+      f: "Serve spawns a child docker-agent.exe that holds the listener; wrapper-kill orphans it. The probes kill the tree — ex06 asserts the port re-binds." }
+  ];
+  var box = document.getElementById("quiz");
+  var scoreBox = document.getElementById("qscore");
+  function render() {
+    box.innerHTML = "";
+    scoreBox.style.display = "none";
+    QUIZ.forEach(function (item, qi) {
+      var d = document.createElement("div"); d.className = "q";
+      var h = document.createElement("p"); h.className = "qq"; h.textContent = (qi + 1) + ". " + item.q; d.appendChild(h);
+      var fbq = document.createElement("div"); fbq.className = "qfb";
+      item.o.forEach(function (opt, oi) {
+        var b = document.createElement("button"); b.className = "opt"; b.textContent = opt;
+        b.addEventListener("click", function () {
+          if (d.dataset.answered) return;
+          d.dataset.answered = "1";
+          var ok = oi === item.a;
+          b.classList.add(ok ? "opt-ok" : "opt-bad");
+          if (!ok) { d.querySelectorAll(".opt")[item.a].classList.add("opt-true"); }
+          d.querySelectorAll(".opt").forEach(function (x) { x.disabled = true; });
+          fbq.textContent = (ok ? "✔ Correct — " : "✘ Not quite — ") + item.f;
+          fbq.classList.add(ok ? "fb-ok" : "fb-bad");
+          fbq.style.display = "block";
+          tally();
+        });
+        d.appendChild(b);
+      });
+      d.appendChild(fbq);
+      box.appendChild(d);
+    });
+  }
+  function tally() {
+    var answered = box.querySelectorAll(".q[data-answered]").length;
+    if (answered < QUIZ.length) return;
+    var right = box.querySelectorAll(".opt-ok").length;
+    scoreBox.textContent = right + " / " + QUIZ.length + (right === QUIZ.length
+      ? " — perfect. The exit-code discipline is yours; you're ready for real runs."
+      : " — reread the feedback above; every miss points at a Part in this lesson.");
+    scoreBox.style.display = "block";
+  }
+  document.getElementById("qreset").addEventListener("click", render);
+  render();
+
+  document.getElementById("markdone").addEventListener("click", function () {
+    try { localStorage.setItem("lessons_complete_0004", "1"); } catch (e) { /* private mode */ }
+    window.location.href = "0005-capstone-choose-flavor.html";
+  });
+})();
+</script>
+</body></html>

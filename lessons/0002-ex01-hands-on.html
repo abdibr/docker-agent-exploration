@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 002 · Ex01 hands-on — run it, then judge it — Docker Agent</title>
+<style>
+  :root{
+    --paper:#faf8f4; --ink:#1d2a36; --muted:#5d6b7a; --line:#e4dfd6;
+    --blue:#0b63c5; --blue-soft:#e8f1fb; --teal:#0a9279; --teal-soft:#e4f4ef;
+    --amber:#a34e12; --amber-soft:#fbf0e4; --red:#b3362e; --red-soft:#faeae8;
+    --violet:#6a4bc4; --violet-soft:#efeafb;
+    --code-bg:#101a26; --code-ink:#dbe6f0;
+    --kw:#7fd1ff; --str:#8fe0b2; --com:#6b7f94; --key:#ffd487;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:17px/1.65 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cef0}
+  a:hover{border-bottom-color:var(--blue)}
+  code,.mono{font-family:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;font-size:.92em}
+  h1,h2,h3{line-height:1.25;letter-spacing:-.01em}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:46px 0 6px}
+  h1{font-size:2.1rem;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:1.06rem;margin:0 0 18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 8px}
+  .chip{font-size:.78rem;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .part{margin-top:52px}
+  .part>h2{font-size:1.45rem;margin:0 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+  .part>h2 .no{color:var(--blue);font-variant-numeric:tabular-nums;margin-right:10px}
+  .lede{color:var(--muted);margin:0 0 18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .card.blue{border-left:5px solid var(--blue);background:var(--blue-soft)}
+  .card.teal{border-left:5px solid var(--teal);background:var(--teal-soft)}
+  .card.amber{border-left:5px solid var(--amber);background:var(--amber-soft)}
+  .card.red{border-left:5px solid var(--red);background:var(--red-soft)}
+  .card.violet{border-left:5px solid var(--violet);background:var(--violet-soft)}
+  .card h3{margin:0 0 6px;font-size:1.02rem}
+  .card p{margin:6px 0}
+  .tagline{font-size:.9rem;color:var(--muted);font-style:italic}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.93rem;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f3efe7;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody tr:nth-child(even){background:#fbfaf7}
+  pre{margin:0;padding:16px 18px;background:var(--code-bg);color:var(--code-ink);border-radius:12px;overflow-x:auto;
+    font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.86rem;line-height:1.55}
+  pre .kw{color:var(--kw)} pre .str{color:var(--str)} pre .com{color:var(--com);font-style:italic} pre .key{color:var(--key)}
+  .codelabel{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 6px}
+  .cite{color:var(--muted);font-size:.84rem;background:#f4f1ea;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:16px 0}
+  .cite b{color:var(--ink)}
+  .flow{margin:12px 0 0;padding:0}
+  .flow li{padding:8px 0 8px 30px;border-bottom:1px dashed var(--line);font-size:.95rem}
+  .flow li::marker{color:var(--blue);font-weight:700}
+  .flow li:last-child{border-bottom:none}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:1px 7px;vertical-align:middle}
+  .pill.ex{background:var(--teal-soft);color:var(--teal)} .pill.warn{background:var(--red-soft);color:var(--red)}
+  details{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 16px}
+  summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  /* command box with copy */
+  .cmdbox{position:relative;margin:8px 0 4px}
+  .cmdbox pre{padding-right:92px}
+  .copybtn{position:absolute;top:10px;right:10px;border:1px solid #26374a;background:#16222f;color:var(--code-ink);
+    border-radius:8px;padding:5px 11px;font-size:.74rem;cursor:pointer;font-family:inherit}
+  .copybtn:hover{border-color:var(--kw)}
+  .copybtn.ok{border-color:var(--str);color:var(--str)}
+  /* pre-flight gates */
+  .gate{display:flex;gap:13px;align-items:flex-start;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;margin:10px 0}
+  .gate input{width:20px;height:20px;margin-top:3px;accent-color:var(--teal);flex:0 0 20px;cursor:pointer}
+  .gate .gt{font-weight:700;font-size:1rem}
+  .gate .gw{color:var(--muted);font-size:.88rem;margin:2px 0 4px}
+  .gate.done{border-color:var(--teal);background:var(--teal-soft)}
+  .gate .cmdbox pre{font-size:.8rem;padding:10px 12px;width:100%}
+  #gatedone{display:none;margin:14px 0;background:var(--teal-soft);border:1px solid var(--teal);color:var(--teal);
+    border-radius:10px;padding:10px 16px;font-size:.94rem;font-weight:700}
+  #gatedone.on{display:block}
+  /* transcript-judging simulator */
+  .simcase{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px 18px;margin:14px 0}
+  .simcase h3{margin:0 0 4px;font-size:1rem}
+  .simcase .ask{font-size:.9rem;color:var(--muted);margin:0}
+  .vrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .vbtn{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;font-size:.88rem;
+    cursor:pointer;font-family:inherit;transition:all .12s}
+  .vbtn:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .vbtn:disabled{cursor:default;opacity:.75}
+  .vbtn.v-ok{border-color:var(--teal);background:var(--teal-soft);color:var(--teal);font-weight:700;opacity:1}
+  .vbtn.v-bad{border-color:var(--red);background:var(--red-soft);color:var(--red);font-weight:700;opacity:1}
+  .vbtn.v-true{border-color:var(--teal);border-style:dashed}
+  .exp{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .exp.show{display:block}
+  .exp.ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .exp.no{background:var(--red-soft);border-left:4px solid var(--red)}
+  /* auto-graded quiz (same engine as Lesson 001) */
+  .quiz{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0}
+  .q{margin-top:28px}
+  .q .qq{font-size:1rem;font-weight:600;margin:0 0 12px}
+  .qfb{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .qfb.fb-ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .qfb.fb-bad{background:var(--red-soft);border-left:4px solid var(--red)}
+  .opt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;
+    padding:12px 16px;margin:9px 0;font-size:.95rem;cursor:pointer;font-family:inherit;transition:all .12s}
+  .opt:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .opt:disabled{cursor:default;opacity:.72}
+  .opt.opt-ok{border-color:var(--teal);background:var(--teal-soft);opacity:1}
+  .opt.opt-bad{border-color:var(--red);background:var(--red-soft);opacity:1}
+  .opt.opt-true{border-color:var(--teal);border-style:dashed}
+  #qreset{margin-top:16px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #qreset:hover{border-color:var(--blue)}
+  #markdone{border:none;background:var(--blue);color:#fff;font-weight:600;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #markdone:hover{filter:brightness(1.1)}
+  .qscore{text-align:center;padding:30px 10px;display:none}
+  .qscore .big{font-size:2.6rem;font-weight:800;color:var(--blue)}
+  .qscore p{color:var(--muted)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.85rem}
+  @media print{
+    body{background:#fff}.wrap{max-width:100%;padding:0}
+    .cmdbox .copybtn,.no-print,.simcase .vrow,.simcase .exp{display:none!important}
+    .card,pre,table,.gate,details{break-inside:avoid}
+    pre{background:#f2f4f7;color:#1d2a36}
+    pre .kw,pre .str,pre .key{color:inherit}pre .com{color:#666}
+    a{border-bottom:none;color:inherit}
+  }
+</style>
+</head>
+<body><div class="wrap">
+<main>
+
+<p class="kicker">Docker Agent workspace · Lesson 002 · hands-on</p>
+<h1>Ex01 hands-on — run it, then judge it</h1>
+<p class="sub">Lesson 001 gave you the mental model. Today <i>you</i> drive <code>ex01-first-agent</code> for real:
+four pre-flight gates, a free dry-run, the TUI demo, then the repo's verification template — and the
+judgment call that exit codes cannot make for you.</p>
+<div class="chips">
+  <span class="chip">ex01-first-agent</span>
+  <span class="chip">you type the commands</span>
+  <span class="chip">~30 min</span>
+  <span class="chip">Windows 11 · PowerShell 5.1</span>
+  <span class="chip">prereq: Docker Desktop + Ollama installed</span>
+</div>
+
+<section class="part" id="p1">
+  <h2><span class="no">01</span>Four gates before any spend</h2>
+  <p class="lede">Every misbehaving run tends to trace back to a skipped gate. These four cost under
+  thirty seconds combined, and two of them are free — they touch no model at all. Tick each one as you
+  run its command; your ticks persist in this browser.</p>
+
+  <div class="gate" id="gate0">
+    <input type="checkbox" aria-label="Docker Desktop running">
+    <div>
+      <p class="gt">① Docker Desktop is running</p>
+      <p class="gw">You need the engine (the <i>Server</i> section in the output), not just a client build.</p>
+      <div class="cmdbox no-print"><pre>docker version</pre><button class="copybtn">Copy</button></div>
+    </div>
+  </div>
+
+  <div class="gate" id="gate1">
+    <input type="checkbox" aria-label="Ollama daemon and model present">
+    <div>
+      <p class="gt">② Ollama daemon is up, and the model is present</p>
+      <p class="gw">Required for <i>every</i> run of ex01 — local and cloud alike. The built-in <code>ollama</code>
+      provider talks to <code>localhost:11434</code>. The list must show <code>gemma4:latest</code>
+      (<code>glm-5.3-flash:cloud</code> is optional, for the cloud path only).</p>
+      <div class="cmdbox no-print"><pre>ollama list</pre><button class="copybtn">Copy</button></div>
+    </div>
+  </div>
+
+  <div class="gate" id="gate2">
+    <input type="checkbox" aria-label="docker agent doctor health check">
+    <div>
+      <p class="gt">③ The CLI plugin answers — and you can read a health report</p>
+      <p class="gw"><code>docker agent doctor</code> is the one-shot health check. On this machine it
+      <b>exits non-zero</b> because Docker Model Runner is unreachable — that is <b>not</b> a blocker for ex01,
+      which pins the <code>ollama</code> provider and never touches Model Runner.</p>
+      <div class="cmdbox no-print"><pre>docker agent doctor</pre><button class="copybtn">Copy</button></div>
+    </div>
+  </div>
+
+  <div class="gate" id="gate3">
+    <input type="checkbox" aria-label="Dry-run passes">
+    <div>
+      <p class="gt">④ Config sanity — the free gate</p>
+      <p class="gw"><code>--dry-run</code> validates the config without touching a model. Later examples in this
+      repo run this same gate before any spend.</p>
+      <div class="cmdbox no-print"><pre>cd ex01-first-agent; docker agent run .\agent.yaml --dry-run</pre><button class="copybtn">Copy</button></div>
+    </div>
+  </div>
+
+  <div id="gatedone">✓ All four gates green — you're spend-safe. Continue to Part 02.</div>
+
+  <div class="card amber">
+    <h3>⚠ Why gates ② and ③ look contradictory — they aren't</h3>
+    <p class="tagline">Gate ② must be <i>green</i> before any run (the daemon serves every model call), while gate ③
+    may end <i>non-zero</i> and still be fine (its only complaint here is Model Runner, which ex01 never uses).
+    If a run later misbehaves, the README's first diagnostic reflex is <code>ollama list</code> — the daemon
+    explains far more failures than anything else on this box.</p>
+  </div>
+</section>
+<section class="part" id="p2">
+  <h2><span class="no">02</span>Two surfaces: look around, then verify</h2>
+  <p class="lede">The TUI is for browsing; the verification template is for proof. Ex01 is machine-verified through
+  exactly one command — the same shape every later example in this repo reuses. Run the TUI once to
+  loosen up, then switch to the template.</p>
+
+  <p class="codelabel">TUI — owner demo (interactive; nothing is asserted)</p>
+  <div class="cmdbox no-print">
+<pre><span class="kw">cd</span> ex01-first-agent
+docker agent run .\agent.yaml</pre>
+    <button class="copybtn">Copy</button>
+  </div>
+  <p class="tagline">Chat freely: ask what tools it has, or what it can read. Quit with Ctrl+C. Nothing here
+  is checked or stored — this surface exists so you've <i>seen</i> the agent think.</p>
+
+  <p class="codelabel" style="margin-top:26px">The verification template — ex01's one machine-checked command</p>
+  <div class="cmdbox no-print">
+<pre>docker agent run .\agent.yaml --exec <span class="str">'Read agent.yaml in the current directory using your filesystem tools. Then answer with exactly two lines. Line 1: the provider and the model name you find under models. Line 2: the three toolset types listed for this agent.'</span> --safety restricted</pre>
+    <button class="copybtn">Copy</button>
+  </div>
+
+  <table>
+    <thead><tr><th>Piece</th><th>What it does</th><th>Why it earns its place</th></tr></thead>
+    <tbody>
+      <tr><td><code>docker agent run .\agent.yaml</code></td>
+          <td>Config file first, as the positional argument.</td>
+          <td>The config <i>is</i> the program — and <code>agent.yaml</code> is not
+              auto-discovered (only <code>docker-agent.yaml</code> would be), so name it.</td></tr>
+      <tr><td><code>--exec '…'</code></td>
+          <td>Headless: one task, full transcript to stdout, exit when done.</td>
+          <td>A scripted run is itself the test — the transcript is the evidence.</td></tr>
+      <tr><td><i>the task wording</i></td>
+          <td>Read-only, narrow, answer lives entirely inside a file the agent must read.</td>
+          <td>Reliable for a small model; deterministic; leaves no scratch files.</td></tr>
+      <tr><td><code>--safety restricted</code></td>
+          <td>Fail-closed unattended profile: safe calls auto-approved, everything else
+            silently denied, no human prompted mid-run.</td>
+          <td>This read-only task passes unattended; nothing risky slips through.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="codelabel">Shape of a passing run (abridged — not literal output)</p>
+<pre><span class="com"># tool calls:</span>  read_file(agent.yaml)          <span class="com">→ agent reads the file</span>
+<span class="com"># final answer (two lines):</span>
+ollama gemma4:latest
+filesystem shell think
+<span class="com"># exit code: 0</span></pre>
+
+  <div class="card red">
+    <h3>🚦 Exit 0 is the <i>start</i> of judgment, not the end</h3>
+    <p>A denied tool call still exits 0 — the denial exists only as a transcript line, e.g.
+    <code>Tool 'write_file' is denied by the restricted safety mode…</code>. That's why the repo judges
+    every verification run on <b>exit code <i>plus</i> transcript content</b>. When you script assertions later,
+    assert on the answer lines — never on the exit code alone.</p>
+  </div>
+
+  <div class="card amber">
+    <h3>⚠ PowerShell 5.1 notes for these commands</h3>
+    <p><b>Single quotes are literal</b> — use them for the <code>--exec</code> task (as above). Use <code>;</code>,
+    not <code>&amp;&amp;</code>, to chain commands. If the task text ever contains double quotes that PS mangles
+    when you paste, shift the task onto <b>stdin</b> instead:</p>
+    <div class="cmdbox no-print">
+<pre><span class="kw">echo</span> <span class="str">'&lt;the same task text&gt;'</span> | docker agent run .\agent.yaml - --exec --safety restricted</pre>
+      <button class="copybtn">Copy</button>
+    </div>
+    <p class="tagline">The <code>-</code> argument says "read the message from stdin". Ground truth: the repo's
+    run-modes notes verified this form.</p>
+  </div>
+
+  <div class="card violet">
+    <h3>🧪 Optional awareness — the one-line cloud swap (your spend, already smoke-verified once)</h3>
+    <p>The config's swap point is a single value: <code>model: gemma4:latest</code> →
+    <code>model: glm-5.3-flash:cloud</code> (same daemon, proxies to Ollama Cloud; requires the Ollama app
+    signed in). A minimal <code>--exec 'Reply with the single word: pong'</code> smoke returned <code>pong</code>
+    on 2026-10-19 for well under one cent. Whether the full verification template behaves identically on the
+    cloud model was <b>never probed</b> — treat that as unknown. The committed config stays on the local model;
+    rerun anything cloud-side only if <i>you</i> decide it's worth the spend.</p>
+  </div>
+</section>
+<section class="part" id="p3">
+  <h2><span class="no">03</span>Judge the run — the skill that transfers</h2>
+  <p class="lede">The repo's contract for <i>every</i> verification run in this sequence: <b>exit 0
+  <i>and</i> the two correct lines in the transcript</b>. Both halves. Here's what passing looks like,
+  then three real transcripts for you to judge.</p>
+
+  <p class="codelabel">The verified passing run, annotated (recorded 2026-10-19, <code>docker agent</code> v1.145.0)</p>
+<pre><span class="com"># … first tool call reads the file — with a stumble:</span>
+read_file(agent.yaml, limit: 0)
+<span class="com"># → tool error: invalid limit 0: limit must be &gt;= 1</span>
+<span class="com"># … the agent read the error and retried with a valid limit:</span>
+read_file(agent.yaml, limit: 200)          <span class="com">← self-correction, not a failure</span>
+<span class="com"># … final answer, exactly two lines:</span>
+ollama gemma4:latest
+filesystem shell think
+<span class="com"># exit code: 0</span></pre>
+  <p class="tagline">That <code>limit: 0</code> stumble is in the verified-run record. The tool error was clear enough
+  that gemma4 fixed itself on the retry — self-correction in a transcript is healthy behavior, not noise. The
+  real danger is the <i>opposite</i>: a run that looks fine from the exit code while the transcript records
+  denials you never saw.</p>
+
+  <h3 style="margin:30px 0 4px">🎯 Practice: judge each transcript</h3>
+  <p class="lede" style="margin:4px 0 8px">For each simulated run, pick the verdict. Answers lock in once chosen — like the quiz.</p>
+
+  <div class="simcase" data-ok="0">
+    <h3>Case A — a plain verification run</h3>
+    <p class="ask">Exit code 0. Transcript: a <code>read_file</code> on <code>agent.yaml</code> (after one
+    self-corrected <code>limit: 0</code> error), then the two lines — <code>ollama gemma4:latest</code> and
+    <code>filesystem shell think</code> — then clean exit.</p>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">✅ Success — trust it</button>
+      <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
+      <button class="vbtn" data-v="2">🧰 Setup problem — fix before spending</button>
+    </div>
+    <div class="exp">This is both halves of the contract: exit 0 <b>and</b> the exact two expected lines. The
+    retried <code>read_file</code> is healthy self-correction — small models stumble; the transcript shows
+    they recovered. Verdict: pass.</div>
+  </div>
+
+  <div class="simcase" data-ok="1">
+    <h3>Case B — a task that wanted to write</h3>
+    <p class="ask">Exit code 0. Transcript: the agent calls <code>write_file</code>, gets
+    <code>Tool 'write_file' is denied by the restricted safety mode…</code>, retries the identical call
+    several times (<code>detected 5 consecutive identical calls</code>), then answers with a vague summary
+    and exits.</p>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">✅ Success — trust it</button>
+      <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
+      <button class="vbtn" data-v="2">🧰 Setup problem — fix before spending</button>
+    </div>
+    <div class="exp">Classic hidden failure. The denial exists <b>only</b> in the transcript; exit 0 lied.
+    Under <code>--safety restricted</code> the denial itself is correct fail-closed behavior — the mistake
+    was designing a verification task that must write. Narrow the task to be read-only, or approve the
+    write deliberately with <code>autonomous</code>/<code>--yolo</code> if you mean it. Note the small-model
+    loop too: five identical denied calls before giving up.</div>
+  </div>
+
+  <div class="simcase" data-ok="2">
+    <h3>Case C — the message came first</h3>
+    <p class="ask">You paste <code>docker agent run "hello world" --exec</code> in PowerShell. Output:
+    <code>Error: could not parse reference: … hello world</code>. No transcript, no tool calls at all.</p>
+    <div class="vrow">
+      <button class="vbtn" data-v="0">✅ Success — trust it</button>
+      <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
+      <button class="vbtn" data-v="2">🧰 Setup problem — fix before spending</button>
+    </div>
+    <div class="exp">Setup problem, caught before any model spend. The first positional argument is the
+    <b>config</b>, not the message — Docker Agent tried to parse <i>"hello world"</i> as a registry reference.
+    Fix: put the file first (<code>docker agent run .\agent.yaml "hello world" --exec</code>) or pipe the
+    message on stdin (<code>echo "hello world" | docker agent run .\agent.yaml - --exec</code>). Recorded in
+    the repo's run-modes gotchas.</div>
+  </div>
+
+  <div class="card teal">
+    <h3>🧰 When <i>your</i> real run misbehaves — check in this order</h3>
+    <ol class="flow" style="margin-top:0">
+      <li><b>Reread the transcript.</b> Denials, loops, and wrong answers live there; exit codes rarely tell the truth on their own.</li>
+      <li><b><code>ollama list</code>.</b> Daemon up? Model present? Most failures on this box stop here.</li>
+      <li><b><code>docker agent debug toolsets .\agent.yaml</code>.</b> The concrete tool list — introspection catches a missing toolset that "feels" like a run bug.</li>
+      <li><b>Narrow the task.</b> Read-only, one file, a two-line answer — reliability for a small model is a task-design skill, not an incantation.</li>
+    </ol>
+  </div>
+</section>
+<section class="part" id="p4">
+  <h2><span class="no">04</span>Carry forward</h2>
+  <ol class="flow">
+    <li><b>Four gates, every time</b> — Docker Desktop, <code>ollama list</code>, the plugin's health report
+      (a Model-Runner complaint is expected and fine here), and <code>--dry-run</code>. Under thirty seconds.</li>
+    <li><b>The template is one command</b> — config first, <code>--exec '<task>'</code>, <code>--safety restricted</code>
+      — and every later example in this repo reuses exactly this shape. Learn it once here.</li>
+    <li><b>Exit 0 opens the judgment; the transcript closes it.</b> Denied calls and tool loops leave the exit
+      code untouched — the transcript is where failure actually lives.</li>
+    <li><b>The two lines are the pass marker</b> — <code>ollama gemma4:latest</code>, then
+      <code>filesystem shell think</code>. Assert on content, never on exit code alone.</li>
+    <li><b>Self-correction is healthy; silent denials are the danger.</b> Read every transcript before you
+      believe anything — including from yourself.</li>
+  </ol>
+
+  <div class="quiz no-print">
+    <h3>🎯 Self-check — nine questions</h3>
+    <p class="tagline">Feedback is immediate, answers lock, and everything is grounded in the repo's own
+    records. The <a href="../reference/glossary.html">glossary</a> remains fair game.</p>
+    <div id="quiz"></div>
+    <div class="qscore" id="qscore" style="display:none"></div>
+    <button id="qreset">↺ Reset quiz</button>
+  </div>
+
+  <div class="card teal no-print" style="margin-top:12px">
+    <h3>Next up — Lesson 003 (in draft): reading the MCP flavors</h3>
+    <p class="tagline">Ex02 &amp; ex03 side by side: catalog <code>ref:</code> tools vs the self-authored ~100-line
+    MCP server, why their verification switches to <code>--yolo</code>, and <code>debug toolsets</code> as the
+    introspection gate. Until it lands, the lesson index is your hub.</p>
+    <p class="cite" style="margin-top:8px"><button id="markdone">✓ Mark Lesson&nbsp;002 complete and open the lesson index</button></p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <p><b>Ground rules</b> · Ground truth = this repo's docs (<a href="../docs/notes/run-modes.md">run-modes.md</a>,
+  <a href="../docs/notes/flavors.md">flavors.md</a>) and <code>ex01-first-agent/README.md</code> — never model
+  memory. · Local default <code>gemma4:latest</code> via built-in <code>ollama</code> provider; cloud swap = edit
+  one <code>model:</code> line, your spend. · <a href="../reference/glossary.html">Glossary</a> ·
+  <a href="../reference/ex-map.html">Example map</a> · <a href="../NOTES.md">Workspace notes</a> ·
+  <a href="index.html">Lessons</a> — previous: <a href="0001-docker-agent-mental-model.html">001&nbsp;mental&nbsp;model&nbsp;←</a></p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- copy buttons ---- */
+  document.querySelectorAll(".copybtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      var text = pre ? pre.textContent : "";
+      function flash(ok) {
+        btn.textContent = ok ? "Copied ✓" : "Copy failed";
+        btn.classList.toggle("ok", !!ok);
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1400);
+      }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta); flash(ok);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { flash(true); }, fallback);
+      } else { fallback(); }
+    });
+  });
+
+  /* ---- pre-flight gates: persist ticks ---- */
+  var gates = document.querySelectorAll(".gate input[type=checkbox]");
+  var banner = document.getElementById("gatedone");
+  function refresh() {
+    var done = 0;
+    gates.forEach(function (c) {
+      c.closest(".gate").classList.toggle("done", c.checked);
+      if (c.checked) done++;
+    });
+    banner.classList.toggle("on", done === gates.length);
+  }
+  gates.forEach(function (cb, i) {
+    var key = "l002_gate_" + i;
+    try { cb.checked = localStorage.getItem(key) === "1"; } catch (e) {}
+    cb.addEventListener("change", function () {
+      try { localStorage.setItem(key, cb.checked ? "1" : "0"); } catch (e) {}
+      refresh();
+    });
+  });
+  refresh();
+
+  /* ---- transcript judging ---- */
+  document.querySelectorAll(".simcase").forEach(function (cs) {
+    var okv = cs.dataset.ok;
+    var exp = cs.querySelector(".exp");
+    cs.querySelectorAll(".vbtn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (cs.dataset.answered) return;
+        cs.dataset.answered = "1";
+        var right = b.dataset.v === okv;
+        b.classList.add(right ? "v-ok" : "v-bad");
+        if (!right) { cs.querySelectorAll(".vbtn")[okv].classList.add("v-true"); }
+        cs.querySelectorAll(".vbtn").forEach(function (x) { x.disabled = true; });
+        exp.textContent = (right ? "✔ Well judged — " : "✘ Not quite — ") + exp.textContent;
+        exp.classList.add(right ? "ok" : "no", "show");
+      });
+    });
+  });
+  /* ---- quiz: same engine as Lesson 001 ---- */
+  var QUIZ = [
+    { q: "Any run of ex01 — local or cloud — needs which process running first?",
+      o: ["Docker Model Runner", "The Ollama daemon (localhost:11434)", "An MCP gateway container", "Nothing — the model is embedded in the plugin"], a: 1,
+      f: "The built-in ollama provider talks to the daemon's OpenAI-compatible endpoint; ollama list confirms the daemon and that gemma4:latest is present." },
+    { q: "What does `docker agent run .\\agent.yaml --dry-run` do?",
+      o: ["Sends one cheap prompt to sanity-check the daemon", "Validates the config without touching any model", "Downloads the model if missing", "Runs the task with all tools disabled"], a: 1,
+      f: "It's the free gate: config validation with zero model spend. Later examples run it before every verification." },
+    { q: "The verification template's --safety restricted is best described as…",
+      o: ["Approves everything — that's why the task must be safe", "Prompts a human to approve each dangerous call", "Fail-closed for unattended runs: safe calls auto-approved, everything else silently denied", "A sandboxing option that containers the run"], a: 2,
+      f: "Fail-closed, no human mid-run. Denied calls show up only in the transcript — which is why the judgment needs both halves." },
+    { q: "A run exits 0, but the transcript shows `Tool 'write_file' is denied by the restricted safety mode…`. Verdict?",
+      o: ["Success — exit 0 settles it", "Not success — a denied call means the task's side effect never happened", "Success — the denial is informational", "Not success — rerun with --dry-run"], a: 1,
+      f: "Denials leave the exit code untouched — Case B in Part 03. The repo judges exit code PLUS transcript content; assert on answer lines, never exit alone." },
+    { q: "In the verified run, the agent's first read_file sent limit: 0 and got an error. What happened next?",
+      o: ["The run failed with a non-zero exit", "It restarted the whole config from scratch", "It read the error and retried with a valid limit — then answered correctly", "It asked a human for the limit"], a: 2,
+      f: "Recorded self-correction: 'invalid limit 0: limit must be >= 1' was clear enough for gemma4 to recover on retry. Healthy behavior, not noise." },
+    { q: "The two lines a passing ex01 verification run must print are…",
+      o: ["ollama gemma4:latest / filesystem shell think", "ollama gemma4:latest / filesystem shell browse", "ollama gemma4:latest / filesystem write think", "provider: ollama / model: gemma4:latest"], a: 0,
+      f: "The agent reads agent.yaml and answers: the named model entry resolves to ollama + gemma4:latest, and the three toolset types are filesystem, shell, think." },
+    { q: "docker agent doctor exits non-zero on this machine. Blocker for ex01?",
+      o: ["Yes — nothing else proceeds", "Yes, but only when running with --safety restricted", "No — its complaint is unreachable Docker Model Runner; ex01 pins the ollama provider and an explicit config", "No — doctor is deprecated"], a: 2,
+      f: "The documented machine quirk: Model Runner being down doesn't affect the ollama provider path. Read the complaint, judge it, proceed." },
+    { q: "docker agent run \"hello world\" --exec fails almost instantly with `could not parse reference`. Why?",
+      o: ["The config file was deleted", "It greps the config for the phrase", "The first positional argument is the config — it parsed the message as a registry reference", "The shell rejected the double quotes"], a: 2,
+      f: "Config goes first and isn't auto-discovered (only docker-agent.yaml would be). Fix: file first, or pipe the message." },
+    { q: "PowerShell 5.1 mangles your --exec task because it contains double quotes. Cleanest escape?",
+      o: ["Escape each quote with backslashes", "Use ; instead of quotes", "Give up and use the TUI", "Put the task on stdin: echo '<task>' | docker agent run .\\agent.yaml - --exec"], a: 3,
+      f: "The stdin form (the dash argument) sidesteps quoting entirely — and is recorded in the repo's run-modes notes." }
+  ];
+  var box = document.getElementById("quiz");
+  var scoreBox = document.getElementById("qscore");
+  function render() {
+    box.innerHTML = "";
+    scoreBox.style.display = "none";
+    QUIZ.forEach(function (item, qi) {
+      var d = document.createElement("div"); d.className = "q";
+      var h = document.createElement("p"); h.className = "qq"; h.textContent = (qi + 1) + ". " + item.q; d.appendChild(h);
+      var fbq = document.createElement("div"); fbq.className = "qfb";
+      item.o.forEach(function (opt, oi) {
+        var b = document.createElement("button"); b.className = "opt"; b.textContent = opt;
+        b.addEventListener("click", function () {
+          if (d.dataset.answered) return;
+          d.dataset.answered = "1";
+          var ok = oi === item.a;
+          b.classList.add(ok ? "opt-ok" : "opt-bad");
+          if (!ok) { d.querySelectorAll(".opt")[item.a].classList.add("opt-true"); }
+          d.querySelectorAll(".opt").forEach(function (x) { x.disabled = true; });
+          fbq.textContent = (ok ? "✔ Correct — " : "✘ Not quite — ") + item.f;
+          fbq.classList.add(ok ? "fb-ok" : "fb-bad");
+          fbq.style.display = "block";
+          tally();
+        });
+        d.appendChild(b);
+      });
+      d.appendChild(fbq);
+      box.appendChild(d);
+    });
+  }
+  function tally() {
+    var answered = box.querySelectorAll(".q[data-answered]").length;
+    if (answered < QUIZ.length) return;
+    var right = box.querySelectorAll(".opt-ok").length;
+    scoreBox.textContent = right + " / " + QUIZ.length + (right === QUIZ.length
+      ? " — perfect. The exit-code discipline is yours; you're ready for real runs."
+      : " — reread the feedback above; every miss points at a Part in this lesson.");
+    scoreBox.style.display = "block";
+  }
+  document.getElementById("qreset").addEventListener("click", render);
+  render();
+
+  document.getElementById("markdone").addEventListener("click", function () {
+    try { localStorage.setItem("lessons_complete_0002", "1"); } catch (e) { /* private mode */ }
+    window.location.href = "index.html";
+  });
+})();
+</script>
+</body></html>
