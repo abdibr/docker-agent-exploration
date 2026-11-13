@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lesson 006 · Everything in plain language — Docker Agent essentials</title>
+<title>Lesson 000 · Everything in plain language — Docker Agent essentials</title>
 <style>
   :root{
     --paper:#faf8f4; --ink:#1d2a36; --muted:#5d6b7a; --line:#e4dfd6;
@@ -118,7 +118,7 @@
 <body>
 <div class="wrap">
 <header>
-  <p class="kicker">Docker Agent foundations · Lesson 006</p>
+  <p class="kicker">Docker Agent foundations · Lesson 000 · the entry point</p>
   <h1>Everything in plain language</h1>
   <p class="sub">Every concept from Lessons 001–005 retold at kitchen-table level — no jargon, no terminal
   required, one recap table, one honest self-check.</p>
@@ -136,7 +136,7 @@
   Lessons 001–005 will feel like familiar ground revisited in depth. <b>Or read it last</b>, as a plain-language
   recap that compresses the whole course into one sitting. Nothing here requires running anything.</p>
   <div class="roadmap">
-    <div class="rm now"><b>006 · This lesson — plain-language digest</b>works as a start-simple preview or an after-course recap</div>
+    <div class="rm now"><b>000 · This lesson — the entry point</b>start-simple digest: read here first, revisit as a recap</div>
     <div class="rm"><b>001 · Mental model &amp; map</b><a href="0001-docker-agent-mental-model.html">the full big picture</a>, with an interactive YAML game</div>
     <div class="rm"><b>002 · Ex01 hands-on</b><a href="0002-ex01-hands-on.html">run the smallest agent</a> and judge its transcript</div>
     <div class="rm"><b>003 · MCP flavors</b><a href="0003-ex02-ex03-mcp-flavors.html">catalog tools vs your own server</a></div>
@@ -425,16 +425,16 @@
     <div class="qscore" id="qscore"></div>
     <button id="qreset">↺ Reset quiz</button>
   </div>
-  <p class="cite no-print"><button id="markdone">✓ Mark Lesson&nbsp;006 complete and open the lesson index</button></p>
+  <p class="cite no-print"><button id="markdone">✓ Mark Lesson&nbsp;000 complete and open the lesson index</button></p>
 </section>
 
 <footer>
-  <p><b>Prev:</b> <a href="0005-capstone-choose-flavor.html">005&nbsp;Capstone&nbsp;←</a> ·
-  <b>Index:</b> <a href="index.html">lesson index</a> · <b>Deep dive:</b>
-  <a href="0001-docker-agent-mental-model.html">001&nbsp;mental&nbsp;model</a> ·
+  <p><b>Next:</b> <a href="0001-docker-agent-mental-model.html">001&nbsp;mental&nbsp;model&nbsp;&amp;&nbsp;map&nbsp;→</a> ·
+  <b>Index:</b> <a href="index.html">lesson index</a> · <b>Deep dives:</b>
   <a href="0002-ex01-hands-on.html">002&nbsp;hands-on</a> ·
   <a href="0003-ex02-ex03-mcp-flavors.html">003&nbsp;MCP&nbsp;flavors</a> ·
-  <a href="0004-ex04-ex07-subs-and-serve.html">004&nbsp;subs&nbsp;&amp;&nbsp;serve</a></p>
+  <a href="0004-ex04-ex07-subs-and-serve.html">004&nbsp;subs&nbsp;&amp;&nbsp;serve</a> ·
+  <a href="0005-capstone-choose-flavor.html">005&nbsp;capstone</a></p>
   <p><b>Ground rules</b> · Ground truth = repo docs (<a href="../docs/notes/run-modes.md">run-modes</a>,
   <a href="../docs/notes/flavors.md">flavors</a>, <a href="../docs/notes/phase-notes.md">phase-notes</a>) + official
   <a href="https://docs.docker.com/ai/cagent/" target="_blank">Docker Agent docs</a> ·
@@ -592,7 +592,7 @@
   render();
 
   document.getElementById("markdone").addEventListener("click", function () {
-    try { localStorage.setItem("lessons_complete_0006", "1"); } catch (e) { /* private mode */ }
+    try { localStorage.setItem("lessons_complete_0000", "1"); } catch (e) { /* private mode */ }
     window.location.href = "index.html";
   });
 })();
