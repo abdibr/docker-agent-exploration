@@ -36,9 +36,9 @@ One numbered, self-contained directory per flavor so setup never leaks between t
 
 ## Prerequisites (recorded so failures are diagnosable in minutes)
 
-- Docker Desktop running: Docker 29.8.2, Compose v5.6.0, `docker agent` v1.145.0
+- Docker Desktop running: Docker 29.8.2, Compose v5.6.0, `docker agent` v1.145.0 at bring-up (Docker Desktop auto-updated the CLI plugin to v1.153.0 mid-phase on 2026-11-13; the Ex03–Ex07 surfaces were verified against v1.153.0 and behave identically for these configs)
 - Ollama v0.40.5 daemon running — and app signed in for the cloud path
 - Models already present locally: `gemma4:latest`, `glm-5.3-flash:cloud`
 - Node v24 + npm 11 (for the TypeScript MCP-server example); Python 3.11 (bonus only)
 
-*Status: bring-up (01), Ex01 (02) and Ex02 (03) done and verified — Ex01's headless run exits 0 on local `gemma4:latest` and the one-time cloud smoke routed through the local daemon; Ex02's headless run fires a real catalog-MCP web search (containerized `docker:duckduckgo`, no local install, no key) and its results demonstrably shape the answer. Work continues with ticket 04 (`ex03-mcp-custom-server`).*
+*Status: bring-up (01), Ex01 (02), Ex02 (03), Ex03 (04) and Ex04 (05) done and verified — Ex01's headless run exits 0 on local `gemma4:latest` and the one-time cloud smoke routed through the local daemon; Ex02's headless run fires a real catalog-MCP web search (containerized `docker:duckduckgo`, no local install, no key) whose results demonstrably shape the answer; Ex03 ships a hand-written TypeScript MCP server containerized via `command: docker` and proves the echo round trip through an agent headless run; Ex04 defaults its committed config to `glm-5.3-flash:cloud` and its one pre-approved cloud run shows two visible `transfer_task` delegations (planner + reviewer) whose outputs shape the answer. Work continues with tickets 06–08 (`ex05` agent-as-MCP-server, `ex06` A2A, `ex07` ACP editor) — all `docker agent serve` surfaces.*

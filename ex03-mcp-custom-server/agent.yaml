@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json
+
+## Ex03 — learn MCP from the server side: a hand-written, containerized MCP server.
+## The `echo` tool lives in server.ts, is baked into the mcp-ex03-echo:local image (see
+## README for `docker build`), and reaches the agent through a stdio MCP toolset that
+## spawns `docker run --rm -i` on the image — no catalog ref, no gateway, just our own
+## server as a container. One-line model swap: change the `model:` line below to
+## `glm-5.3-flash:cloud`.
+
+models:
+  gemma4_local:
+    provider: ollama
+    model: gemma4:latest
+    description: Local gemma4 on the host Ollama daemon (localhost:11434) - the swap point for local/cloud
+
+agents:
+  root:
+    model: gemma4_local
+    description: Ex03 MCP-server-side agent - consumes our own containerized TypeScript MCP echo server
+    instruction: |
+      You are Ex03, an agent in the docker_agents exploration repo that consumes a
+      custom MCP server (not a catalog one): the echo tool comes from the
+      mcp-ex03-echo container, which the agent framework itself starts as an MCP
+      stdio server.
+
+      Rules:
+      - When asked to echo text, first call the echo MCP tool with exactly the
+        requested text, then answer only from what it returned.
+      - Quote the exact text the echo tool returned, character count included.
+      - If the echo tool errors or returns nothing usable, say so plainly instead of
+        inventing its output.
+      - Before any multi-step task, write a short plan with the think tool.
+      - Answer in short, factual sentences.
+    max_iterations: 20
+    toolsets:
+      - type: filesystem
+        allow_list:
+          - "."
+      - type: think
+      - type: mcp
+        command: docker      # the agent spawns this command itself; MCP over stdio
+        args:
+          - run
+          - --rm
+          - -i
+          - mcp-ex03-echo:local   # built by the README's docker build command
+        tools:               # allowlist: expose only the one tool this server has
+          - echo
