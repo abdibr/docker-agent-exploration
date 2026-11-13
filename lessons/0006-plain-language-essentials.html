@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 006 · Everything in plain language — Docker Agent essentials</title>
+<style>
+  :root{
+    --paper:#faf8f4; --ink:#1d2a36; --muted:#5d6b7a; --line:#e4dfd6;
+    --blue:#0b63c5; --blue-soft:#e8f1fb; --teal:#0a9279; --teal-soft:#e4f4ef;
+    --amber:#a34e12; --amber-soft:#fbf0e4; --red:#b3362e; --red-soft:#faeae8;
+    --violet:#6a4bc4; --violet-soft:#efeafb;
+    --code-bg:#101a26; --code-ink:#dbe6f0;
+    --kw:#7fd1ff; --str:#8fe0b2; --com:#6b7f94; --key:#ffd487;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font:17px/1.65 -apple-system,"Segoe UI",system-ui,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:0 20px 80px}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid #b9cef0}
+  a:hover{border-bottom-color:var(--blue)}
+  code,.mono{font-family:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;font-size:.92em}
+  h1,h2,h3{line-height:1.25;letter-spacing:-.01em}
+  .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:46px 0 6px}
+  h1{font-size:2.1rem;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:1.06rem;margin:0 0 18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 8px}
+  .chip{font-size:.78rem;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+  .part{margin-top:52px}
+  .part>h2{font-size:1.45rem;margin:0 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+  .part>h2 .no{color:var(--blue);font-variant-numeric:tabular-nums;margin-right:10px}
+  .lede{color:var(--muted);margin:0 0 18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  .card.blue{border-left:5px solid var(--blue);background:var(--blue-soft)}
+  .card.teal{border-left:5px solid var(--teal);background:var(--teal-soft)}
+  .card.amber{border-left:5px solid var(--amber);background:var(--amber-soft)}
+  .card.red{border-left:5px solid var(--red);background:var(--red-soft)}
+  .card.violet{border-left:5px solid var(--violet);background:var(--violet-soft)}
+  .card h3{margin:0 0 6px;font-size:1.02rem}
+  .card p{margin:6px 0}
+  .grid{display:grid;gap:12px}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.93rem;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#f3efe7;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tbody tr:nth-child(even){background:#fbfaf7}
+  pre{margin:0;padding:16px 18px;background:var(--code-bg);color:var(--code-ink);border-radius:12px;overflow-x:auto;
+    font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace;font-size:.86rem;line-height:1.55}
+  pre .kw{color:var(--kw)} pre .str{color:var(--str)} pre .com{color:var(--com);font-style:italic} pre .key{color:var(--key)}
+  .cite{color:var(--muted);font-size:.84rem;background:#f4f1ea;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin:16px 0}
+  .cite b{color:var(--ink)}
+  details{margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px 16px}
+  summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  .tagline{font-size:.9rem;color:var(--muted);font-style:italic}
+  .roadmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+  .rm{border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 12px;font-size:.85rem;color:var(--muted)}
+  .rm b{display:block;color:var(--ink);font-size:.9rem;margin-bottom:2px}
+  .rm.now{background:var(--blue-soft);border-color:#b9cef0}
+  .rm.now b{color:var(--blue)}
+  .cmdbox{position:relative;margin:8px 0 4px}
+  .cmdbox pre{padding-right:92px}
+  .copybtn{position:absolute;top:10px;right:10px;border:1px solid #26374a;background:#16222f;color:var(--code-ink);
+    border-radius:8px;padding:5px 11px;font-size:.74rem;cursor:pointer;font-family:inherit}
+  .copybtn:hover{border-color:var(--kw)}
+  .copybtn.ok{border-color:var(--str);color:var(--str)}
+  .simcase{border:1px solid var(--line);border-radius:14px;background:#fff;padding:16px 18px;margin:14px 0}
+  .simcase h3{margin:0 0 4px;font-size:1rem}
+  .simcase .ask{font-size:.9rem;color:var(--muted);margin:0}
+  .vrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .vbtn{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;font-size:.88rem;
+    cursor:pointer;font-family:inherit;transition:all .12s}
+  .vbtn:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .vbtn:disabled{cursor:default;opacity:.75}
+  .vbtn.v-ok{border-color:var(--teal);background:var(--teal-soft);color:var(--teal);font-weight:700;opacity:1}
+  .vbtn.v-bad{border-color:var(--red);background:var(--red-soft);color:var(--red);font-weight:700;opacity:1}
+  .vbtn.v-true{border-color:var(--teal);border-style:dashed}
+  .simcase .exp{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .simcase .exp.show{display:block}
+  .simcase .exp.ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .simcase .exp.no{background:var(--red-soft);border-left:4px solid var(--red)}
+  .quiz{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;margin:16px 0}
+  .qmeta{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .qbar{height:6px;background:#efece6;border-radius:99px;margin:8px 0 18px;overflow:hidden}
+  .qbar i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .3s}
+  .qq{font-size:1.08rem;font-weight:600;margin:0 0 14px}
+  .opt{display:block;width:100%;text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:12px 16px;margin:9px 0;font-size:.97rem;cursor:pointer;font-family:inherit;transition:all .12s}
+  .opt:hover:not(:disabled){border-color:var(--blue);transform:translateX(2px)}
+  .opt:disabled{cursor:default;opacity:.72}
+  .q{margin-top:28px}
+  .q .qq{font-size:1rem}
+  .qfb{border-radius:10px;padding:12px 14px;font-size:.9rem;margin-top:12px;display:none}
+  .qfb.fb-ok{background:var(--teal-soft);border-left:4px solid var(--teal)}
+  .qfb.fb-bad{background:var(--red-soft);border-left:4px solid var(--red)}
+  .opt.opt-ok{border-color:var(--teal);background:var(--teal-soft);opacity:1}
+  .opt.opt-bad{border-color:var(--red);background:var(--red-soft);opacity:1}
+  .opt.opt-true{border-color:var(--teal);border-style:dashed}
+  #qreset{margin-top:16px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #qreset:hover{border-color:var(--blue)}
+  #markdone{border:none;background:var(--blue);color:#fff;font-weight:600;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit}
+  #markdone:hover{filter:brightness(1.1)}
+  .qscore{text-align:center;padding:30px 10px;display:none}
+  .qscore .big{font-size:2.6rem;font-weight:800;color:var(--blue)}
+  .qscore p{color:var(--muted)}
+  footer{margin-top:60px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.85rem}
+  footer li{margin:4px 0}
+  @media print{
+    body{background:#fff}.wrap{max-width:100%;padding:0}
+    .cmdbox .copybtn,.no-print,.simcase .vrow,.simcase .exp{display:none!important}
+    .card,pre,table,details{break-inside:avoid}
+    pre{background:#f2f4f7;color:#1d2a36}
+    pre .kw,pre .str,pre .key{color:inherit}pre .com{color:#666}
+    a{border-bottom:none;color:inherit}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <p class="kicker">Docker Agent foundations · Lesson 006</p>
+  <h1>Everything in plain language</h1>
+  <p class="sub">Every concept from Lessons 001–005 retold at kitchen-table level — no jargon, no terminal
+  required, one recap table, one honest self-check.</p>
+  <div class="chips">
+    <span class="chip">⏱ ~20 min</span>
+    <span class="chip">🗣️ zero jargon — analogies first, terms second</span>
+    <span class="chip">🧭 distills 001–005 and the verified ex01–ex07</span>
+    <span class="chip">🎯 ends with a 9-question plain-language quiz</span>
+  </div>
+</header>
+
+<div class="card blue">
+  <h3>Where this lesson fits</h3>
+  <p>Two ways to use it. <b>Read it first</b>, if you want the gentle version before anything technical — then
+  Lessons 001–005 will feel like familiar ground revisited in depth. <b>Or read it last</b>, as a plain-language
+  recap that compresses the whole course into one sitting. Nothing here requires running anything.</p>
+  <div class="roadmap">
+    <div class="rm now"><b>006 · This lesson — plain-language digest</b>works as a start-simple preview or an after-course recap</div>
+    <div class="rm"><b>001 · Mental model &amp; map</b><a href="0001-docker-agent-mental-model.html">the full big picture</a>, with an interactive YAML game</div>
+    <div class="rm"><b>002 · Ex01 hands-on</b><a href="0002-ex01-hands-on.html">run the smallest agent</a> and judge its transcript</div>
+    <div class="rm"><b>003 · MCP flavors</b><a href="0003-ex02-ex03-mcp-flavors.html">catalog tools vs your own server</a></div>
+    <div class="rm"><b>004 · Sub-agents &amp; serve</b><a href="0004-ex04-ex07-subs-and-serve.html">delegation plus the three doors</a></div>
+    <div class="rm"><b>005 · Capstone</b><a href="0005-capstone-choose-flavor.html">choose a flavor for a real problem</a></div>
+  </div>
+</div>
+
+<section class="part" id="p1">
+  <h2><span class="no">01</span>What you are building — the one-sentence version</h2>
+  <p class="lede">Everything else is just this sentence, stretched out.</p>
+
+  <div class="card">
+    <p><b>You write a recipe for a robot coworker, and a program on your computer does the cooking.</b>
+    The recipe is a text file written in <i>YAML</i> (a spelling-sensitive list format that humans can read).
+    The cook is a command called <code>docker agent</code> that already ships inside Docker Desktop. You never
+    write any plumbing code — the recipe is the whole program.</p>
+    <p>That is the whole idea. An <b>agent</b> here means a program an AI model drives: the model gets a job
+    description, some tools, and a patience budget, and it decides step by step how to finish the task.</p>
+  </div>
+
+  <div class="grid g3">
+    <div class="card teal">
+      <h3>🍳 The recipe = one YAML file</h3>
+      <p class="tagline">Which "brain" the agent uses, what its job is, which tools it may touch. You can git-commit it, diff it, share it — like a Dockerfile, but for agents.</p>
+    </div>
+    <div class="card teal">
+      <h3>👨‍🍳 The cook = <code>docker agent</code></h3>
+      <p class="tagline">A command-line program that reads the recipe and runs the agent — in an interactive window, or once with a printed transcript. No extra code from you.</p>
+    </div>
+    <div class="card teal">
+      <h3>🧠 The brain = any model</h3>
+      <p class="tagline">A free local model on your machine, or a paid cloud one (Claude, GPT, Gemini…). Swapping brains is one line in the recipe. This repo runs local by default — cost zero, works offline.</p>
+    </div>
+  </div>
+
+  <div class="cite"><b>Claim checks:</b> "AI Agent Builder and Runtime by Docker Engineering", the Docker Desktop
+  4.63+ bundling and the old <code>cagent</code> name come from the
+  <a href="https://docs.docker.com/ai/cagent/" target="_blank">official docs</a> and the
+  <a href="https://github.com/docker/docker-agent" target="_blank">docker/docker-agent repo</a>. The
+  "recipe is the whole program" framing is what <a href="../ex01-first-agent/README.md">ex01's README</a> calls
+  the "no glue code" philosophy, recorded from verified runs.</div>
+</section>
+
+<section class="part" id="p2">
+  <h2><span class="no">02</span>The recipe card, in plain words</h2>
+  <p class="lede">This is a trimmed copy of the real recipe in <b>ex01</b>. The right column translates every part
+  into everyday language.</p>
+
+  <div class="cmdbox"><pre><span class="com"># ~ex01-first-agent/agent.yaml — trimmed</span>
+<span class="kw">models:</span>
+  <span class="str">my_local:</span>
+    <span class="key">provider:</span> <span class="str">ollama</span>
+    <span class="key">model:</span> <span class="str">gemma4:latest</span>
+<span class="kw">agents:</span>
+  <span class="str">root:</span>
+    <span class="key">model:</span> <span class="str">my_local</span>
+    <span class="key">instruction:</span> <span class="str">|</span>
+      <span class="com">You answer questions about files in this folder.</span>
+      <span class="com">First read the file, then answer in short sentences.</span>
+    <span class="key">max_iterations:</span> <span class="str">20</span>
+    <span class="key">toolsets:</span>
+      - <span class="key">type:</span> <span class="str">filesystem</span>
+      - <span class="key">type:</span> <span class="str">shell</span>
+      - <span class="key">type:</span> <span class="str">think</span></pre><button class="copybtn">Copy</button></div>
+
+  <table>
+    <thead><tr><th>In the file</th><th>In plain language</th></tr></thead>
+    <tbody>
+      <tr><td><code>models:</code></td><td><b>Which brain</b> — and where it lives. Here: a small model called <code>gemma4</code> running <i>on your machine</i> ("ollama" is the free local model server). Change two words here and the agent runs on Claude or GPT instead (Part 07).</td></tr>
+      <tr><td><code>agents:</code></td><td><b>Who works for you</b> — one worker, named <code>root</code>. Bigger setups can list many workers (Part 04).</td></tr>
+      <tr><td><code>instruction:</code></td><td><b>The job description</b>, written in ordinary words. Be concrete: "quote exact values you saw" beats "be accurate".</td></tr>
+      <tr><td><code>toolsets:</code></td><td><b>What it may touch</b> — read/write files, run commands, a private notepad to think in (<code>think</code>). Tools are given, not invented; safety settings decide how much asking-permission happens (Part 03).</td></tr>
+      <tr><td><code>max_iterations:</code></td><td><b>The patience budget</b> — roughly how many think–act steps before it must stop and say whatever it has. It exists so a confused agent can never run away.</td></tr>
+      <tr><td><code>model: my_local</code></td><td><b>The worker picks a brain by name</b> — the name must exist in <code>models:</code>, just like choosing a labeled jar off a shelf.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="cite"><b>Source:</b> trimmed from the real
+  <a href="../ex01-first-agent/agent.yaml">../ex01-first-agent/agent.yaml</a>, whose key names are pinned by the
+  official <a href="https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json" target="_blank">agent-schema.json</a>. Read the full anatomy in
+  <a href="0001-docker-agent-mental-model.html">Lesson 001</a>, where this table is an interactive click-to-match game.</div>
+</section>
+
+<section class="part" id="p3">
+  <h2><span class="no">03</span>Two ways to run it — and the one trap everyone hits</h2>
+  <p class="lede">Running the recipe is one command. Reading the result correctly is the part people get wrong.</p>
+
+  <div class="grid g3">
+    <div class="card violet">
+      <h3>🪟 Live conversation</h3>
+      <p class="tagline"><code>docker agent run .\agent.yaml</code> opens a chat window. You talk, it works, you watch. Great for getting a feel; hard to judge later, because the output scrolls away.</p>
+    </div>
+    <div class="card violet">
+      <h3>📜 One printed run</h3>
+      <p class="tagline"><code>--exec "…task…"</code> gives the agent one job, prints the whole work log (every tool call and the final answer) and stops. This is how this repo verifies every example.</p>
+    </div>
+    <div class="card violet">
+      <h3>🧪 Free rehearsal</h3>
+      <p class="tagline"><code>--dry-run</code> checks the recipe for typos and impossible settings <i>without running the model</i>. Costs nothing, breaks nothing, fixes most beginner errors in seconds.</p>
+    </div>
+  </div>
+
+  <div class="cmdbox"><pre>docker agent run .\ex01-first-agent\agent.yaml --dry-run</pre><button class="copybtn">Copy</button></div>
+  <div class="cmdbox"><pre>docker agent run .\ex01-first-agent\agent.yaml --exec "Reply with the single word: pong" --safety restricted</pre><button class="copybtn">Copy</button></div>
+
+  <div class="card red">
+    <h3>⚠️ The trap: exit code 0 does not mean it worked</h3>
+    <p>When a program ends, it reports a number — 0 traditionally means "no crash". Newcomers see the prompt
+    come back with no red text and assume success. <b>Wrong: denials, missing tools and confused agents can
+    still end with a 0.</b> The rule this repo teaches: <b>read the printed transcript</b> — did the right tool
+    actually fire, and did the answer answer the question? Exit 0 is a hygiene check, not a verdict.</p>
+  </div>
+
+  <div class="simcase" data-ok="1">
+    <h3>Practice: judge a run like the repo does</h3>
+    <p class="ask">A headless run just returned. Here is (a simplified version of) its full output. Did it succeed?</p>
+    <pre>exit code: 0
+
+> Tool call requested: shell (run: "del C:\Users\me\resume.pdf")
+> Policy: shell denied — restricted safety mode
+> Answer: I attempted to read the requested file but could not.</pre>
+    <div class="vrow no-print">
+      <button class="vbtn" data-v="0">✔ It worked — the exit code is 0</button>
+      <button class="vbtn" data-v="1">✘ It did not do the job — despite exit 0</button>
+    </div>
+    <p class="exp">The transcript shows the real story: the shell call was <b>denied</b> by the safety mode and the
+    answer admits nothing was read. Exit 0 only tells you the process ended — exactly the "exit 0 ≠ success"
+    rule this repo records in its red cards (Lesson 002 drills this with the same judging flow).</p>
+  </div>
+
+  <details>
+    <summary>What is <code>--safety restricted</code>, in plain words?</summary>
+    <p>Safety modes are permission ladders for tool use: they decide whether the agent must <i>ask</i> you
+    before each risky action, or may act on its own. <code>restricted</code> mostly auto-allows safe actions
+    and silently denies the rest — in an unattended run there is nobody to ask, so denials just appear in the
+    transcript (still ending with exit 0 — Part 01's trap). The full ladder and the per-flavor choice, including
+    when hands-off verification switches to the everything-allowed mode, is Lesson 003's topic. And if your
+    recipe asks for a toolset the CLI does not know, the handshake fails — also with a 0 — which is why one
+    gate in every verification is checking what the agent <i>really</i> sees with <code>docker agent debug toolsets</code>.</p>
+  </details>
+
+  <div class="cite"><b>Claim checks:</b> the verification template, the exit-0 discipline and the safety ladder are
+  documented in <a href="../docs/notes/run-modes.md">docs/notes/run-modes.md</a> (written from verified runs on
+  this machine) and re-taught hands-on in <a href="0002-ex01-hands-on.html">Lesson 002</a> and
+  <a href="0003-ex02-ex03-mcp-flavors.html">Lesson 003</a>.</div>
+</section>
+
+<section class="part" id="p4">
+  <h2><span class="no">04</span>Superpowers, part one: help from outside and colleagues inside</h2>
+  <p class="lede">One agent alone is limited: it only has the built-in tools you listed. There are two kinds of
+  extra help — borrowing tools from outside, and delegating work to teammates inside the same file.</p>
+
+  <div class="grid g3">
+    <div class="card teal">
+      <h3>🗄️ Borrow a ready-made tool — the catalog</h3>
+      <p>Add a line like <code>type: mcp, ref: docker:duckduckgo</code> and your agent can web-search. The tool runs in its own throwaway container, managed by Docker — you install nothing, and this one needs no account or key. The catch: you are limited to the catalog's shelf.</p>
+    </div>
+    <div class="card teal">
+      <h3>🔧 Build the exact tool you need — your own MCP server</h3>
+      <p>When nobody has the tool you want, you write it — about a hundred lines for a simple one — and run it in a container too. Your logic, your rules, same isolation. Ex03 in this repo is one, teaching itself to echo.</p>
+    </div>
+    <div class="card teal">
+      <h3>👥 Hire colleagues — sub-agents</h3>
+      <p>List teammates under <code>sub_agents:</code> and the lead gets a hand-over tool (<code>transfer_task</code>). Planner plans, reviewer reviews, the lead composes the answer. Each teammate only sees <i>what the lead forwarded</i> — a clean hand-off, and the token bill multiplies with every colleague.</p>
+    </div>
+  </div>
+
+  <p>The outside tools arrive through <b>MCP — the Model Context Protocol</b>. Plain words: an agreed plug
+  shape for tools, so any agent can use any tool that speaks it, the way any lamp fits any wall socket.
+  "Catalog tool" and "my own server" are the same socket from the agent's point of view — the difference is
+  only who built the gadget on the other side.</p>
+
+  <div class="cite"><b>Claim checks:</b> the catalog swap and its isolation/latency trade-offs are Ex02's recorded
+  run evidence; the ~100-line server and the missing-toolset gate are Ex03's; the <code>transfer_task</code>
+  mechanics, the context boundary and the ~5-chat fan-out are Ex04's. All in
+  <a href="0003-ex02-ex03-mcp-flavors.html">Lesson 003</a> and
+  <a href="0004-ex04-ex07-subs-and-serve.html">Lesson 004</a>, distilled into the decision table
+  <a href="../docs/notes/flavors.md">docs/notes/flavors.md</a>.</div>
+</section>
+
+<section class="part" id="p5">
+  <h2><span class="no">05</span>Superpowers, part two: letting other programs use your agent</h2>
+  <p class="lede">So far your agent takes orders from you. The last trick reverses the arrow: your recipe can be
+  <i>served</i>, so other programs come to it. Same file, no config change — one extra command.</p>
+
+  <table>
+    <thead><tr><th>The command</th><th>In plain language</th><th>Who knocks on this door</th></tr></thead>
+    <tbody>
+      <tr><td><code>serve mcp</code></td><td><b>Your agent becomes one tool.</b> Other programs see it as a single well-labeled button — the button's name and description come from your recipe. Ex05 proved it with a standard client: Claude Code connected.</td><td>Any MCP-speaking client: Claude Code, editors, SDKs</td></tr>
+      <tr><td><code>serve a2a</code></td><td><b>Agent meets agent.</b> Yours publishes a small "business card" (agent card) on port 8082; another agent finds it and hands over a whole <i>task</i>, gets results back. For program-to-program teamwork, not one-button tool calls.</td><td>Other agents and agent platforms</td></tr>
+      <tr><td><code>serve acp</code></td><td><b>An editor seat.</b> Your agent plugs into a code editor (like Zed) over its protocol and behaves like an assistant inside the IDE. Ex07 verified the protocol handshake; the full editor walkthrough is the one honest gap in this course.</td><td>Your code editor</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card amber">
+    <h3>🧾 Honesty corner — what this course has <i>not</i> personally verified</h3>
+    <p>This repo's discipline is "verified before commit", and it applies to this lesson too. Two more serve
+    doors exist in the docs — <code>serve api</code> (a plain REST interface) and <code>serve chat</code> — but
+    this workspace has <b>never run them</b>; they are documented, not probed. The Ex07 editor walkthrough is
+    likewise labeled unverified-on-this-machine; only its protocol handshake was proven. When you read claims
+    anywhere — including here — prefer ones pinned to a recorded run.</p>
+  </div>
+
+  <div class="cmdbox"><pre>docker agent serve mcp .\ex07-acp-editor\agent.yaml</pre><button class="copybtn">Copy</button></div>
+
+  <div class="cite"><b>Claim checks:</b> the port map and flag table (which doors accept which options) come from
+  <a href="../docs/notes/phase-notes.md">docs/notes/phase-notes.md</a>; the probe evidence per door is in
+  <a href="0004-ex04-ex07-subs-and-serve.html">Lesson 004</a>; the unprobed-surfaces honesty list is kept in
+  <a href="0005-capstone-choose-flavor.html">Lesson 005</a>.</div>
+</section>
+
+<section class="part" id="p6">
+  <h2><span class="no">06</span>Which one, when — the plain chooser</h2>
+  <p class="lede">The whole decision table from the repo's cheat-sheet, compressed into "if you are thinking…, do…" sentences.</p>
+
+  <table>
+    <thead><tr><th>If you catch yourself thinking…</th><th>Do this</th><th>First taste it here</th></tr></thead>
+    <tbody>
+      <tr><td>"I need my agent to use <i>a tool that already exists</i> (search, GitHub…)."</td><td><b>Borrow from the catalog</b> — one reference line, containerized, nothing to install.</td><td>Ex02 · Lesson 003</td></tr>
+      <tr><td>"No one has the tool I need — it must follow <i>my exact logic</i>."</td><td><b>Write your own MCP server</b> and run it in a container.</td><td>Ex03 · Lesson 003</td></tr>
+      <tr><td>"This job splits into <i>roles</i> — plan it, then check it."</td><td><b>Add sub-agents</b> and delegate with <code>transfer_task</code>. Reach for this <i>before</i> any fancier machinery.</td><td>Ex04 · Lesson 004</td></tr>
+      <tr><td>"I want <i>any standard program</i> to press my agent like a button."</td><td><b>Serve it as an MCP tool</b> — one command, no config change.</td><td>Ex05 · Lesson 004</td></tr>
+      <tr><td>"<i>Another agent</i> should find mine and hand it whole tasks."</td><td><b>Serve it over A2A</b> — agents exchange business cards first.</td><td>Ex06 · Lesson 004</td></tr>
+      <tr><td>"I want my agent <i>inside my code editor</i>."</td><td><b>Serve it over ACP</b> — the editor-integration seat.</td><td>Ex07 · Lesson 004</td></tr>
+    </tbody>
+  </table>
+
+  <p>And the meta-rule the capstone insists on: <b>one flavor is enough; several can stack later.</b> Start with
+  the smallest door that solves the problem — you can always add a second flavor once the first one pays off.</p>
+
+  <div class="cite"><b>Source:</b> the full six-flavor table with isolation, cost and protocol-machinery columns is
+  <a href="../docs/notes/flavors.md">docs/notes/flavors.md</a>; the scenario drills are
+  <a href="0005-capstone-choose-flavor.html">Lesson 005</a>'s capstone.</div>
+</section>
+
+<section class="part" id="p7">
+  <h2><span class="no">07</span>Brains and money — the two sentences</h2>
+  <p class="lede">Two rules cover everything about models and cost in this course.</p>
+
+  <div class="card blue">
+    <h3>1. The brain is one line — and the default here is free</h3>
+    <p>Every recipe pins its brain in the <code>models:</code> block: <code>provider: ollama</code> +
+    <code>model: gemma4:latest</code> means "your own machine, your own model, zero cost". Swap two words for
+    <code>provider: anthropic</code> + <code>model: claude-sonnet-4-5</code> and the same recipe runs on Claude.
+    Google, Azure, a hundred others — same two words. The repo always starts local, then pays only for tiny
+    deliberate smoke checks.</p>
+  </div>
+
+  <div class="card red">
+    <h3>2. Keys live in your environment — never in the file</h3>
+    <p>Cloud providers need an API key — a password-shaped string. It belongs in an <i>environment variable</i>
+    set outside the recipe (e.g. <code>ANTHROPIC_API_KEY</code> in your shell), never typed into the YAML and
+    never committed to git. That way the recipe stays shareable and the secret stays yours. The CLI checks the
+    variable when it starts and tells you plainly if it is missing.</p>
+  </div>
+
+  <div class="cite"><b>Claim checks:</b> the one-line swap is documented per example as "Local ↔ cloud swap"
+  (e.g. <a href="../ex01-first-agent/README.md">ex01's README</a>); the provider list, env-var names and
+  <code>token_key</code> indirection are from the official
+  <a href="https://docs.docker.com/ai/docker-agent/providers/overview/" target="_blank">Model Providers page</a>;
+  the README's <a href="../README.md#using-a-different-provider-claude-openai-gemini-">provider-swap section</a>
+  shows the same recipe edit for Claude/OpenAI/Gemini.</div>
+</section>
+
+<section class="part" id="p8">
+  <h2><span class="no">08</span>The essentials in nine lines</h2>
+  <p class="lede">If you remember only this list, you know the whole course's spine. Then prove it below.</p>
+
+  <ol class="flow">
+    <li><b>A Docker Agent is a recipe + a cook:</b> YAML file in, running agent out — no glue code ever.</li>
+    <li><b>The recipe has five plain parts:</b> which brain (<code>models</code>), who (<code>agents</code>), the job description (<code>instruction</code>), allowed tools (<code>toolsets</code>), the patience budget (<code>max_iterations</code>).</li>
+    <li><b>Two ways to run:</b> a live chat window, or one printed transcript run with <code>--exec</code> — plus the free rehearsal <code>--dry-run</code>.</li>
+    <li><b>Exit code 0 is not a verdict:</b> judge the transcript — did the right tool fire and the answer answer the question?</li>
+    <li><b>MCP is the tool plug:</b> borrow catalog tools by reference, or build your own ~100-line server — same socket.</li>
+    <li><b>Sub-agents are colleagues:</b> roles inside one recipe, reached by <code>transfer_task</code>, each seeing only what was forwarded.</li>
+    <li><b>Three doors let others in:</b> <code>serve mcp</code> (your agent as a button), <code>serve a2a</code> (agent meets agent), <code>serve acp</code> (the editor seat).</li>
+    <li><b>Choose the smallest flavor that fits;</b> stack more later only if the first pays off.</li>
+    <li><b>Brains swap in two words; keys stay out of the file;</b> local-first keeps the bill at zero.</li>
+  </ol>
+
+  <div class="quiz">
+    <div class="qmeta"><span>Plain-language self-check</span><span id="qprogress">0 of 9</span></div>
+    <div class="qbar"><i id="qbarfill" style="width:0%"></i></div>
+    <div id="quiz"></div>
+    <div class="qscore" id="qscore"></div>
+    <button id="qreset">↺ Reset quiz</button>
+  </div>
+  <p class="cite no-print"><button id="markdone">✓ Mark Lesson&nbsp;006 complete and open the lesson index</button></p>
+</section>
+
+<footer>
+  <p><b>Prev:</b> <a href="0005-capstone-choose-flavor.html">005&nbsp;Capstone&nbsp;←</a> ·
+  <b>Index:</b> <a href="index.html">lesson index</a> · <b>Deep dive:</b>
+  <a href="0001-docker-agent-mental-model.html">001&nbsp;mental&nbsp;model</a> ·
+  <a href="0002-ex01-hands-on.html">002&nbsp;hands-on</a> ·
+  <a href="0003-ex02-ex03-mcp-flavors.html">003&nbsp;MCP&nbsp;flavors</a> ·
+  <a href="0004-ex04-ex07-subs-and-serve.html">004&nbsp;subs&nbsp;&amp;&nbsp;serve</a></p>
+  <p><b>Ground rules</b> · Ground truth = repo docs (<a href="../docs/notes/run-modes.md">run-modes</a>,
+  <a href="../docs/notes/flavors.md">flavors</a>, <a href="../docs/notes/phase-notes.md">phase-notes</a>) + official
+  <a href="https://docs.docker.com/ai/cagent/" target="_blank">Docker Agent docs</a> ·
+  <a href="../reference/glossary.html">Glossary</a> · <a href="../reference/ex-map.html">Example map</a> ·
+  <a href="../README.md">Repo home</a></p>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- copy buttons ---- */
+  document.querySelectorAll(".copybtn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.parentElement.querySelector("pre");
+      var text = pre ? pre.textContent : "";
+      function flash(ok) {
+        btn.textContent = ok ? "Copied ✓" : "Copy failed";
+        btn.classList.toggle("ok", !!ok);
+        setTimeout(function () { btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1400);
+      }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta); flash(ok);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { flash(true); }, fallback);
+      } else { fallback(); }
+    });
+  });
+
+  /* ---- transcript judging ---- */
+  document.querySelectorAll(".simcase").forEach(function (cs) {
+    var okv = cs.dataset.ok;
+    var exp = cs.querySelector(".exp");
+    cs.querySelectorAll(".vbtn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (cs.dataset.answered) return;
+        cs.dataset.answered = "1";
+        var right = b.dataset.v === okv;
+        b.classList.add(right ? "v-ok" : "v-bad");
+        if (!right) { cs.querySelectorAll(".vbtn")[okv].classList.add("v-true"); }
+        cs.querySelectorAll(".vbtn").forEach(function (x) { x.disabled = true; });
+        exp.textContent = (right ? "✔ Well judged — " : "✘ Not quite — ") + exp.textContent;
+        exp.classList.add(right ? "ok" : "no", "show");
+      });
+    });
+  });
+
+  /* ---- quiz: same engine as Lessons 001–005, plain-language data ---- */
+  var QUIZ = [
+    { q: "In the plainest terms, a Docker Agent is…",
+      o: ["A recipe (YAML file) plus a cook (the docker agent command) — you write the recipe, it runs the agent",
+          "A chatbot website you log into with a browser",
+          "A programming language you compile into a binary",
+          "A cloud service that requires a monthly subscription"], a: 0,
+      f: "Part 01: the config is the whole program — no glue code, no SDK. It ships inside Docker Desktop 4.63+ (called cagent on 4.49–4.62)." },
+    { q: "Which brain your agent uses is decided by…",
+      o: ["A hidden setting inside the docker agent program",
+          "Whatever model is fastest that day",
+          "The models: block in your recipe — provider (where it lives) plus the exact model",
+          "An environment variable only"], a: 2,
+      f: "Part 02: models: is the brain shelf. The agent picks one by name — swap gemma4:latest for claude-sonnet-4-5 and the same recipe runs on Anthropic (Part 07)." },
+    { q: "A run finishes and the exit code is 0. What do you actually know?",
+      o: ["Everything worked as intended",
+          "The process ended without crashing — success still needs the transcript",
+          "The model answered correctly",
+          "All tools were approved"], a: 1,
+      f: "Part 03's red card: denials, missing tools and confused loops also end 0. Read the work log — did the right tool fire and did the answer answer the question?" },
+    { q: "You want to check a recipe for typos without spending anything. Which command?",
+      o: ["--safety autonomous", "--max-iterations 1", "debug toolsets", "--dry-run"], a: 3,
+      f: "Part 03's violet card: --dry-run validates the config without touching a model. Cost-free, and it catches most beginner mistakes." },
+    { q: "MCP, in one plain sentence, is…",
+      o: ["A protocol that hides which model your agent uses",
+          "A standard plug shape for tools — any MCP-speaking agent can use any MCP-speaking tool",
+          "Docker's name for its container registry",
+          "A paid marketplace for AI plugins"], a: 1,
+      f: "Part 04: catalog tool and self-built server are the same socket from the agent's view; only who built the gadget differs." },
+    { q: "Nobody makes the tool you need, and it must follow your exact logic. What fits?",
+      o: ["Stack catalog entries until one approximates it",
+          "Write your own MCP server (~100 lines for a simple one) and containerize it",
+          "Give the agent more max_iterations and hope",
+          "Switch to a bigger local model"], a: 1,
+      f: "Part 04's middle card: the catalog is a shelf of ready-made gadgets — when yours is not on it, Ex03-style, you build it. Same isolation story as catalog tools." },
+    { q: "Sub-agents, in plain words, are…",
+      o: ["Teammates inside the same recipe: the lead delegates with transfer_task, each seeing only what was forwarded",
+          "Independent agents that find each other over the network",
+          "Backup copies that restart your agent if it crashes",
+          "Cheaper clones of your agent sold by providers"], a: 0,
+      f: "Part 04's third card: roles in one file — planner, reviewer — no protocol machinery. Fresh-view-only-what's-forwarded is the context boundary; the token bill multiplies with each colleague." },
+    { q: "You want any standard program (say Claude Code) to press your agent like a button. Which one command?",
+      o: ["docker agent serve mcp .\\agent.yaml",
+          "docker agent run .\\agent.yaml --always-on",
+          "docker agent publish .\\agent.yaml",
+          "docker agent serve chat .\\agent.yaml"], a: 0,
+      f: "Part 05's table: serve mcp turns the agent into one tool — name and description come from the recipe. Ex05 proved it with Claude Code connecting. (serve chat exists but is documented-not-probed here.)" },
+    { q: "Where does a provider's API key belong?",
+      o: ["In a comment at the bottom of the YAML",
+          "In an environment variable set outside the recipe — never in the file, never in git",
+          "Inside the instruction: text",
+          "In a key.txt next to agent.yaml"], a: 1,
+      f: "Part 07's red card: the recipe stays shareable, the secret stays yours. The CLI checks e.g. ANTHROPIC_API_KEY at startup and names it if missing." }
+  ];
+
+  var box = document.getElementById("quiz");
+  var scoreBox = document.getElementById("qscore");
+  var bar = document.getElementById("qbarfill");
+  var progress = document.getElementById("qprogress");
+  function render() {
+    box.innerHTML = "";
+    scoreBox.style.display = "none";
+    bar.style.width = "0%";
+    progress.textContent = "0 of " + QUIZ.length;
+    QUIZ.forEach(function (item, qi) {
+      var d = document.createElement("div"); d.className = "q";
+      var h = document.createElement("p"); h.className = "qq"; h.textContent = (qi + 1) + ". " + item.q; d.appendChild(h);
+      var fbq = document.createElement("div"); fbq.className = "qfb";
+      item.o.forEach(function (opt, oi) {
+        var b = document.createElement("button"); b.className = "opt"; b.textContent = opt;
+        b.addEventListener("click", function () {
+          if (d.dataset.answered) return;
+          d.dataset.answered = "1";
+          var ok = oi === item.a;
+          b.classList.add(ok ? "opt-ok" : "opt-bad");
+          if (!ok) { d.querySelectorAll(".opt")[item.a].classList.add("opt-true"); }
+          d.querySelectorAll(".opt").forEach(function (x) { x.disabled = true; });
+          fbq.textContent = (ok ? "✔ Correct — " : "✘ Not quite — ") + item.f;
+          fbq.classList.add(ok ? "fb-ok" : "fb-bad");
+          fbq.style.display = "block";
+          tally();
+        });
+        d.appendChild(b);
+      });
+      d.appendChild(fbq);
+      box.appendChild(d);
+    });
+  }
+  function tally() {
+    var answered = box.querySelectorAll(".q[data-answered]").length;
+    bar.style.width = Math.round((answered / QUIZ.length) * 100) + "%";
+    progress.textContent = answered + " of " + QUIZ.length;
+    if (answered < QUIZ.length) return;
+    var right = box.querySelectorAll(".opt-ok").length;
+    scoreBox.textContent = right + " / " + QUIZ.length + (right === QUIZ.length
+      ? " — perfect. The essentials are yours; the deep dives (001–005) will all feel like review."
+      : " — reread the feedback above; every miss names the part that explains it.");
+    scoreBox.style.display = "block";
+  }
+  document.getElementById("qreset").addEventListener("click", render);
+  render();
+
+  document.getElementById("markdone").addEventListener("click", function () {
+    try { localStorage.setItem("lessons_complete_0006", "1"); } catch (e) { /* private mode */ }
+    window.location.href = "index.html";
+  });
+})();
+</script>
+</body>
+</html>
