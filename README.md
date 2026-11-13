@@ -27,6 +27,32 @@ One numbered, self-contained directory per flavor so setup never leaks between t
 - **One commit per example.** Git is local-first: initialized and run with no remote for the whole exploration phase, each example committed at example granularity with a clear message, so the history itself narrates the learning path. The repo was published to GitHub after phase exit.
 - **No secrets, ever.** Credential indirection happens through environment-variable expansion in configs and git-ignored local files.
 
+## Using a different provider (Claude, OpenAI, Gemini, …)
+
+Every example pins its model in exactly one place — a named entry in the config's `models:` block — so switching from the local Ollama daemon to a hosted provider is the same one-line swap you already have for local↔cloud, plus an API key in your environment (never in the repo):
+
+```yaml
+# ex01-first-agent/agent.yaml — before (built-in local provider, key-free):
+models:
+  gemma4_local:
+    provider: ollama
+    model: gemma4:latest
+
+# after (Anthropic — same shape, different provider + model ID):
+models:
+  gemma4_local:
+    provider: anthropic
+    model: claude-sonnet-4-5
+    # max_tokens: 64000   # optional
+```
+
+Or skip the named entry entirely and use the inline `provider/model` shorthand: `model: anthropic/claude-sonnet-4-5`.
+
+- **Credentials live in your environment, not in YAML.** Each built-in provider reads a conventional env var and Docker Agent validates it at startup, failing fast and naming the missing variable. Set it before running: `export ANTHROPIC_API_KEY=sk-ant-…` (POSIX) or `$env:ANTHROPIC_API_KEY = "sk-ant-…"` (PowerShell). Anthropic → `ANTHROPIC_API_KEY`, OpenAI → `OPENAI_API_KEY`, Gemini → `GOOGLE_API_KEY` or `GEMINI_API_KEY`. Override the variable name per model with `token_key:` — note its value is the *name* of the env var, which is exactly why keys never need to enter a config file.
+- **Other providers beyond the big three.** Popular aliases include `amazon-bedrock` (Claude via AWS), `openrouter`, `mistral` (`MISTRAL_API_KEY`), `deepseek` (`DEEPSEEK_API_KEY`), `github-copilot` (`GITHUB_TOKEN` with the `copilot` scope) — plus the key-free local options `dmr` (Docker Model Runner) and `ollama`. For a custom OpenAI-compatible endpoint, run the `docker agent setup` wizard or define a `providers:` block with `base_url:` + `token_key:`. Full table of aliases and keys: [Model Providers](https://docs.docker.com/ai/docker-agent/providers/overview/).
+- **Mixed teams work.** Agents in one config may use different providers — e.g. Ex04's lead on Claude while planner and reviewer stay on `ollama`, to spend where reasoning pays off. Give each agent a `model:` pointing at a different `models:` entry.
+- **Gotchas.** Model references are case-sensitive (`anthropic/claude-sonnet-4-5` ≠ `…/Claude-Sonnet-4-5`); hosted providers bill real money per call, which is why this repo stays local-first by default; and per-example *Local ↔ cloud swap* sections in each `ex*/README.md` follow the same `models:` block shown above.
+
 ## Repo conventions
 
 - **Issue tracker:** local markdown under `.scratch/<feature-slug>/` with a `Status:` triage line near the top of each issue — see `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md`.
