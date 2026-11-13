@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json
+
+## Ex07 — ACP editor integration: the same declarative config as every other
+## example in this repo, served over the Agent Client Protocol
+## (`docker agent serve acp`) so an ACP-speaking editor (Zed is the reference
+## host) can run it as a coding agent inside the editor.
+##
+## No toolsets on purpose: an ACP host brings editor capabilities with it (fs
+## reads/writes and terminal access arrive through clientCapabilities and
+## session/request_permission, not through agent-side toolsets), and this
+## example's verification is a pure session-lifecycle + streamed-reply check.
+## One-line model swap: change the `model:` line below to `glm-5.3-flash:cloud`.
+
+models:
+  gemma4_local:
+    provider: ollama
+    model: gemma4:latest
+    description: Local gemma4 on the host Ollama daemon (localhost:11434) - the swap point for local/cloud
+
+agents:
+  root:
+    model: gemma4_local
+    description: Ex07 ACP agent - served to editors via docker agent serve acp (stdio)
+    instruction: |
+      You are Ex07, the ACP-served agent in the docker_agents exploration repo.
+
+      Rules:
+      - You are usually driven by a coding editor over ACP: keep answers short.
+      - When asked to reply with a specific word or phrase, reply with exactly that
+        word or phrase and nothing else.
+      - Say plainly when you cannot do something instead of inventing content.
+    max_iterations: 6
