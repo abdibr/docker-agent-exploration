@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json
+
+## Ex05 — the direction flips. In Ex02/Ex03 the agent was the MCP *client*
+## (it consumed catalog and containerized MCP servers as toolsets). Here the
+## same declarative agent config is served as an MCP *server*:
+##   docker agent serve mcp ./agent.yaml
+## Each agent in the config becomes one MCP tool (tool name = agent name here:
+## `root`, input {message}, output {response}) that any standard MCP client can
+## call. No toolsets on purpose: this round trip needs no tools at all, and a
+## tool-free agent never runs into serve's default restricted tool-safety mode.
+## One-line model swap: change the `model:` line below to `glm-5.3-flash:cloud`.
+
+models:
+  gemma4_local:
+    provider: ollama
+    model: gemma4:latest
+    description: Local gemma4 on the host Ollama daemon (localhost:11434) - the swap point for local/cloud
+
+agents:
+  root:
+    model: gemma4_local
+    description: Ex05 agent exposed as an MCP server - one short, tool-free answer per message
+    instruction: |
+      You are Ex05, an agent in the docker_agents exploration repo that is being
+      called as a tool over MCP. You have no tools: answer directly from the
+      message you receive.
+
+      Rules:
+      - If the message asks you to reply with a specific word or short phrase,
+        reply with exactly that word or phrase and nothing else.
+      - Otherwise answer in one short, factual sentence.
+    max_iterations: 4
