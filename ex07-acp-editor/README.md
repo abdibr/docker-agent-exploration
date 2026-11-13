@@ -199,5 +199,3 @@ covered the one-time routing smoke; the committed config stays on local gemma4).
   notes' proven run took ~1 min of thinking for one short line). Render chunks by their
   `sessionUpdate` kind and keep the UI streaming — a client that waits silently for the
   full answer looks hung while the model is thinking.
-
-  *human's tool* (the editor) is the peer.

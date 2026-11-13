@@ -109,11 +109,12 @@ containerized server's output demonstrably shaped the answer. Runs finish in und
 minute.
 
 **Supplementary direct protocol probe (model-free).** The Testing Decisions allow a minimal
-direct probe next to the agent-mediated check. `req.txt` records a full MCP exchange; piped
-through the exact command the agent runs, the container answers it with no model at all:
+direct probe next to the agent-mediated check. The `mcp-probe-requests.ndjson` fixture
+records a full MCP exchange; piped through the exact command the agent runs, the container
+answers it with no model at all:
 
 ```powershell
-cmd /c "type req.txt | docker run --rm -i mcp-ex03-echo:local"
+cmd /c "type mcp-probe-requests.ndjson | docker run --rm -i mcp-ex03-echo:local"
 ```
 
 → three NDJSON responses: `initialize` (`serverInfo mcp-echo 1.0.0`), `tools/list` (the

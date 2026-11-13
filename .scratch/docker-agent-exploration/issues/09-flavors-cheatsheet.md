@@ -8,7 +8,7 @@
 
 - [x] Cheat-sheet committed with a decision-ready comparison: what each flavor is for, isolation/cost/complexity notes, when to reach for it
 - [x] Cross-cutting phase notes finalized under the docs/notes area
-- [x] Spec exit condition met: examples 01–07 verified green plus the cheat-sheet; wrap-up commit made
+- [x] Spec exit condition met: examples 01–07 verified green plus the cheat-sheet; wrap-up commit made — green per each ticket's own verification evidence (Ex07's in-editor session is marked owner-demo; its wire probe is green)
 - [x] Explicit stop: no real-problem work started — the next move belongs to the owner
 
 ## Comments
@@ -23,6 +23,6 @@
 
 **The one verification spot check re-run at phase exit (the only run executed by this ticket):** the Ex01 template, verbatim from `ex01-first-agent/README.md`, run from that example directory in the worktree on 2026-11-13 — `docker agent run .\agent.yaml --exec 'Read agent.yaml in the current directory using your filesystem tools. Then answer with exactly two lines. Line 1: the provider and the model name you find under models. Line 2: the three toolset types listed for this agent.' --safety restricted` (local `gemma4:latest`, no other local runs overlapping; finished in under a minute) → **EXITCODE=0**; transcript shows `Calling read_file(` → `read_file response → (` with the `agent.yaml` content (so the side effect, not just the exit code, is proven), and the answer arrived as two lines: `Provider: ollama, Model: gemma4:latest` / `Toolset types: filesystem, shell, think` — the run's own phrasing of the two values the template expects (provider `ollama` + `gemma4:latest`; toolsets `filesystem shell think`). Both halves of the exit-0-is-not-success discipline held. **Everything else was deliberately NOT re-run** — the cloud run (one, ticket 05), the container build (ticket 04), and the serve probes (tickets 06–08) stand on their per-ticket evidence: Ex01 2026-10-19 and Ex02 2026-10-25 on v1.145.0; Ex03–Ex07 on 2026-11-13 on v1.153.0; the ACP in-editor session remains ticket 08's honestly-unticked owner hands-on demo — carried over, not silently closed.
 
-**Spec exit condition, as met:** examples 01–07 verified green per their tickets, plus the cheat-sheet (`docs/notes/flavors.md`) and the finalized phase notes — committed together in the wrap-up commit. **Explicit stop:** the exploration phase ends here; no real-problem work has been started, and selecting the first real problem (and the flavor(s) to build it on) belongs to the owner. The cheat-sheet's table is the starting point for that conversation.
+**Spec exit condition, as met:** examples 01–07 verified green per each ticket's own verification evidence (Ex07's in-editor session is marked owner-demo; its wire probe is green), plus the cheat-sheet (`docs/notes/flavors.md`) and the finalized phase notes — committed together in the wrap-up commit. **Explicit stop:** the exploration phase ends here; no real-problem work has been started, and selecting the first real problem (and the flavor(s) to build it on) belongs to the owner. The cheat-sheet's table is the starting point for that conversation.
 
 
