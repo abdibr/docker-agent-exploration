@@ -38,13 +38,15 @@ models:
     provider: ollama
     model: gemma4:latest
 
-# after (Anthropic — same shape, different provider + model ID):
+# after (Anthropic — same shape, different provider + model + key name):
 models:
-  gemma4_local:
+  claude_sonnet:
     provider: anthropic
     model: claude-sonnet-4-5
     # max_tokens: 64000   # optional
 ```
+
+(If you rename the key, update every `model:` reference in the `agents:` block to match — e.g. `model: claude_sonnet`.)
 
 Or skip the named entry entirely and use the inline `provider/model` shorthand: `model: anthropic/claude-sonnet-4-5`.
 
