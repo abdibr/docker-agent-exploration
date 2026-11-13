@@ -134,8 +134,8 @@
 <header>
   <p class="kicker">Docker Agent foundations · Lesson 001</p>
   <h1>The mental model &amp; the map of seven flavors</h1>
-  <p class="sub">What <code>docker agent</code> is, how one YAML file becomes a working program, and which interop
-  flavor to reach for — grounded in this repo's seven verified examples.</p>
+  <p class="sub">What <code>docker agent</code> is, how one YAML file becomes a working program, and which way of
+  connecting to reach for — grounded in this repo's seven run-verified examples.</p>
   <div class="chips">
     <span class="chip">⏱ ~25 min</span>
     <span class="chip">💤 zero prerequisites</span>
@@ -143,6 +143,7 @@
     <span class="chip">🎯 ends with a 9-question retrieval quiz</span>
   </div>
 </header>
+<main>
 
 <div class="card blue">
   <h3>Where you are on the mission</h3>
@@ -165,17 +166,17 @@
 
   <div class="card">
     <p><b>1.</b> <b>Docker Agent is Docker's open-source AI agent builder and runtime.</b> You write a
-    declarative YAML file naming the <i>models</i>, the <i>agents</i> (role, instruction, tools), and how they
-    connect — and the <code>docker agent</code> CLI plugin turns that file into a running agent.
+    YAML file that names the <i>models</i>, the <i>agents</i> (role, instructions, tools), and how they
+    connect — and the <code>docker agent</code> command turns that file into a running agent.
     It ships inside Docker Desktop 4.63+; on 4.49–4.62 the same tool was called <code>cagent</code>, which is why
     older tutorials use that name.</p>
     <p><b>2.</b> <b>The config is the whole program.</b> No wrapper scripts, no client code, no SDK — the
-    YAML file alone runs the agent, interactively or headless. This is the "no glue code" philosophy on display
+    YAML file alone runs the agent, as a live chat or as a one-shot printed run. This is the "no glue code" philosophy on display
     in <a href="../ex01-first-agent/README.md">ex01-first-agent/README.md</a>.</p>
-    <p><b>3.</b> <b>Every interop flavor is one config edit away.</b> External tools arrive via MCP (a catalog
-    reference or your own containerized server), extra roles via <code>sub_agents:</code>, and the same config
-    can be <i>served</i> over five different network/protocol surfaces. One file, seven flavors — exactly what
-    the seven examples in this repo prove, in order.</p>
+    <p><b>3.</b> <b>Every connection type is one config edit away.</b> External tools arrive through MCP (a ready-made
+    catalog entry, or a server of your own in a container), extra teammate roles through <code>sub_agents:</code>, and
+    the same config can be <i>served</i> to other programs through five different network doors. One
+    file, seven flavors — exactly what the seven examples in this repo prove, in order.</p>
   </div>
 
   <div class="cite"><b>Claim checks:</b> the definition, rename history, and OCI sharing come from the
@@ -187,16 +188,16 @@
 
   <div class="grid g3">
     <div class="card teal">
-      <h3>🧩 Declarative &amp; versionable</h3>
-      <p class="tagline">Agents are YAML you can git-commit, diff, and review — like a Dockerfile for agents. One commit per example is how this whole repo was built.</p>
+      <h3>🧩 Plain text you can version</h3>
+      <p class="tagline">Agents are YAML you can git-commit, diff, and review — like a Dockerfile, but for agents. One commit per example is how this whole repo was built.</p>
     </div>
     <div class="card teal">
-      <h3>🔌 Provider-agnostic</h3>
-      <p class="tagline">Named <code>models:</code> entries point at any provider. This repo pins the built-in <code>ollama</code> provider → local <code>gemma4:latest</code> on your own daemon, with a one-line local↔cloud swap.</p>
+      <h3>🔌 Works with any provider</h3>
+      <p class="tagline">Named <code>models:</code> entries point at any provider. This repo pins the built-in <code>ollama</code> provider → local <code>gemma4:latest</code> on your own machine, and swapping to a cloud model is a one-line edit.</p>
     </div>
     <div class="card teal">
-      <h3>🤝 Interop by construction</h3>
-      <p class="tagline">Built-in toolsets today (<code>filesystem</code>, <code>shell</code>, <code>think</code>); MCP for external tools; <code>sub_agents</code> for roles; five <code>serve</code> surfaces for client programs.</p>
+      <h3>🤝 Connections built in</h3>
+      <p class="tagline">Built-in toolsets today (<code>filesystem</code>, <code>shell</code>, <code>think</code>); MCP for external tools; <code>sub_agents</code> for teammate roles; five <code>serve</code> doors for other programs.</p>
     </div>
   </div>
 </section>
@@ -252,15 +253,15 @@
       Every agent references it by name, so changing the model is an edit in exactly one line — the repo's one-line
       local↔cloud swap (<code>gemma4:latest</code> → <code>glm-5.3-flash:cloud</code>).</li>
       <li><b>The agent entry</b> — <code>root</code> is the agent you actually talk to. Its
-      <code>description</code> isn't just documentation: later examples show it surfacing in protocol metadata
-      (in Ex05 it becomes the MCP tool's description; in Ex06 it feeds the A2A agent card).</li>
+      <code>description</code> isn't just documentation: later examples show other programs reading it
+      (in Ex05 it becomes the MCP tool's description; in Ex06 it appears on the A2A agent card).</li>
       <li><b>The instruction</b> — this is the prompt. The model sees it on every turn; the repo's rule
-      ("first read the file, quote exact values") is what makes the verification answer <i>deterministic</i>.</li>
+      ("first read the file, quote exact values") is what makes the verification answer come out the <i>same way every time</i>.</li>
       <li><b><code>max_iterations: 20</code></b> — the turn budget, a runaway-loop fuse. Ex04 needs 12 for its lead,
       because delegation takes turns.</li>
-      <li><b>Toolsets</b> — capabilities attached declaratively. <code>filesystem</code> is sandboxed here with
+      <li><b>Toolsets</b> — the abilities you list in the file. <code>filesystem</code> is sandboxed here with
       <code>allow_list: ["."]</code>: the agent can only touch its working directory. <code>think</code> gives the
-      model a scratchpad (gemma4 reasons inline, so it rarely calls it — not an error).</li>
+      model a private scratchpad (gemma4 usually reasons in its own words, so it rarely calls it — not an error).</li>
     </ul>
   </details>
 
@@ -269,7 +270,7 @@
     <p>On first verification, gemma4 called <code>read_file</code> with
     <code>limit: 0</code> and got back <code>invalid limit 0: limit must be &gt;= 1</code> — then <i>read the error,
     corrected itself, and retried</i>. Lesson: small models trip on parameter corners, and clear tool errors are
-    enough for them to self-correct. That's also your first taste of the exit-code discipline in the next section —
+    enough for them to fix themselves. That's also your first taste of the exit-code rule in the next section —
     the run still exited 0 either way.</p>
   </div>
 </section>
@@ -282,12 +283,12 @@
   <table>
     <thead><tr><th>Verb</th><th>What happens</th><th>Where the repo leans on it</th></tr></thead>
     <tbody>
-      <tr><td class="mono">docker agent run cfg.yaml</td><td>Interactive TUI — a terminal chat with your agent</td><td>Owner demos (every example's "run it" section)</td></tr>
-      <tr><td class="mono">… --exec "task"</td><td><b>Headless</b> run: prints the full transcript (tool calls + answer) to stdout, exits when done</td><td>The verification template — every example's single machine-checked command</td></tr>
-      <tr><td class="mono">… --json</td><td>NDJSON event stream (one JSON object per line, ~150 events per trivial prompt)</td><td>Machine-readable evidence in the notes</td></tr>
-      <tr><td class="mono">echo "task" | … - --exec</td><td>Task piped via stdin instead of an argument</td><td>Windows PowerShell quote-mangling escape hatch</td></tr>
+      <tr><td class="mono">docker agent run cfg.yaml</td><td>Interactive TUI — a chat window in your terminal</td><td>Owner demos (every example's "run it" section)</td></tr>
+      <tr><td class="mono">… --exec "task"</td><td><b>Headless</b> (no chat window): one task, prints the full transcript (tool calls + answer), then exits</td><td>The verification template — every example's single machine-checked command</td></tr>
+      <tr><td class="mono">… --json</td><td>One JSON event per line (~150 lines for a trivial prompt) — easy for scripts to read</td><td>Machine-readable evidence in the notes</td></tr>
+      <tr><td class="mono">echo "task" | … - --exec</td><td>The task arrives through a pipe instead of a quoted argument</td><td>The clean escape when Windows PowerShell mangles your quotes</td></tr>
       <tr><td class="mono">… --dry-run</td><td>Validates the config <b>without touching a model</b></td><td>Pre-flight gate before any spend, from Ex02 on</td></tr>
-      <tr><td class="mono">debug config / debug toolsets</td><td>Canonical config view / the concrete tool list (this one starts toolsets!)</td><td>The missing-image and wrong-toolset lessons of Ex03</td></tr>
+      <tr><td class="mono">debug config / debug toolsets</td><td>The config exactly as the CLI sees it / the exact tool list — this one actually starts the toolsets, so it catches real problems</td><td>The missing-image and wrong-toolset lessons of Ex03</td></tr>
     </tbody>
   </table>
 
@@ -299,19 +300,19 @@ docker agent run .\agent.yaml --exec <span class="str">'Read agent.yaml in the c
 filesystem tools. Then answer with exactly two lines. Line 1: the provider and the
 model name you find under models. Line 2: the three toolset types listed for this agent.'</span> --safety restricted</pre>
 
-  <div class="cite"><b>Why this task is clever:</b> the answer lives entirely in a file the agent must read, so a
-  scripted run is simultaneously the test <i>and</i> the executor — read-only, deterministic, no scratch files.
-  Phases notes call this the "single verification seam": one headless command per example, asserted on external
-  behavior only (<a href="../docs/notes/phase-notes.md">phase-notes.md §7</a>).</div>
+  <div class="cite"><b>Why this task is clever:</b> the answer lives entirely inside a file the agent must read, so one
+  command is both the test <i>and</i> the runner — read-only, same result every time, no leftover files. The repo's
+  rule: one command per example, judged only on what appears in the output
+  (<a href="../docs/notes/phase-notes.md">phase-notes.md §7</a>).</div>
 
   <div class="grid g3">
     <div class="card violet">
       <h3>🛡 <code>--safety restricted</code></h3>
-      <p class="tagline">Fail-closed unattended profile. Obviously-safe calls (this read) auto-approve; everything else is <i>silently denied</i> — the denial only shows in the transcript, never as a prompt. The repo's default for verification.</p>
+      <p class="tagline">Fail-closed means: when in doubt, refuse. Built for runs with nobody watching. Obviously-safe calls (this read) auto-approve; everything else is <i>silently denied</i> — the denial only shows in the transcript, never as a prompt. The repo's default for verification.</p>
     </div>
     <div class="card violet">
       <h3>⚡ <code>--safety autonomous</code> / <code>--yolo</code></h3>
-      <p class="tagline">Auto-approve everything. Reserved for deliberate one-shot commands — the MCP examples (Ex02/Ex03) verify this way precisely because restricted denies MCP calls.</p>
+      <p class="tagline">Auto-approve everything. Reserved for deliberate one-shot commands — the MCP examples (Ex02/Ex03) verify this way because restricted refuses MCP calls.</p>
     </div>
     <div class="card violet">
       <h3>🎚 The full ladder</h3>
@@ -321,9 +322,9 @@ model name you find under models. Line 2: the three toolset types listed for thi
 
   <div class="card red">
     <h3>🚨 The single most important operating lesson: exit 0 is not success</h3>
-    <p>Denied tool calls, missing tool images, degenerate loops — all still exit 0. In Ex01–Ex03 the denial only
+    <p>Refused tool calls, missing tool images, loops that repeat the same failed call — all still exit 0. In Ex01–Ex03 the refusal only
     appears as a transcript line like <span class="mono">Tool 'write_file' is denied by the restricted safety
-    mode…</span>. Judge the <b>transcript</b> (or the protocol surface), never the exit code. Every gotcha list in
+    mode…</span>. Judge the <b>transcript</b> (or the protocol output), never the exit code. Every gotcha list in
     this repo repeats it: <a href="../docs/notes/phase-notes.md">phase-notes §4</a>.</p>
   </div>
 
@@ -331,29 +332,29 @@ model name you find under models. Line 2: the three toolset types listed for thi
   <table>
     <thead><tr><th>Serve surface</th><th>Where</th><th>Consumed by</th><th>Example</th></tr></thead>
     <tbody>
-      <tr><td class="mono">serve api</td><td class="mono">127.0.0.1:8080</td><td>REST / sessions + bearer auth <span class="pill warn">documented, never probed here</span></td><td>—</td></tr>
+      <tr><td class="mono">serve api</td><td class="mono">127.0.0.1:8080</td><td>A simple HTTP API with sessions and token auth <span class="pill warn">documented, never probed here</span></td><td>—</td></tr>
       <tr><td class="mono">serve mcp</td><td class="mono">stdio · HTTP :8081 with --http</td><td>Any MCP client (Claude Code connected ✓ in Ex05)</td><td class="mono">ex05</td></tr>
-      <tr><td class="mono">serve a2a</td><td class="mono">127.0.0.1:8082</td><td>Other agents over HTTP JSON-RPC + agent-card discovery</td><td class="mono">ex06</td></tr>
+      <tr><td class="mono">serve a2a</td><td class="mono">127.0.0.1:8082</td><td>Other agents over HTTP — they find your agent through its agent card</td><td class="mono">ex06</td></tr>
       <tr><td class="mono">serve chat</td><td class="mono">127.0.0.1:8083</td><td>OpenAI-compatible chat completions <span class="pill warn">documented, never probed here</span></td><td>—</td></tr>
-      <tr><td class="mono">serve acp</td><td class="mono">stdio only, zero flags</td><td>Your editor (spawns the agent as a subprocess)</td><td class="mono">ex07</td></tr>
+      <tr><td class="mono">serve acp</td><td class="mono">stdio only, zero flags</td><td>Your editor (it starts the agent as its helper program)</td><td class="mono">ex07</td></tr>
     </tbody>
   </table>
-  <div class="cite">Shared behavior on every probed surface: stdout carries <b>protocol only</b>, all logging on
-  stderr; tool-safety policy is declared in a startup banner (defaults <code>restricted</code>) —
+  <div class="cite">Shared behavior on every tested surface: the main output (stdout) carries <b>protocol messages only</b>, all logs go to
+  stderr, and a startup banner announces the tool-safety policy (default <code>restricted</code>) —
   <a href="../docs/notes/run-modes.md">run-modes.md §15</a> and
   <a href="../docs/notes/phase-notes.md">phase-notes §6</a>.</div>
 </section>
 
 <section class="part" id="p4">
-  <h2><span class="no">04</span>The map: seven examples, six interop flavors</h2>
-  <p class="lede">Ex01 is the baseline (no interop — just the agent itself). The other six slots test the
-  interop landscape. Distilled from <a href="../docs/notes/flavors.md">docs/notes/flavors.md</a>, the repo's
+  <h2><span class="no">04</span>The map: seven examples, six ways to connect</h2>
+  <p class="lede">Ex01 is the baseline (no special connections — just the agent itself). The other six examples test the
+  ways to connect. Distilled from <a href="../docs/notes/flavors.md">docs/notes/flavors.md</a>, the repo's
   decision cheat-sheet. Memorize these four one-liners — they're the whole map:</p>
 
   <div class="grid g3">
     <div class="card blue"><h3>🔧 MCP</h3><p class="tagline">Wires <b>tools into</b> an agent — or exposes <b>the agent out</b> as one tool.</p></div>
-    <div class="card blue"><h3>🌐 A2A</h3><p class="tagline">Delegates work <b>between agents</b> over a network — with discovery and task state.</p></div>
-    <div class="card blue"><h3>🧩 <code>sub_agents</code></h3><p class="tagline">Multi-role work <b>inside one config</b> — delegation with zero protocol machinery.</p></div>
+    <div class="card blue"><h3>🌐 A2A</h3><p class="tagline">Delegates work <b>between agents</b> over a network — they find each other and trade tasks with task state.</p></div>
+    <div class="card blue"><h3>🧩 <code>sub_agents</code></h3><p class="tagline">Multi-role work <b>inside one config</b> — delegation with zero extra networking setup.</p></div>
     <div class="card blue"><h3>📝 ACP</h3><p class="tagline">The <b>editor-facing seat</b> — the human's tool is the peer.</p></div>
   </div>
 
@@ -364,21 +365,21 @@ model name you find under models. Line 2: the three toolset types listed for thi
         <td><b>Native sub-agents</b><br><span class="mono">sub_agents:</span></td>
         <td><a href="../ex04-sub-agents/README.md">04</a></td>
         <td>Delegate <i>roles</i> (planner, reviewer…) and compose their answers; sub-agents see only what the lead forwards</td>
-        <td>All in-process, one config; context boundary is the handoff</td>
-        <td>Work splits into roles. Try this <b>first</b> — before any protocol machinery</td>
+        <td>All inside one program, one config; each teammate only sees the handover</td>
+        <td>Work splits into roles. Try this <b>first</b> — before any networking setup</td>
       </tr>
       <tr>
         <td><b>MCP client — catalog</b><br><span class="mono">ref: docker:duckduckgo</span></td>
         <td><a href="../ex02-mcp-catalog-tool/README.md">02</a></td>
         <td>Proven containerized tools (web search…) — no server code, no local install, no key</td>
-        <td>Strongest: per-call digest-pinned container, egress-restricted, nothing persists</td>
+        <td>Strongest: a fresh, version-locked container per call, allowed to talk to only one web address; nothing left behind</td>
         <td>Off-the-shelf capability, quickly. Limited by the catalog contents</td>
       </tr>
       <tr>
         <td><b>MCP client — custom server</b><br><span class="mono">command: docker run…</span></td>
         <td><a href="../ex03-mcp-custom-server/README.md">03</a></td>
-        <td>Deterministic tools <i>you</i> wrote (~100 lines, no SDK); learn MCP from the server side</td>
-        <td>Yours: you build/tag the image; per-session container with <span class="mono">--rm</span> teardown</td>
+        <td>Exact, testable tools <i>you</i> wrote (~100 lines, no SDK); learn MCP from the server side</td>
+        <td>Yours: you build the image; a fresh container per session that cleans itself up (<span class="mono">--rm</span>)</td>
         <td>No catalog entry fits, and the job must be exact and testable</td>
       </tr>
       <tr>
@@ -398,7 +399,7 @@ model name you find under models. Line 2: the three toolset types listed for thi
       <tr>
         <td><b>ACP — editor seat</b><br><span class="mono">serve acp</span></td>
         <td><a href="../ex07-acp-editor/README.md">07</a></td>
-        <td>The editor (Zed etc.) spawns your agent over stdio JSON-RPC — sessions, streaming, permission prompts</td>
+        <td>Your editor (Zed etc.) starts your agent and talks to it over standard input/output — sessions, streamed replies, permission prompts</td>
         <td>No flags at all: mode + model are negotiated per session from the editor UI</td>
         <td>The <i>human's tool</i> is the peer and the agent must feel native in the editor</td>
       </tr>
@@ -408,27 +409,27 @@ model name you find under models. Line 2: the three toolset types listed for thi
   <details open>
     <summary>The decision flow — six questions, in this order (flavors.md's rule order)</summary>
     <ol class="flow">
-      <li><b>Can you split by role?</b> Delegate <i>tasks and roles</i> inside one config → <b>native <code>sub_agents</code></b> (Ex04). A lead + specialist beat any networked alternative on simplicity — try it first.</li>
-      <li><b>Who owns the work?</b> If the <i>agent must call out to an MCP client</i> for tools, next question is: does a <b>catalog entry</b> (Ex02) cover it? If yes, stop — you get the strongest isolation for free. If no…</li>
-      <li><b>…build a custom MCP server</b> (Ex03) when you need <i>deterministic, self-authored</i> tools and a container you tag. This is the "custom" slot when no catalog entry covers the capability.</li>
-      <li><b>Is the peer an MCP-native client?</b> Your agent's skills should appear as tools in Claude Code etc. → <b><code>serve mcp</code></b> (Ex05).</li>
-      <li><b>Do agents need discovery + whole-task handoff?</b> Separate processes exchanging stateful tasks → <b><code>serve a2a</code></b> (Ex06).</li>
-      <li><b>Is the peer the human's tool?</b> Editor should spawn the agent native-in-session → <b><code>serve acp</code></b> (Ex07).</li>
+      <li><b>Can you split by role?</b> Delegate <i>tasks and roles</i> inside one config → <b>native <code>sub_agents</code></b> (Ex04). A lead plus specialists is simpler than any networked option — try it first.</li>
+      <li><b>Who owns the work?</b> If the agent needs tools from MCP, next question: does a <b>catalog entry</b> (Ex02) already cover it? If yes, stop — strongest isolation, zero code. If not…</li>
+      <li><b>…build a custom MCP server</b> (Ex03) when you need <i>exact, testable tools you wrote yourself</i>. This is the "custom" slot when no catalog entry covers the capability.</li>
+      <li><b>Is the other side an MCP client?</b> Your agent's skills should appear as tools in Claude Code etc. → <b><code>serve mcp</code></b> (Ex05).</li>
+      <li><b>Do separate agent programs need to find each other and hand over whole tasks?</b> → <b><code>serve a2a</code></b> (Ex06).</li>
+      <li><b>Is the other side the human's editor?</b> The editor starts your agent and drives it in-session → <b><code>serve acp</code></b> (Ex07).</li>
     </ol>
   </details>
 
   <div class="grid g3 no-print">
     <div class="card amber">
       <h3>⚠ Cross-flavor caution #1</h3>
-      <p class="tagline"><b>MCP tool refs belong to the root agent only</b> — sub-<i>agents</i> in one config cannot carry them (flavors.md rule §4), and Ex02's catalog <code>ref:</code> sits only under <code>agents:.root</code>. Delegation is Ex04's <code>sub_agents</code>; MCP stays top-level.</p>
+      <p class="tagline"><b>MCP tool references work only on the top-level agent</b> — sub-<i>agents</i> in one config cannot carry them (flavors.md rule §4), and Ex02's catalog <code>ref:</code> sits only under <code>agents:.root</code>. Delegation is Ex04's <code>sub_agents</code>; MCP stays on the main agent.</p>
     </div>
     <div class="card amber">
       <h3>⚠ Cross-flavor caution #2</h3>
-      <p class="tagline"><b>MCP ≠ A2A.</b> MCP moves <i>synchronous tool calls</i>; A2A moves <i>asynchronous whole tasks</i> with agent-card discovery. Don't bolt A2A on to fix an MCP gap.</p>
+      <p class="tagline"><b>MCP vs A2A.</b> MCP handles <i>quick, back-and-forth tool calls</i>; A2A hands over <i>whole tasks</i> that run on their own time, with discovery. Don't add A2A to fix an MCP problem.</p>
     </div>
     <div class="card amber">
       <h3>⚠ Cross-flavor caution #3</h3>
-      <p class="tagline">Serving to remote peers is <b>network exposure</b> — Ex05's HTTP surface binds 0.0.0.0 by default. Local use stays fine on the loopback addresses we tested; lock remote peers down before sharing.</p>
+      <p class="tagline">Serving beyond your machine is <b>network exposure</b> — Ex05's HTTP mode listens on all network interfaces (0.0.0.0) by default. Local use on your own machine is fine, as we tested it; lock down access before sharing with other computers.</p>
     </div>
   </div>
 
@@ -443,11 +444,11 @@ model name you find under models. Line 2: the three toolset types listed for thi
 <section class="part" id="p5">
   <h2><span class="no">05</span>The five things to carry forward</h2>
   <ol class="flow">
-    <li><b>Config is the whole program.</b> A YAML file alone runs the agent — interactive, headless, or served. If you can't express it in YAML, you're holding it wrong.</li>
+    <li><b>Config is the whole program.</b> A YAML file alone runs the agent — as a chat, as a one-shot run, or served. Anything the agent does should be expressible in the YAML file.</li>
     <li><b>Five keys are the vocabulary.</b> <code>models:</code> entries (named, swappable), <code>agents:</code> with <code>instruction</code>/<code>description</code>, <code>max_iterations</code> as the fuse, <code>toolsets:</code> as capabilities, <code>allow_list</code> as the sandbox.</li>
-    <li><b>Run modes are verbs, not modes.</b> TUI for demos, <code>--exec</code> for transcribed checks, <code>--dry-run</code> to validate free. Pick the surface by what evidence you need.</li>
-    <li><b>Exit code lies; transcript tells the truth.</b> Restricted failures, broken toolsets, degenerate loops — all exit 0. Machine-check the transcript, then judge.</li>
-    <li><b>The map: try sub_agents first, catalog MCP first among protocols.</b> Custom MCP for exactness, serve mcp/a2a/acp when the <i>peer</i> picks the protocol. Catalog tools beat custom servers when they exist — free isolation.</li>
+    <li><b>Run modes are just different commands.</b> Chat window for demos, <code>--exec</code> for recorded test runs, <code>--dry-run</code> to check the config for free. Pick by what evidence you need.</li>
+    <li><b>The exit code can lie; the transcript tells the truth.</b> Refused calls, broken toolsets, stuck loops — all can still exit 0. Read the transcript, then judge.</li>
+    <li><b>The map: try sub_agents first; among the networked options, try catalog MCP first.</b> Custom MCP when you need exact behavior; serve mcp/a2a/acp when the <i>other side</i> picks the protocol. Catalog tools beat custom servers when one exists — strongest isolation for free.</li>
   </ol>
 
   <div class="quiz no-print">
@@ -477,6 +478,7 @@ model name you find under models. Line 2: the three toolset types listed for thi
   <a href="../NOTES.md">Workspace notes</a> · <a href="index.html">Lessons</a> — next:
   <a href="0002-ex01-hands-on.html">002&nbsp;Ex01&nbsp;hands-on →</a></p>
 </footer>
+</div>
 
 <script>
 (function () {
@@ -490,7 +492,7 @@ model name you find under models. Line 2: the three toolset types listed for thi
   var msgs = {
     swap: "① Correct — the named entry. The one-line swap point is its value: gemma4:latest → glm-5.3-flash:cloud.",
     ref: "② Correct — root references the entry by name. Note it also says model:, but here the value is an entry name.",
-    instr: "③ Correct — instruction: is the prompt, seen by the model on every turn. The rules inside make verification deterministic.",
+    instr: "③ Correct — instruction: is the prompt, seen by the model on every turn. The rules inside make the answer come out the same every time.",
     cap: "④ Correct — the turn budget, a runaway-loop fuse. Ex04's lead needs 12, because delegation costs turns.",
     fs: "⑤ Correct — the filesystem toolset, sandboxed to its working directory by allow_list: [\".\"] — allow_list only restricts; the default is unrestricted."
   };
@@ -553,12 +555,12 @@ model name you find under models. Line 2: the three toolset types listed for thi
       o: ["The task succeeded", "All tool calls succeeded",
           "Only baseline sanity — config parsed and the process ended; judge the transcript",
           "Nothing — Docker Agent exit codes are random"], a: 2,
-      f: "Part 03, red card: denied calls, missing toolsets, degenerate loops all still exit 0. Read the transcript or the protocol surface." },
+      f: "Part 03, red card: refused calls, broken toolsets and stuck loops can all still exit 0. Read the transcript or the protocol output." },
     { q: "With --safety restricted, a denied tool call shows up as…",
       o: ["A blocking approval prompt", "An immediate non-zero exit",
           "A silent denial — visible only in the transcript, exit code still 0",
           "An HTTP 500 on stdout"], a: 2,
-      f: "Part 03: restricted is fail-closed for unattended runs (auto-approves only obviously-safe calls); autonomous auto-approves all; ladder is default|strict|balanced|restricted|autonomous." },
+      f: "Part 03: restricted is refuse-by-default when nobody is watching (auto-approves only clearly-safe calls); autonomous approves everything; the ladder is default|strict|balanced|restricted|autonomous." },
     { q: "ex01 swaps its local model to glm-5.3-flash:cloud. Which line changes?",
       o: ["instruction: of the root agent", "The value of model: in the named models entry",
           "max_iterations: 20", "allow_list: in the filesystem toolset"], a: 1,
@@ -574,10 +576,10 @@ model name you find under models. Line 2: the three toolset types listed for thi
           "A2A (serve a2a) — agent-card discovery and whole-task exchange with state",
           "MCP catalog refs — they support peer discovery",
           "serve acp — it accepts TCP clients"], a: 1,
-      f: "Part 04, Ex06: A2A is agent↔agent (agent card, context/task IDs, artifacts, :8082). sub_agents is in-process role delegation with no protocol; MCP moves sync tool calls, not tasks." },
+      f: "Part 04, Ex06: A2A is agent↔agent (agent card, context/task IDs, artifacts, :8082). sub_agents is role delegation inside one program with no networking; MCP moves quick tool calls, not whole tasks." },
     { q: "The repo's free pre-flight gate before any verification spend is…",
       o: ["--json", "debug toolsets", "--dry-run", "--yolo"], a: 2,
-      f: "Part 03: --dry-run validates the config without touching a model. debug toolsets introspects real capability (the Ex03 missing-toolset check); --json formats events after a run." }
+      f: "Part 03: --dry-run validates the config without touching a model. debug toolsets shows the real tool list (the Ex03 missing-toolset check); --json formats events after a run." }
   ];
 
   var box = document.getElementById("quiz");

@@ -129,9 +129,9 @@
 
 <p class="kicker">Docker Agent workspace · Lesson 003 · the MCP flavors</p>
 <h1>Lesson 003 · The MCP flavors — catalog ref vs your own server</h1>
-<p class="sub">Lesson 002 had you run and judge Ex01. Now the same agent pattern reaches outside itself through MCP:
-two verified examples take the identical client seat by two entrances — Docker's catalog ref with zero server code
-(ex02) and your own ~100-line containerized server (ex03) — plus the safety-mode flip, the model-free gate, and the
+<p class="sub">Lesson 002 had you run and judge Ex01. Now the same agent reaches outside itself through MCP:
+two verified examples do the same job — being an MCP client — by two routes: Docker's ready-made catalog tool with zero server code
+(ex02), and your own ~100-line server in a container (ex03). Plus the safety-mode switch, the cost-free check, and the
 transcript traps both leave behind.</p>
 <div class="chips">
   <span class="chip">ex02-mcp-catalog-tool</span>
@@ -143,14 +143,14 @@ transcript traps both leave behind.</p>
 
 <section class="part" id="p1">
   <h2><span class="no">01</span>Same seat, two entrances — MCP as client</h2>
-  <p class="lede">An agent that consumes tools sits in the MCP client seat. Ex02 and Ex03 occupy the identical seat;
-  what differs is the supplier. Exactly one new toolset type enters the config — <code>type: mcp</code> — and both
+  <p class="lede">An agent that uses outside tools is an MCP client. Ex02 and Ex03 do the same job;
+  what differs is who supplies the tool. Exactly one new toolset type enters the config — <code>type: mcp</code> — and both
   committed configs differ from Ex01 by roughly this one entry.</p>
 
   <p>Grounding: run-modes.md §14 counts 27 built-in toolset types; Ex01 used three of them (<code>filesystem</code>,
-  <code>shell</code>, <code>think</code> — expanding to 11 concrete tools). The palette also lists
-  <code>mcp_catalog</code> — the gateway machinery behind catalog refs (<code>docker agent toolsets</code> lists it) —
-  but what an agent config actually contains is a plain <code>type: mcp</code> entry. Here are the two real toolsets,
+  <code>shell</code>, <code>think</code> — expanding to 11 concrete tools). The full list also includes
+  <code>mcp_catalog</code> — the gateway machinery behind catalog entries (<code>docker agent toolsets</code> shows it) —
+  but what actually goes into an agent config is a plain <code>type: mcp</code> entry. Here are the two real toolsets,
   verbatim from each <code>agent.yaml</code>:</p>
 
   <p class="codelabel">ex02 — MCP by reference to Docker's catalog</p>
@@ -194,44 +194,41 @@ transcript traps both leave behind.</p>
           <td>No local MCP install, no API key, nothing to build — the gateway pulls the image on the first call</td>
           <td>No npm install, no tsc, no MCP SDK; one <code>docker build</code> (172 MB image — needs no model or Ollama)</td></tr>
       <tr><td><b>Who runs the container</b></td>
-          <td>Gateway-managed, per call, egress-restricted to <code>html.duckduckgo.com:443</code></td>
+          <td>Managed by Docker's gateway — a fresh container per call, allowed to talk only to <code>html.duckduckgo.com:443</code></td>
           <td>The agent config itself spawns <code>docker run --rm -i</code> per session</td></tr>
       <tr><td><b>What constrains you</b></td>
-          <td>The catalog: keyed entries (brave, tavily, exa) need secrets — out of scope; tool schemas fixed by
-              the snapshot</td>
+          <td>The catalog: entries that need API keys (brave, tavily, exa) are out of scope; the tool's exact behavior is fixed by the catalog</td>
           <td>Only your own JSON Schema and description — deterministic behavior you design</td></tr>
     </tbody>
   </table>
 
   <div class="card teal">
-    <h3>What the catalog entrance provides — digest-pinned and key-free</h3>
+    <h3>What the catalog entrance provides — version-locked and key-free</h3>
     <p><code>docker:duckduckgo</code> resolves to <i>Private Web Search</i> (community-maintained, not affiliated with
     DuckDuckGo): image
     <code style="word-break:break-all">mcp/duckduckgo@sha256:5617c4c60f48f47556c0735de7a73f6abd731c132c65ec8c720b511819c9f88f</code>
-    with egress restricted to <code>html.duckduckgo.com:443</code> (observed at this machine's 2026-10-25 catalog
+    with egress restricted to <code>html.duckduckgo.com:443</code> — allowed to talk only to that one web address (observed at this machine's 2026-10-25 catalog
     snapshot — ex02 README). The first MCP call starts the MCP gateway and auto-pulls that image; nothing needs to be
     installed or configured locally. Browse the catalog with <code>docker mcp catalog ls</code>.</p>
     <p>DuckDuckGo was chosen over the catalog's brave/tavily/exa search entries precisely because it needs
-    <b>no API key</b> — the phase's no-secrets rule stays unbroken (keyed entries would need config-backed secrets
-    wired through <code>docker mcp</code>, deliberately out of scope until then). Cost of the seat: the first call
+    <b>no API key</b> — the phase's no-secrets rule stays unbroken. What this route costs: the first call
     took ~40s (gateway start + image pull); reruns finish in well under a minute.</p>
   </div>
 
   <div class="card violet">
     <h3>What the custom entrance provides — a server you can read</h3>
-    <p><b>MCP over stdio is newline-delimited JSON-RPC, learnable by writing one.</b> <code>server.ts</code> handles
+    <p><b>MCP over stdio is just text messages — one JSON line at a time, over standard input and output — and writing one tiny server teaches you the whole thing.</b> <code>server.ts</code> handles
     <code>initialize</code> (echo back a <code>protocolVersion</code> + <code>serverInfo</code>),
     <code>notifications/initialized</code> (a notification — no response may be sent), <code>tools/list</code>,
     <code>tools/call</code>, and <code>ping</code> — that whole protocol surface is ~100 lines with no SDK.</p>
-    <p><b>The tool description is a prompt to the model.</b> The schema is a JSON Schema the server declares and it is
-    the <i>entire</i> contract the model sees: <code>inputSchema</code> (<code>message</code>, required) tells the
-    framework which arguments to enforce, while the description text — <i>Echoes back the given message prefixed with
-    ECHO:, plus the character count</i> — is what actually steers the model's calling behavior. Write that description
-    as if prompting the model — because it is one.</p>
-    <p><b>Transport follows consumption.</b> The agent spawns the server as a child process (<code>command: docker</code>,
-    <code>args: [run, --rm, -i, &lt;image&gt;]</code>), so the wire is stdin/stdout — not a URL. <code>stderr</code>
-    stays free for server logs (the <i>ready on stdio</i> banner lives there); keep <code>stdout</code> strictly
-    NDJSON — anything else pollutes the protocol stream.</p>
+    <p><b>The tool description is a prompt to the model.</b> <code>inputSchema</code> (<code>message</code>, required) tells the
+    runtime which arguments to enforce, while the description text — <i>Echoes back the given message prefixed with
+    ECHO:, plus the character count</i> — is what actually guides how the model calls the tool. Write that description
+    as if you were prompting the model — because you are.</p>
+    <p><b>How it connects follows how it starts.</b> The agent starts the server as its own child process (<code>command: docker</code>,
+    <code>args: [run, --rm, -i, &lt;image&gt;]</code>), so the messages travel over stdin/stdout — not a network address.
+    Keep <code>stdout</code> strictly one JSON line at a time — anything else corrupts the protocol stream;
+    <code>stderr</code> stays free for server logs (the <i>ready on stdio</i> banner lives there).</p>
     <p>Note there is no <code>image:</code> key, and no URL-style consumption for local servers — <code>docker run</code>
     in <code>command</code>/<code>args</code> <i>is</i> the containerization path.</p>
   </div>
@@ -257,16 +254,16 @@ agents:
 
 <section class="part" id="p2">
   <h2><span class="no">02</span>Why the safety mode flips to autonomous</h2>
-  <p class="lede">Ex01's verification ran <code>--safety restricted</code> because its read-only calls are classified
-  safe. Here that classification stops holding: <b>MCP calls — catalog or custom — are not on the provably-safe
-  list</b> (cross-flavor caution in <a href="../docs/notes/flavors.md">flavors.md</a>). One per-flavor fact reshapes
-  the template; each example's safety mode was checked empirically before committing, not assumed
+  <p class="lede">Ex01's verification ran <code>--safety restricted</code> because its read-only calls count as
+  safe. Here that stops working: <b>MCP calls — catalog or custom — are not on the clearly-safe list</b> (cross-flavor caution in
+  <a href="../docs/notes/flavors.md">flavors.md</a>). That one fact changes the safety mode in the template;
+  each example's mode was tested with real runs before committing, not assumed
   (<a href="../docs/notes/phase-notes.md">phase-notes</a> §3).</p>
 
   <div class="card amber">
     <h3>The recorded proof — same mode, two flavors, one denial text</h3>
     <p>Under <code>--safety restricted</code>, both examples' tool calls were auto-denied in the transcript. That is
-    <b>correct fail-closed behavior</b> — no approver exists in an unattended run:</p>
+    <b>correct refuse-by-default behavior</b> — in a run with nobody watching, there is nobody to approve anything:</p>
 <pre><span class="com"># ex02, catalog tool (Tool approvals — ex02 README):</span>
 Tool 'search' is denied by the restricted safety mode: the call is not
 classified safe, and the mode's fallback denies instead of asking for confirmation.
@@ -275,8 +272,8 @@ classified safe, and the mode's fallback denies instead of asking for confirmati
 Tool 'echo' is denied by the restricted safety mode: the call is not
 classified safe, and the mode's fallback denies instead of asking for confirmation.</pre>
     <p>After the denial, ex02's transcript showed <code>search response → "Tool 'search' is denied…"</code> and gemma4
-    correctly answered that it could not search — with exit 0. Identical verdicts: <i>what</i> serves the tool (a
-    catalog gateway or your own container) does not change the approval classification. The same caution's contrast:
+    correctly answered that it could not search — with exit 0. Same verdict either way: <i>who</i> serves the tool (a
+    catalog gateway or your own container) does not change how it's classified. The same caution's contrast:
     delegation (<code>transfer_task</code>, Ex04) <i>is</i> classified safe, so its template keeps
     <code>restricted</code>.</p>
   </div>
@@ -296,42 +293,42 @@ classified safe, and the mode's fallback denies instead of asking for confirmati
     <p><code>--yolo</code> is an alias for <code>--safety autonomous</code>. <b>Balanced would be worse than
     restricted here:</b> with no human present, the pending call surfaces as
     <code>The user rejected the tool call.</code> (ex02 README + run-modes §11 — observed). <code>autonomous</code>
-    auto-approves everything and stays reserved for deliberate one-shot commands whose blast radius you have read
-    first. The rule the phase converged on: <code>restricted</code> when the task's calls are safe-classified (Ex01,
+    auto-approves everything and stays reserved for deliberate one-shot commands where you have first read
+    everything they're allowed to do. The rule this phase settled on: <code>restricted</code> when the task's calls are safe-classified (Ex01,
     Ex04), <code>autonomous</code> one-shots when the point of the example is a call that is not (Ex02, Ex03) —
     <b>never balanced unattended</b>.</p>
   </div>
 
-  <p class="codelabel">The model-free gate — before any model spend</p>
-  <p><code>docker agent debug toolsets .\agent.yaml</code> expands the config to the <b>concrete tool list the model
+  <p class="codelabel">The model-free check — before any model spend</p>
+  <p><code>docker agent debug toolsets .\agent.yaml</code> expands the config into the <b>exact tool list the model
   would see</b> — 11 tools for both configs here: 9 filesystem + <code>think</code> + the one MCP tool — and
-  <b>it actually starts toolsets</b> (phase-notes §7), so a resolved catalog ref or a built image shows its tool while
-  a missing one simply doesn't appear. For ex02 it is the fast proof that the <code>ref</code> resolved to the right
-  server; for ex03 it is the gate the missing-image lesson bought.</p>
+  <b>it actually starts the toolsets</b> (phase-notes §7), so a working catalog entry or a built image shows its tool,
+  while a missing one simply doesn't appear. For ex02 it's quick proof that the <code>ref</code> pointed at the right
+  server; for ex03 it's the check that was learned from the missing-image mistake.</p>
   <div class="cmdbox no-print"><pre>docker agent debug toolsets .\agent.yaml</pre><button class="copybtn">Copy</button></div>
 
   <div class="card red">
     <h3>⚠ The missing-image trap (ex03)</h3>
-    <p>Run ex03 before building and nothing screams. <code>debug toolsets</code> printed the usual filesystem/think
+    <p>Run ex03 without <code>docker build</code> and nothing screams. <code>debug toolsets</code> printed the usual filesystem/think
     tools with <b>no</b> <code>echo</code> — exit 0. A real headless run printed
     <code>⚠️ Some toolsets failed to initialize for agent 'root'</code> plus
     <code>mcp(stdio cmd=docker ...) start failed: failed to initialize MCP client: connection closed: calling
-    "initialize": client is closing: EOF</code> (the container exits instantly; the MCP handshake reads EOF) —
+    "initialize": client is closing: EOF</code> the container exits instantly, so the MCP handshake hits an unexpected end-of-file (EOF) —
     <b>and still exited 0</b> while gemma4 answered honestly that the tool was unavailable.</p>
     <p>Worse: small models can <i>believe</i> they called the missing tool — gemma4 reasoned <i>"I executed the echo
-    tool"</i> while the only echo truth in the transcript was
+    tool"</i> while the only real echo line in the transcript was
     <code>echo response → "Tool 'echo' is not available…"</code>. Judge tool usage by the <code>response →</code>
     transcript lines, never by the model's narrative (ex03 README gotchas).</p>
-    <p class="tagline">The red run also showed the default <code>resilient</code> lifecycle: the agent starts degraded
-    and loops on an unavailable tool rather than refusing to run. A <code>lifecycle: {profile: strict}</code>
-    refuse-to-start knob exists in the schema but is deliberately left <b>unverified on this machine</b>.</p>
+    <p class="tagline">The red run also showed the default <code>resilient</code> behavior: the agent keeps running in a reduced
+    state and loops on the unavailable tool rather than refusing to start. A <code>lifecycle: {profile: strict}</code>
+    refuse-to-start option exists in the schema but is deliberately left <b>unverified on this machine</b>.</p>
   </div>
 
   <p class="codelabel">The gate sequence for ex03 — in this order</p>
   <div class="cmdbox no-print"><pre><span class="kw">cd</span> ex03-mcp-custom-server
 docker build -t mcp-ex03-echo:local .</pre><button class="copybtn">Copy</button></div>
-  <p class="tagline">Bakes <code>server.ts</code> into a <code>node:24-alpine</code> image (172 MB; Node v24.22.3 — the
-  version that executes a <code>.ts</code> file directly via Node 24 type stripping). Needs no running model or Ollama.
+  <p class="tagline">Puts <code>server.ts</code> into a <code>node:24-alpine</code> image (172 MB; Node v24.22.3 — the
+  version that runs a <code>.ts</code> file directly). Needs no running model or Ollama.
   Verified against <code>docker agent</code> v1.153.0 (Docker Engine 29.9.3), 2026-11-13 — ex03 README.</p>
   <div class="cmdbox no-print"><pre>docker agent debug toolsets .\agent.yaml</pre><button class="copybtn">Copy</button></div>
   <p class="tagline">Green means <b>11 tools</b> for this config, with <code>+ echo - Echoes back the given
@@ -344,10 +341,10 @@ docker build -t mcp-ex03-echo:local .</pre><button class="copybtn">Copy</button>
 docker agent run .\agent.yaml --exec <span class="str">'Use your web-search MCP tool: search the web for Docker MCP Gateway GitHub repository. Then answer with exactly two lines. Line 1: the URL of the official GitHub repository from your search results. Line 2: the exact title shown for the top result.'</span> --safety autonomous</pre>
     <button class="copybtn">Copy</button>
   </div>
-  <p class="tagline">Task design (ex02 README): the two answer lines exist only if the search tool actually returned
-  results — a small model cannot reliably guess the exact title offline. The wording carries no embedded double
-  quotes: PowerShell 5.1 mangles those inside <code>--exec</code> text (same gotcha as Ex01). The snapshot also fixes
-  the tool schemas — <code>search</code> takes <code>query</code>, <code>max_results</code> (1–20, default 10),
+  <p class="tagline">Task design (ex02 README): the two answer lines can only exist if the search tool really ran —
+  a small model can't reliably guess the exact title offline. The wording avoids double quotes, which PowerShell 5.1
+  mangles inside <code>--exec</code> text (same gotcha as Ex01). The catalog's snapshot also fixes the tool's
+  interface — <code>search</code> takes <code>query</code>, <code>max_results</code> (1–20, default 10),
   optional <code>region</code>; gemma4 chose <code>max_results: 1</code> unprompted.</p>
 
   <div class="cmdbox no-print">
@@ -384,8 +381,8 @@ echo response → "ECHO: round trip check 42 (19 chars)"
 <section class="part" id="p3">
   <h2><span class="no">03</span>Judge the transcript</h2>
   <p class="lede">The contract hasn't changed since Ex01: <b>exit 0 <i>and</i> transcript content</b> — both halves.
-  What the MCP flavors changed is the failure zoo: a fail-closed denial that exits 0, a missing image that exits 0,
-  and a model that can narrate a call the framework rejected. Three real recorded situations follow — pick the
+  What MCP adds is a bigger collection of failure shapes: a refused call that exits 0, a missing image that exits 0,
+  and a model that can claim it made a call the system rejected. Three real recorded situations follow — pick the
   verdict for each. Answers lock once chosen, like the quiz.</p>
 
   <div class="simcase" data-ok="0">
@@ -416,13 +413,13 @@ echo response → "ECHO: round trip check 42 (19 chars)"
       <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
       <button class="vbtn" data-v="2">🛠 Setup problem — fix before spending</button>
     </div>
-    <div class="exp">Not success — the failure hides <i>only</i> in the transcript; the exit code lied. The denial
-    itself is <b>correct fail-closed behavior</b>: no approver exists in an unattended run, and MCP calls are not on
-    the provably-safe list (flavors.md cross-flavor caution; exact denial line in the ex02 README — and the identical
-    verdict for ex03's custom <code>echo</code>: what serves the tool does not change the classification). Under
-    <code>balanced</code> it would instead read <i>The user rejected the tool call.</i> — <code>autonomous</code> is
-    the deliberate one-shot this template reserves. For CI: exit 0 is not enough; assert on transcript and answer
-    content.</div>
+    <div class="exp">Not success — the failure hides <i>only</i> in the transcript; the exit code lied. The refusal
+    itself is <b>correct refuse-by-default behavior</b>: nobody is there to approve, and MCP calls are not on
+    the clearly-safe list (flavors.md cross-flavor caution; the exact refusal line is in the ex02 README — and the
+    verdict is identical for ex03's custom <code>echo</code>: who serves the tool does not change the
+    classification). Under <code>balanced</code> it would instead read <i>The user rejected the tool call.</i> —
+    <code>autonomous</code> is the deliberate one-shot this template reserves. For CI: exit 0 is not enough; check
+    transcript and answer content.</div>
   </div>
 
   <div class="simcase" data-ok="2">
@@ -436,26 +433,25 @@ echo response → "ECHO: round trip check 42 (19 chars)"
       <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
       <button class="vbtn" data-v="2">🛠 Setup problem — fix before spending</button>
     </div>
-    <div class="exp">Setup problem — and a spend anyway. The image does not exist; the container exits instantly and
+    <div class="exp">Setup problem — and you paid for it anyway. The image does not exist; the container exits instantly and
     the handshake reads EOF, while the run exits 0 and the model's reasoning believes a call the framework rejected.
     Only the <code>response →</code> transcript line is truth (ex03 README gotchas; the recorded run even had gemma4
     answering honestly that the tool was unavailable — but its reasoning narrated the phantom call). Fix:
-    <code>docker build -t mcp-ex03-echo:local .</code> first, then the model-free gate — <code>debug toolsets</code>
+    <code>docker build -t mcp-ex03-echo:local .</code> first, then the model-free check — <code>debug toolsets</code>
     must list 11 tools with <code>+ echo</code> among them.</div>
   </div>
 
   <div class="card teal">
-    <h3>Same MCP seat, different landlord — isolation &amp; lifecycle</h3>
+    <h3>Same MCP client job, different landlord — who hosts the container</h3>
     <table>
       <thead><tr><th></th><th>ex02 — gateway-managed</th><th>ex03 — yours</th></tr></thead>
       <tbody>
         <tr><td><b>The image</b></td>
-            <td>The catalog snapshot's digest pin (<code>mcp/duckduckgo@sha256:5617c4c6…</code>); the config
-                <code>ref</code> carries no version — a newer catalog release can move that pin, and the tool schemas
-                with it</td>
+            <td>The catalog snapshot's image pin (<code>mcp/duckduckgo@sha256:5617c4c6…</code>); the config
+                <code>ref</code> carries no version — a newer catalog release can swap the exact image, and change the tool with it</td>
             <td><code>mcp-ex03-echo:local</code>, built and tagged by you (172 MB image)</td></tr>
         <tr><td><b>The container</b></td>
-            <td>Gateway runs the pinned image as a one-off container per call; egress-restricted to
+            <td>Gateway runs the pinned image as a one-off container per call; allowed to talk only to
                 <code>html.duckduckgo.com:443</code></td>
             <td>The framework spawns <code>docker run --rm -i</code> per session; the short-lived container is
                 visible in <code>docker ps</code> during a run</td></tr>
@@ -466,7 +462,7 @@ echo response → "ECHO: round trip check 42 (19 chars)"
                 image stays until you <code>docker rmi</code> it</td></tr>
         <tr><td><b>If a toolset fails</b></td>
             <td>Gateway-managed end to end; a per-call start means a fresh container every time</td>
-            <td>Default <code>resilient</code> lifecycle keeps the agent degraded (the Case C shape);
+            <td>Default <code>resilient</code> behavior keeps the agent running in a reduced state (the Case C shape);
                 <code>lifecycle: {profile: strict}</code> exists but is deliberately left unverified</td></tr>
       </tbody>
     </table>
@@ -480,19 +476,19 @@ echo response → "ECHO: round trip check 42 (19 chars)"
       <code>ref: docker:duckduckgo</code> (ex02) and your own <code>command:</code>/<code>args:</code> (ex03) occupy
       the identical MCP-client seat; the named-block shape (<code>mcps:</code> + <code>ref:</code>) is the equivalent
       write-up that pays off once several agents share one server definition.</li>
-    <li><b>The catalog's price is the catalog.</b> Zero code, zero install, zero keys for the ref seat (DuckDuckGo
-      over brave/tavily/exa precisely because no API key) — but the snapshot owns the digest pin and the tool schemas
-      (a newer release can move both), and keyed entries need secrets this phase deliberately left out of scope.</li>
-    <li><b>MCP calls are not on the provably-safe list.</b> <code>restricted</code> auto-denies them — correct
-      fail-closed behavior, and the denial text is identical for a catalog tool and your own container;
+    <li><b>The catalog's price is the catalog's limits.</b> Zero code, zero install, zero keys for the ref route (DuckDuckGo
+      over brave/tavily/exa precisely because no API key) — but the snapshot owns the exact image and the tool schemas
+      (a newer release can change both), and key-required entries need secrets this phase deliberately left out of scope.</li>
+    <li><b>MCP calls are not on the clearly-safe list.</b> <code>restricted</code> refuses them by default — correct
+      refuse-by-default behavior, and the refusal text is identical for a catalog tool and your own container;
       <code>balanced</code> with no human present surfaces <i>The user rejected the tool call.</i> So the unattended
       MCP template is a deliberate <code>--safety autonomous</code> one-shot.</li>
-    <li><b>Build, then the model-free gate.</b> <code>docker build</code> first; <code>debug toolsets</code> must list
-      11 tools with <code>+ echo</code> (or <code>+ search</code>) among them — it starts toolsets and catches the
+    <li><b>Build first, then the model-free check.</b> <code>docker build</code> first; <code>debug toolsets</code> must list
+      11 tools with <code>+ echo</code> (or <code>+ search</code>) among them — it starts the toolsets and catches the
       missing image that the run itself shrugs off (exit 0, ⚠️, EOF handshake).</li>
-    <li><b>The transcript is still the only judge.</b> Restricted denials, missing images and failed tool calls all
-      exit 0; the <code>response →</code> transcript lines are the truth and the model's narrative is not — small
-      models can believe they called a tool the framework rejected.</li>
+    <li><b>The transcript is still the only judge.</b> Restricted refusals, missing images and failed tool calls all
+      exit 0; the <code>response →</code> transcript lines are the truth and the model's story is not — small
+      models can believe they called a tool the system rejected.</li>
   </ol>
 
   <div class="quiz no-print">
@@ -580,14 +576,14 @@ echo response → "ECHO: round trip check 42 (19 chars)"
           "command/args for web search, catalog refs for tools you authored — the ref points at your image",
           "Both entrances require docker build first"],
       a: 0,
-      f: "flavors.md's table: ex02 = off-the-shelf capability quickly, under Docker's isolation model, constrained by the catalog (keyed entries need secrets — out of scope); ex03 = a tool the catalog doesn't have, deterministic behavior, and an honest protocol education." },
+      f: "flavors.md's table: ex02 = off-the-shelf capability quickly, under Docker's isolation model, limited by the catalog (key-required entries need secrets — out of scope); ex03 = a tool the catalog doesn't have, exact testable behavior, and an honest protocol education." },
     { q: "Why does the ex02/ex03 verification template run --safety autonomous when Ex01 used --safety restricted?",
       o: ["Autonomous skips the gateway handshake and the image pull",
-          "MCP calls — catalog or custom — are not on the provably-safe list, so restricted auto-denies them; autonomous is a deliberate one-shot whose blast radius you read first",
+          "MCP calls — catalog or custom — are not on the clearly-safe list, so restricted auto-denies them; autonomous is a deliberate one-shot whose powers you read first",
           "Restricted blocks only write_file, and this task never writes",
           "Autonomous is the documented default for --exec runs"],
       a: 1,
-      f: "Phase-notes §3 and both READMEs' Tool-approvals sections: the identical denial text under restricted proves the classification is about MCP calls in general — not about which container serves them." },
+      f: "Phase-notes §3 and both READMEs' Tool-approvals sections: the identical refusal text under restricted proves the classification is about MCP calls in general — not about which container serves them." },
     { q: "And why is balanced the worst unattended choice here?",
       o: ["It denies twice as hard as restricted",
           "It requires an API key in the config",
@@ -608,14 +604,14 @@ echo response → "ECHO: round trip check 42 (19 chars)"
           "Exit 0; '⚠️ Some toolsets failed to initialize for agent 'root'' plus an MCP initialize handshake that closes with EOF — while gemma4 narrates 'I executed the echo tool' anyway",
           "Only a warning during the TUI demo, never in --exec"],
       a: 2,
-      f: "ex03's red run: the container exits instantly, the handshake reads EOF, the run still exits 0 — and the small model believed it called the tool. The response → transcript line is the truth; the model's narrative is not." },
+      f: "ex03's red run: the container exits instantly, the handshake reads EOF, the run still exits 0 — and the small model believed it called the tool. The response → transcript line is the truth; the model's story is not." },
     { q: "After each example's verified run, what remains in docker images / docker ps -a?",
       o: ["Nothing in either — both are gateway-managed",
           "ex02: no image or container remnants (pull, run, teardown all gateway-managed); ex03: no leftover containers (--rm), but the image stays until you docker rmi it",
           "ex03 strips the image too; ex02 leaves the pinned image",
           "Both leave containers — clean them with docker rm"],
       a: 1,
-      f: "Ownership differs: the catalog snapshot's digest pin can move with a newer release; ex03's image is yours to build, tag and eventually rmi. (The schema's lifecycle: {profile: strict} refuse-to-start knob exists but was deliberately left unverified on this machine)." },
+      f: "Ownership differs: the catalog snapshot's image pin can move with a newer release; ex03's image is yours to build, tag and eventually rmi. (The schema's lifecycle: {profile: strict} refuse-to-start option exists but was deliberately left unverified on this machine)." },
     { q: "What does docker agent debug toolsets .\\agent.yaml actually prove?",
       o: ["That the daemon serves the model",
           "That the config parses — nothing more",

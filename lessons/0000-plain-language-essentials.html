@@ -246,9 +246,9 @@
   <div class="card red">
     <h3>⚠️ The trap: exit code 0 does not mean it worked</h3>
     <p>When a program ends, it reports a number — 0 traditionally means "no crash". Newcomers see the prompt
-    come back with no red text and assume success. <b>Wrong: denials, missing tools and confused agents can
-    still end with a 0.</b> The rule this repo teaches: <b>read the printed transcript</b> — did the right tool
-    actually fire, and did the answer answer the question? Exit 0 is a hygiene check, not a verdict.</p>
+    come back with no red text and assume success. <b>Wrong: refusals, missing tools and stuck loops can
+    all still end with a 0.</b> The rule this repo teaches: <b>read the printed transcript</b> — did the right tool
+    actually fire, and did the answer answer the question? Exit 0 is only a first check, not proof the job was done.</p>
   </div>
 
   <div class="simcase" data-ok="1">
@@ -270,13 +270,13 @@
 
   <details>
     <summary>What is <code>--safety restricted</code>, in plain words?</summary>
-    <p>Safety modes are permission ladders for tool use: they decide whether the agent must <i>ask</i> you
-    before each risky action, or may act on its own. <code>restricted</code> mostly auto-allows safe actions
-    and silently denies the rest — in an unattended run there is nobody to ask, so denials just appear in the
-    transcript (still ending with exit 0 — Part 01's trap). The full ladder and the per-flavor choice, including
-    when hands-off verification switches to the everything-allowed mode, is Lesson 003's topic. And if your
-    recipe asks for a toolset the CLI does not know, the handshake fails — also with a 0 — which is why one
-    gate in every verification is checking what the agent <i>really</i> sees with <code>docker agent debug toolsets</code>.</p>
+    <p>Safety modes are permission rules for tools: they decide whether the agent must <i>ask</i> you
+    before each risky action, or may act on its own. <code>restricted</code> mostly lets safe actions through
+    on their own and quietly refuses the rest — and with nobody watching there is nobody to ask, so the
+    refusals just show up in the transcript (the run still ends with exit 0 — the Part 03 trap). Lesson 003
+    covers the full ladder and when verification switches to the allow-everything mode. If your recipe names
+    a toolset the CLI does not know about, the run fails too — still with exit 0 — which is why it pays to
+    check what tools the agent <i>really</i> sees with <code>docker agent debug toolsets</code>.</p>
   </details>
 
   <div class="cite"><b>Claim checks:</b> the verification template, the exit-0 discipline and the safety ladder are
@@ -336,9 +336,9 @@
     <h3>🧾 Honesty corner — what this course has <i>not</i> personally verified</h3>
     <p>This repo's discipline is "verified before commit", and it applies to this lesson too. Two more serve
     doors exist in the docs — <code>serve api</code> (a plain REST interface) and <code>serve chat</code> — but
-    this workspace has <b>never run them</b>; they are documented, not probed. The Ex07 editor walkthrough is
-    likewise labeled unverified-on-this-machine; only its protocol handshake was proven. When you read claims
-    anywhere — including here — prefer ones pinned to a recorded run.</p>
+    this workspace has <b>never run them</b>; they are documented, but never tested here. The Ex07 editor
+    walkthrough carries the same honest label — unverified on this machine — because only its protocol handshake
+    was proven. When you read claims anywhere — including here — prefer ones backed by a recorded run.</p>
   </div>
 
   <div class="cmdbox"><pre>docker agent serve mcp .\ex07-acp-editor\agent.yaml</pre><button class="copybtn">Copy</button></div>
@@ -508,7 +508,7 @@
           "The process ended without crashing — success still needs the transcript",
           "The model answered correctly",
           "All tools were approved"], a: 1,
-      f: "Part 03's red card: denials, missing tools and confused loops also end 0. Read the work log — did the right tool fire and did the answer answer the question?" },
+      f: "Part 03's red card: refusals, missing tools and stuck loops can all also end 0. Read the work log — did the right tool fire and did the answer answer the question?" },
     { q: "You want to check a recipe for typos without spending anything. Which command?",
       o: ["--safety autonomous", "--max-iterations 1", "debug toolsets", "--dry-run"], a: 3,
       f: "Part 03's violet card: --dry-run validates the config without touching a model. Cost-free, and it catches most beginner mistakes." },
@@ -529,7 +529,7 @@
           "Independent agents that find each other over the network",
           "Backup copies that restart your agent if it crashes",
           "Cheaper clones of your agent sold by providers"], a: 0,
-      f: "Part 04's third card: roles in one file — planner, reviewer — no protocol machinery. Fresh-view-only-what's-forwarded is the context boundary; the token bill multiplies with each colleague." },
+      f: "Part 04's third card: roles in one file — planner, reviewer — with zero extra networking. Fresh-view-only-what's-forwarded is the context boundary; the token bill multiplies with each colleague." },
     { q: "You want any standard program (say Claude Code) to press your agent like a button. Which one command?",
       o: ["docker agent serve mcp .\\agent.yaml",
           "docker agent run .\\agent.yaml --always-on",

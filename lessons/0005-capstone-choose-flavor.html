@@ -130,8 +130,9 @@
 <p class="kicker">Docker Agent workspace · Lesson 005 · capstone</p>
 <h1>Lesson 005 · Capstone — choose the flavor for a real problem</h1>
 <p class="sub">Lessons 001–004 built the vocabulary and the mechanics. This capstone is MISSION.md's item three:
-<i>decide, for a new problem, which flavor fits</i> — using the repo's decision rules, not vibes. The syllabus is the
-repo's flavor cheat-sheet; the practice is six invented owner problems; the exit is the repo's deliberate pause.</p>
+<i>decide, for a new problem, which flavor fits</i> — using the repo's decision rules, not gut feeling. The study sheet is
+the repo's flavor cheat-sheet; the practice is six invented owner problems; the finish is the
+repo's deliberate pause.</p>
 <div class="chips">
   <span class="chip">capstone · mission item 3</span>
   <span class="chip">syllabus: docs/notes/flavors.md</span>
@@ -142,23 +143,23 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
 
 <section class="part" id="p1">
   <h2><span class="no">01</span>The decision path — read it in order</h2>
-  <p class="lede">flavors.md answers <i>which seat do I want, and when</i>; run-modes.md answers <i>how do I run it</i>.
+  <p class="lede">flavors.md answers <i>which connection do I want, and when</i>; run-modes.md answers <i>how do I run it</i>.
   The repo's decision rules are an <b>ordered</b> list, and the order is a cost argument: structural before protocol,
-  borrowed before built. Six questions, six seats.</p>
+  borrowed before built. Six questions, six answers.</p>
 
   <ol class="flow">
     <li><b>Does the work split into ROLES — plan / review / compose?</b> → Native <code>sub_agents:</code>, reach it
-    <b>first</b>, before any protocol machinery: zero protocol machinery, one YAML file — the list hands the lead a
-    <code>transfer_task</code> tool. Accept the cost now: the highest of the built-ins, one task fans into ~5 model
+    <b>first</b>, before any networking setup: zero protocol chatter, one YAML file — the list hands the lead a
+    <code>transfer_task</code> tool. Accept the cost: of the built-in options this one is the priciest — one task fans out into ~5 model
     chats.</li>
     <li><b>Need a capability you DON'T own — proven tools like web search, no budget for code?</b> → Catalog MCP ref
     (<code>type: mcp, ref: docker:…</code>): the fastest off-the-shelf path — the <code>ref</code> plus Docker's
     catalog snapshot <i>is</i> the server. Bounded by the catalog; keyed entries need secrets, out of scope in the
     no-secrets phase.</li>
-    <li><b>Need a tool you DO own and can test — deterministic, a repo artifact?</b> → Custom MCP server
-    (<code>type: mcp, command: docker run --rm -i &lt;img&gt;</code>): you build and tag the image; per-session
-    container with <code>--rm</code> teardown; ~deterministic. Transport follows consumption: spawning via
-    <code>command:</code> means stdio NDJSON.</li>
+    <li><b>Need a tool you DO own and can test — exact, a repo artifact?</b> → Custom MCP server
+    (<code>type: mcp, command: docker run --rm -i &lt;img&gt;</code>): you build and tag the image; a fresh container per
+    session with <code>--rm</code> cleanup; same behavior every time. How it connects follows how it starts: a
+    <code>command:</code> spawn talks over stdin/stdout, one JSON line at a time.</li>
     <li><b>Should someone else's MCP CLIENT call YOUR AGENT as one tool?</b> → <code>serve mcp</code>: one tool per
     agent, named after the agent; the agent's <code>description:</code> steers the caller; no config change — the same
     YAML, one serve verb.</li>
@@ -166,7 +167,7 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
     <code>/.well-known/agent-card.json</code>; one <code>SendMessage</code> returns a whole task object
     (<code>TASK_STATE_COMPLETED</code> + artifacts); CamelCase A2A v1.0 methods.</li>
     <li><b>Should the HUMAN's EDITOR drive your agent?</b> → <code>serve acp</code>: stdio-only, no launch flags — the
-    editor spawns it like a language server; file and terminal capabilities arrive via the host's
+    editor starts it like a language server; file and terminal abilities arrive through the editor's
     <code>clientCapabilities</code> and <code>session/request_permission</code> prompts, not agent-side toolsets.</li>
   </ol>
 
@@ -176,22 +177,22 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
     over a network, with discovery; <b><code>sub_agents</code> is multi-role work inside one config</b>; <b>ACP is the
     editor-facing seat</b> — the human's tool is the peer.</p>
     <p class="tagline">Verbatim from the flavor sheet, distilled from ex07-acp-editor/README.md's cross-flavor table.
-    If a drill answer below seems to contradict one of these lines, the drill is wrong — not the line.</p>
+    If anything below ever seems to contradict one of these lines, trust the line and reread the drill.</p>
   </div>
 
   <table>
     <thead><tr><th>Flavor</th><th>Isolation story</th><th>Cost you accept</th><th>Complexity</th><th>When to reach for it</th></tr></thead>
     <tbody>
       <tr><td><b>Native sub-agents</b> <code>sub_agents:</code> <span class="pill ex">Ex04</span></td>
-          <td>In-process: one config, one daemon; sub-agents get a <b>fresh view</b> — only what the lead forwards (the context boundary)</td>
-          <td>Highest of the built-ins: a task fans into ~5 model chats — hence Ex04's cloud default</td>
-          <td>Lowest: zero protocol machinery, one YAML file; the lead gets <code>transfer_task</code></td>
-          <td>Work splits into <i>roles</i>, lead composes the answer. Reach FIRST, before protocol machinery</td></tr>
+          <td>Inside one program: one config, one model server; sub-agents get a <b>fresh view</b> — only what the lead forwards (the context boundary)</td>
+          <td>Priciest of the built-ins: a task fans into ~5 model chats — hence Ex04's cloud default</td>
+          <td>Lowest: zero protocol chatter, one YAML file; the lead gets <code>transfer_task</code></td>
+          <td>Work splits into <i>roles</i>, lead composes the answer. Reach FIRST, before any networking setup</td></tr>
       <tr><td><b>MCP client · catalog ref</b> <code>ref: docker:…</code> <span class="pill ex">Ex02</span></td>
-          <td>Strongest: digest-pinned, egress-restricted container per call; nothing local persists</td>
-          <td>~40 s first call (gateway start + image pull) — an egress dependency at call time</td>
+          <td>Strongest: a version-locked container per call, allowed out to only one web address; nothing left on your machine</td>
+          <td>~40 s first call (gateway start + image pull) — every call needs web access</td>
           <td>Lowest possible: one toolset entry + optional <code>tools:</code> allowlist</td>
-          <td>Off-the-shelf capability, fast. Bounded by the catalog; keyed entries need secrets — no-secrets phase</td></tr>
+          <td>Off-the-shelf capability, fast. Bounded by the catalog; key-required entries need secrets — no-secrets phase</td></tr>
       <tr><td><b>MCP client · custom server</b> <code>command: docker run --rm -i &lt;img&gt;</code> <span class="pill ex">Ex03</span></td>
           <td>You own it: build + tag the image; per-session container, <code>--rm</code> teardown</td>
           <td>One-time 172 MB build; per-call spin-up, sub-second on a warm engine</td>
@@ -221,10 +222,10 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
 
   <div class="card violet">
     <h3>🧩 Flavors stack — the YAML composes</h3>
-    <p>A toolset inside an agent that <i>also</i> declares <code>sub_agents:</code> is just composed YAML — a reading of
-    the docs' structure: Lesson 003's catalog toolset on Lesson 001's config shape; a Lesson 004-style team could carry
-    a catalog toolset in a member.</p>
-    <p class="tagline">Honest label: documented by the config grammar, verified piecewise — <b>no example ran a stacked
+    <p>An agent can list toolsets <i>and</i> <code>sub_agents:</code> in the same file — the pieces simply combine:
+    Lesson 003's catalog toolset on Lesson 001's config shape; a Lesson 004-style team could give a member a
+    catalog toolset.</p>
+    <p class="tagline">Honest label: read out of the documented config structure, verified piece by piece — <b>no example ran a stacked
     flavor end to end</b>. Drill 3 exercises the stacked reasoning.</p>
   </div>
 
@@ -235,10 +236,10 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
 
 <section class="part" id="p2">
   <h2><span class="no">02</span>Flavor drills — six owners' problems</h2>
-  <p class="lede">Reading a table is not yet deciding with it. The six scenarios below are <b>invented drill
-  prompts</b> — they sound like ownership work, but they are not; the flavor facts used to judge them are <i>not</i>
+  <p class="lede">Reading a table isn't the same as deciding with it. The six scenarios below are <b>invented drill
+  prompts</b> — they sound like real work, but they are not; the flavor facts used to judge them are <i>not</i>
   invented: every trade-off in the feedback traces to the flavor sheet, the phase notes, or an example README. One
-  drill is deliberately a composite, because in real ownership flavors stack.</p>
+  drill is deliberately a combination, because in real work flavors stack.</p>
 
   <p class="codelabel">The serve family you are choosing among (default addresses; run-modes.md §15 + §19)</p>
   <div class="cmdbox no-print">
@@ -256,9 +257,9 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
   <p class="tagline">Copy the syntax if useful; deciding is the quiz.</p>
 
   <div class="quiz">
-    <h3>🎯 Six drills — pick the seat, then name the trade-off you just accepted</h3>
+    <h3>🎯 Six drills — pick the flavor, then name the trade-off you just accepted</h3>
     <p class="tagline">Answers lock once chosen, like every lesson's quiz. The point is not the score — it is saying
-    the trade-off in one breath after the seat. Feedback cites the example and the repo document.</p>
+    the trade-off in one breath after the pick. Feedback cites the example and the repo document.</p>
     <div id="quiz2"></div>
     <div class="qscore" id="qscore2" style="display:none"></div>
     <button id="qreset2" style="margin-top:16px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 18px;font-size:.9rem;cursor:pointer;font-family:inherit">↺ Reset drills</button>
@@ -268,32 +269,32 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
 <section class="part" id="p3">
   <h2><span class="no">03</span>The trade-off ledger — and the honesty list</h2>
   <p class="lede">The flavor sheet's cost column is the honest part of its table; the phase notes sharpen it. Before the
-  drills commit you anywhere, read what each seat gives up — not disqualifications, just price tags you sign for.</p>
+  drills commit you anywhere, read what each choice gives up — not disqualifications, just price tags you accept with it.</p>
 
   <div class="card">
     <h3>🧮 sub_agents — you pay in model chats</h3>
     <p>One task fans into ~5 model chats (lead turns + a full nested chat per sub-agent); hence Ex04's cloud default,
     <code>glm-5.3-flash:cloud</code>, the one-line local swap for cheap iteration, and per-agent
-    <code>max_iterations</code> kept small (shipped split: lead 12 / subs 6). Isolation is real but in-process:
+    <code>max_iterations</code> kept small (shipped split: lead 12 / subs 6). Isolation is real but inside one program:
     sub-agents see only what the lead forwards. The proof is transcript lines
-    (<code>transfer_task response</code>), not a protocol probe — there is no protocol.</p>
+    (<code>transfer_task response</code>), not a protocol check — there is no protocol.</p>
   </div>
 
   <div class="card">
     <h3>📦 Catalog ref — you pay in pin stability and egress</h3>
-    <p>The <code>ref</code> carries <b>no version</b>: a newer catalog snapshot can move the digest pin — and the tool
-    schemas with it. Each call fetches an egress-restricted container at call time (~40 s first call). Bounded by the
-    catalog; keyed entries (brave, tavily, exa) need secrets — Ex02 chose DuckDuckGo to stay key-free. And the call is
-    not on the provably-safe list: under <code>restricted</code> it is auto-denied, so unattended verification runs
-    <code>--safety autonomous</code> deliberate one-shots.</p>
+    <p>The <code>ref</code> carries <b>no version</b>: a newer catalog snapshot can swap the exact image — and change the
+    tool with it. Each call fetches a container that may talk to only one web address (~40 s first call). You're limited to
+    what the catalog holds; key-required entries (brave, tavily, exa) need secrets — Ex02 chose DuckDuckGo to stay
+    key-free. And MCP calls aren't on the clearly-safe list: under <code>restricted</code> they are refused, so unattended
+    verification runs use a deliberate <code>--safety autonomous</code> one-shot.</p>
   </div>
 
   <div class="card">
     <h3>🔨 Custom MCP server — you pay in artifact ownership</h3>
-    <p>Server code + Dockerfile + image lifecycle are yours: one-time 172 MB build on <code>node:24-alpine</code>,
-    image stays until <code>docker rmi</code>. Stdio discipline: stdout pure NDJSON, stderr the log channel. A missing
-    image fails almost silently and still exits 0 — <code>debug toolsets</code> is the model-free gate. Same safety row
-    as any MCP call: denied under <code>restricted</code>.</p>
+    <p>Server code + Dockerfile + image upkeep are yours: one-time 172 MB build on <code>node:24-alpine</code>,
+    image stays until <code>docker rmi</code>. Stdio discipline: stdout pure one-JSON-per-line, stderr the log channel. A missing
+    image fails almost silently and still exits 0 — <code>debug toolsets</code> is the model-free check. Same safety row
+    as any MCP call: refused under <code>restricted</code>.</p>
   </div>
 
   <div class="card">
@@ -302,45 +303,45 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
     (<code>readOnlyHint: true</code> despite a full LLM chat — don't read safety into them). One full LLM chat per
     <code>tools/call</code> (~20 s local gemma4). Serving defaults to <code>restricted</code> tool safety
     (<code>Tool safety policy: restricted (source: serve default)</code> — observed live in Ex05/Ex06), comfortable
-    only because those configs declare <b>no toolsets</b>; a served agent with toolsets inherits the same fail-closed
+    only because those configs declare <b>no toolsets</b>; a served agent with toolsets inherits the same refuse-by-default
     denials. The stdio variant accepts no <code>--safety</code>/<code>--auth-token</code>; those exist only on the
-    stateless <code>--http</code> variant (default <code>127.0.0.1:8081</code>, auth required for non-loopback
+    session-less <code>--http</code> variant (default <code>127.0.0.1:8081</code>, auth required for non-loopback
     binds).</p>
   </div>
 
   <div class="card">
     <h3>🌐 serve a2a — you pay in protocol surface</h3>
-    <p>The discovery/protocol surface is yours to script safely against drift: the CLI moved
+    <p>There's no one to negotiate discovery/protocol drift with but yourself: the CLI moved
     <code>v1.145.0 → v1.153.0</code> and the card grew <code>capabilities.pushNotifications:false</code>. This build
-    speaks A2A v1.0 CamelCase methods (<code>message/send</code>; a non-CamelCase method answers -32601); legacy
+    speaks A2A v1.0 with CamelCase methods only (older snake_case names like <code>message/send</code> answer -32601); legacy
     <code>agent.json</code> discovery is 404; the card's <code>name</code> is the <b>config file's stem</b>, not the
-    agent name. Serving itself free — one LLM round trip per task: 331–496 ms overhead beyond the model on this
+    agent name. Serving itself is free — one LLM round trip per task: 331–496 ms overhead beyond the model on this
     build.</p>
   </div>
 
   <div class="card">
     <h3>💻 serve acp — you pay in host dependency</h3>
-    <p>The host, not your config, brings file/terminal capabilities (<code>clientCapabilities</code> +
+    <p>The editor, not your config, brings file/terminal abilities (<code>clientCapabilities</code> +
     <code>session/request_permission</code> prompts) — the example config deliberately carries no toolsets. The host
     must speak ACP v1 (<code>protocolVersion: 1</code> — the number; v2 only Draft). The wire <i>moved</i> between
     plugin versions — update notifications grew an envelope, and a client pinned to the flat shape reads none of it
-    (how Ex07's first probe run went red). gemma4 streams thoughts: ~1 min of <code>agent_thought_chunk</code> before
+    (how Ex07's first probe run went red). gemma4 streams its thinking: ~1 min of <code>agent_thought_chunk</code> before
     the answer — keep the UI streaming. The in-editor session is the owner demo: <b>no ACP host was installed on this
     machine</b> — editor steps stay <span class="pill warn">UNVERIFIED-ON-THIS-MACHINE</span>.</p>
   </div>
 
   <div class="card amber">
     <h3>⚠ Environment honesty — costs you cannot see in any one row</h3>
-    <p><b>One model daemon, shared contention.</b> Every wall-clock number in this course was taken when runs did not
-    overlap; overlapping runs serialize on the same daemon/GPU and inflate every affected run's wall time
+    <p><b>One model server, shared waiting.</b> Every timing number in this course was measured while no runs
+    overlapped; overlapping runs queue up on the same model server/GPU and stretch everyone's wall time
     (phase notes §1).</p>
-    <p><b>Exit 0 is not success — everywhere.</b> Denied tool calls (Ex01–03), missing tool images (Ex03) and
-    degenerate tool loops (Ex01/02) all still exit 0. Serve surfaces change the proof's shape: their probes assert the
-    protocol surface itself, so the probe's exit is trustworthy by construction. One-sentence form
-    (run-modes.md §9): <i>exit 0 means the agent finished, not the task succeeded</i>.</p>
-    <p><b>The CLI moved underfoot once already</b> (<code>v1.145.0 → v1.153.0</code>): MCP <code>initialize</code>
+    <p><b>Exit 0 is not success — everywhere.</b> Refused tool calls (Ex01–03), missing tool images (Ex03) and
+    stuck tool loops (Ex01/02) all still exit 0. Serve surfaces change the proof's shape: their probes check the
+    protocol messages themselves, so the probe's exit is trustworthy by design. One-sentence form
+    (run-modes.md §9): <i>exit 0 means the agent finished, not that the task succeeded</i>.</p>
+    <p><b>The CLI already changed once under this course</b> (<code>v1.145.0 → v1.153.0</code>): MCP <code>initialize</code>
     dropped the <code>logging:{}</code> capability; ACP update notifications grew an envelope; the A2A card grew a
-    field. Script against field <i>presence and meaning</i>, not exact snapshots.</p>
+    field. Script against what a field <i>means</i> being present, not exact snapshots.</p>
     <p><b>And on Windows:</b> PowerShell 5.1 mangles embedded double quotes in <code>--exec</code> text;
     <code>serve</code> spawns a child <code>docker-agent.exe</code> that holds the listener — kill the tree
     (<code>taskkill /pid &lt;pid&gt; /T /F</code>), not just the wrapper (Ex05–Ex07).</p>
@@ -349,20 +350,19 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
   <div class="card red">
     <h3>🚧 The honesty list — documented, not built this phase</h3>
     <p>None of these was exercised by an example this phase:</p>
-    <p>• <b>Headless CLI</b> (<code>run --exec</code>, <code>--json</code>, stdin) — not an interop flavor but the
-    phase's single verification seam: every example's machine-verification command is a headless run at this
-    boundary.</p>
+    <p>• <b>Headless CLI</b> (<code>run --exec</code>, <code>--json</code>, stdin) — not a connection type but the run
+    mode every example's automatic check uses: a one-shot headless run.</p>
     <p>• <b><code>serve api</code></b> — default <code>127.0.0.1:8080</code>. Session-based REST
     (<code>POST /api/sessions</code>, <code>--auth-token</code> bearer, <code>--session-workingdir-root</code> for
     multi-user scoping). Documented from <code>--help</code> text; never probed.</p>
     <p>• <b><code>serve chat</code></b> — default <code>127.0.0.1:8083</code>. OpenAI-compatible chat completions over
     the agent. Documented from the port map; never probed.</p>
-    <p>• <b>OCI share</b> (<code>docker agent share push</code> / <code>pull</code>) — an agent config as an OCI
-    artifact; <code>sub_agents:</code> and serve surfaces accept OCI refs directly. Out of scope this phase (needs a
+    <p>• <b>OCI share</b> (<code>docker agent share push</code> / <code>pull</code>) — an agent config shared as an OCI
+    artifact; <code>sub_agents:</code> and serve doors accept OCI references directly. Out of scope this phase (needs a
     registry); closest verified behavior: a non-path argument to <code>run</code> is parsed as a registry
     reference.</p>
     <p><b>Those last three carry the honest label</b> — documented as surfaces the CLI exposes, <b>unverified on this
-    machine</b> — an owner next step if a use case needs them.</p>
+    machine</b> — a next step for the owner if a use case needs them.</p>
   </div>
 
   <div class="card violet">
@@ -394,12 +394,13 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
     <li><b>The decision path is ordered.</b> Roles → <code>sub_agents</code> first; capability you don't own → catalog
     ref; tool you own and can test → custom MCP server; someone's MCP client calls your agent → <code>serve mcp</code>;
     another agent over HTTP → <code>serve a2a</code>; the human's editor → <code>serve acp</code>.</li>
-    <li><b>The comparison table is the syllabus.</b> One row per seat — isolation, cost, complexity, when-to-reach. When
+    <li><b>The comparison table is the syllabus.</b> One row per flavor — isolation, cost, complexity, when-to-reach. When
     two rows both fit, the row you pick <i>is</i> the trade-off you accept.</li>
     <li><b>Flavors stack</b> — toolsets inside an agent that also declares <code>sub_agents:</code> is composed YAML
     (a reading of the docs' structure; no example ran a stack end to end).</li>
-    <li><b>Judgment travels:</b> exit 0 (or a probe's exit) <i>plus</i> evidence — transcript, protocol assert, or side
-    effect; script against field <i>presence and meaning</i>, the CLI moved underfoot once already.</li>
+    <li><b>Judgment needs evidence:</b> exit 0 (or a probe's exit) <i>plus</i> something you can point at —
+    transcript lines, protocol checks, or a real side effect; write code against what fields <i>mean</i>, not exact
+    snapshots — the CLI already changed once.</li>
     <li><b><code>serve api</code>, <code>serve chat</code> and OCI share stay on the honesty list</b> — documented,
     unverified on this machine. The deliberate pause ends the phase; the first real problem is the owner's move.</li>
   </ol>
@@ -463,7 +464,7 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
           "serve acp — prompt it from Zed each morning",
           "serve api — a REST surface a scheduler could hit"],
       a: 2,
-      f: "Borrowed capability, no code: the ref plus Docker's catalog snapshot IS the server (Ex02, Lesson 003; DuckDuckGo was picked over brave/tavily/exa to stay key-free). Accepted: the ref carries no version — a newer snapshot can move the digest pin and the tool schemas; each call fetches an egress-restricted container (~40 s first call); MCP calls are not on the provably-safe list, so unattended verification runs --safety autonomous deliberate one-shots. serve api is documented, never probed." },
+      f: "Borrowed capability, no code: the ref plus Docker's catalog snapshot IS the server (Ex02, Lesson 003; DuckDuckGo was picked over brave/tavily/exa to stay key-free). Accepted: the ref carries no version — a newer snapshot can swap the exact image and change the tool; each call fetches a container allowed out to only one web address (~40 s first call); MCP calls are not on the clearly-safe list, so unattended verification uses a deliberate --safety autonomous one-shot. serve api is documented, never tested." },
     { q: "Drill 2 · invented scenario — Invoice line-math must be deterministic and unit-testable; a model guessing is unacceptable. The catalog has nothing for it, and the domain logic is ours. Which flavor?",
       o: ["Native sub_agents — a calculator role the lead consults",
           "MCP client, custom server (type: mcp, command: docker run --rm -i <img>)",
@@ -479,7 +480,7 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
           "A custom MCP search server, plus serve acp for the reviewer role",
           "serve mcp — the lead invokes itself as one tool"],
       a: 2,
-      f: "Roles first → sub_agents (reach for it FIRST, before any protocol machinery — the table's wording); the research gap is a borrowed capability → catalog ref. They stack as composed YAML — toolsets inside an agent that also declares sub_agents: — a reading of the docs' grammar, verified piecewise; no example ran the stack end to end. Accepted = both rows: ~5 model chats per task (per-agent max_iterations small — ex04 ships lead 12 / subs 6 — cheap/agentic model, Ex04's cloud default) plus the catalog snapshot's movable pin." },
+      f: "Roles first → sub_agents (reach for it FIRST, before any networking setup — the table's wording); the research gap is a borrowed capability → catalog ref. They stack as combined YAML — toolsets inside an agent that also declares sub_agents: — a reading of the docs' grammar, verified piecewise; no example ran the stack end to end. Accepted = both rows: ~5 model chats per task (per-agent max_iterations small — ex04 ships lead 12 / subs 6 — cheap/agentic model, Ex04's cloud default) plus the catalog snapshot's swappable image pin." },
     { q: "Drill 4 · invented scenario — Claude Code should treat our release-notes agent as ONE tool on its palette. Zero client code, its UI makes the calls. Which flavor?",
       o: ["MCP client, catalog ref — list our agent in Docker's catalog",
           "serve acp — Claude Code spawns us like an editor subprocess",
@@ -487,7 +488,7 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
           "serve a2a — Claude Code discovers us through the agent card",
           "Native sub_agents — Claude Code becomes the lead"],
       a: 2,
-      f: "Agent-as-tool in one verb (Ex05, Lesson 004; verified against live Claude Code ✓ Connected and a stdio probe): tools/list returns one tool per agent, named after it; input {message}, output {response}; the tool description IS the agent's description: — write it like a tool description. Accepted: the caller steers by the description alone; annotations are generic (readOnlyHint: true despite a full LLM chat); serving defaults to restricted tool safety, comfortable only because the served configs declare no toolsets. --safety/--auth-token live only on the stateless --http variant (127.0.0.1:8081)." },
+      f: "Agent-as-tool in one command (Ex05, Lesson 004; verified against live Claude Code ✓ Connected and a stdio probe): tools/list returns one tool per agent, named after it; input {message}, output {response}; the tool description IS the agent's description: — write it like a tool description. Accepted: the caller steers by the description alone; annotations are generic (readOnlyHint: true despite a full LLM chat); serving defaults to restricted tool safety, comfortable only because the served configs declare no toolsets. --safety/--auth-token live only on the session-less --http variant (127.0.0.1:8081)." },
     { q: "Drill 5 · invented scenario — Two agent configs on two machines, a QA agent and a docs agent, should be discoverable peers: each finds the other's card, sends a task, follows task state, receives artifacts it can forward. Which flavor?",
       o: ["serve a2a — agent card plus a JSON-RPC task lifecycle",
           "Native sub_agents — one team config, two roles",
@@ -495,7 +496,7 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
           "serve acp — an editor drives both agents in sessions",
           "MCP client, custom server — one agent consumes the other"],
       a: 0,
-      f: "The agent-to-agent seat (Ex06): GET /.well-known/agent-card.json — the card name is the CONFIG file's stem, not the agent name — then one SendMessage returns a whole task object: TASK_STATE_COMPLETED, history[], artifacts[], contextId — an answer to forward, not text to display. Accepted: the discovery/protocol surface is yours to script against drift — the CLI moved v1.145.0 → v1.153.0 and the card grew capabilities.pushNotifications:false. CamelCase A2A v1.0 methods; legacy agent.json discovery is 404. sub_agents cannot cross machines — in-process, one YAML, one daemon." },
+      f: "The agent-to-agent door (Ex06): GET /.well-known/agent-card.json — the card name is the CONFIG file's stem, not the agent name — then one SendMessage returns a whole task object: TASK_STATE_COMPLETED, history[], artifacts[], contextId — an answer to forward, not text to display. Accepted: the discovery/protocol details are yours to script defensively — the CLI moved v1.145.0 → v1.153.0 and the card grew capabilities.pushNotifications:false. CamelCase A2A v1.0 methods; legacy agent.json discovery is 404. sub_agents cannot cross machines — they run inside one program, one YAML, one model server." },
     { q: "Drill 6 · invented scenario — The owner wants to prompt the agent inside Zed like any coding agent: file reads, terminal access, streamed replies, mid-session model switch — all from the editor's own UI, not from config edits. Which flavor?",
       o: ["serve chat — OpenAI-compatible completions on 127.0.0.1:8083",
           "serve api — POST /api/sessions and script the session",
@@ -503,7 +504,7 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
           "serve mcp with --http — register it as one more tool",
           "serve a2a — Zed discovers the agent card"],
       a: 2,
-      f: "The editor-facing seat (Ex07): serve acp is the fifth serve surface, the only stdio-only one — no --listen/--http/--safety/--auth flags; the host spawns it like a language server, and the peer is a person's tool. Accepted: the host must speak ACP v1 (protocolVersion: 1 — the number; v2 is Draft); the wire shape moved between plugin versions (flat → envelope — a pinned client reads none of it); file/terminal capabilities come via the host's clientCapabilities and session/request_permission prompts, not agent-side toolsets; an in-editor session is the owner demo — no ACP host installed here, so editor steps stay UNVERIFIED-ON-THIS-MACHINE." }
+      f: "The editor-facing door (Ex07): serve acp is the fifth serve surface, the only stdio-only one — no --listen/--http/--safety/--auth flags; the editor starts it like a language server, and the peer is a person's tool. Accepted: the host must speak ACP v1 (protocolVersion: 1 — the number; v2 is Draft); the wire shape moved between plugin versions (flat → envelope — a pinned client reads none of it); file/terminal abilities come via the editor's clientCapabilities and session/request_permission prompts, not agent-side toolsets; an in-editor session is the owner demo — no ACP host installed here, so editor steps stay UNVERIFIED-ON-THIS-MACHINE." }
   ];
   var box2 = document.getElementById("quiz2");
   var scoreBox2 = document.getElementById("qscore2");
@@ -539,7 +540,7 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
     if (answered < DRILLS.length) return;
     var right = box2.querySelectorAll(".opt-ok").length;
     scoreBox2.textContent = right + " / " + DRILLS.length + (right === DRILLS.length
-      ? " — all six seats chosen with their trade-offs named. The map works."
+      ? " — all six flavors chosen with their trade-offs named. The map works."
       : " — every miss is a row of the Part 01 table; reread the drill feedback above.");
     scoreBox2.style.display = "block";
   }
@@ -566,18 +567,18 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
           "Only when every tool call was approved",
           "Never — headless runs cannot be judged",
           "When exit 0 AND the expected transcript content (or protocol evidence, or side effect) hold — exit 0 means the agent finished, not that the task succeeded"], a: 3,
-      f: "Lesson 002's discipline (run-modes.md §9): denied calls, missing tool images and degenerate loops all exited 0 somewhere in ex01–ex03." },
+      f: "Lesson 002's discipline (run-modes.md §9): refused calls, missing tool images and stuck loops all exited 0 somewhere in ex01–ex03." },
     { q: "Under --safety restricted: a catalog MCP search call, and transfer_task delegation — what happens?",
       o: ["Both are auto-approved as proven-safe",
           "Search prompts the user; transfer_task is denied",
-          "Search is auto-denied (MCP calls are not on the provably-safe list); transfer_task delegation IS auto-approved",
+          "Search is auto-denied (MCP calls are not on the clearly-safe list); transfer_task delegation IS auto-approved",
           "Both sit pending until a human appears"], a: 2,
       f: "Per-flavor safety (phase notes §3, verified in ex02/ex03/ex04): restricted auto-denies MCP calls — those templates run --safety autonomous deliberate one-shots; delegation is classified safe, so Ex04 keeps restricted." },
     { q: "Catalog ref vs custom MCP server — the isolation stories, one line each?",
       o: ["Both spawn a container per call from your own Dockerfile",
           "The catalog one installs locally; the custom one runs remotely",
           "Neither is isolated — that is why secrets stayed in scope",
-          "Catalog ref: a digest-pinned, egress-restricted container per call, nothing left behind. Custom: a per-session container from an image you built and tagged"], a: 3,
+          "Catalog ref: a version-locked container per call, allowed out to only one web address, nothing left behind. Custom: a per-session container from an image you built and tagged"], a: 3,
       f: "Ex02 vs Ex03 (Lesson 003). The custom row adds ownership costs the catalog never has: one-time 172 MB build, image stays until docker rmi, stdout must stay pure NDJSON." },
     { q: "In sub_agents, what does listing sub_agents: on the lead concretely hand it?",
       o: ["An agent card listing its children",
@@ -587,16 +588,16 @@ repo's flavor cheat-sheet; the practice is six invented owner problems; the exit
       f: "Lesson 004: delegation is not a conversation handoff; each sub-agent gets a fresh view with only what the lead forwarded — the context boundary; the cost is the ~5-model-chat fan-out." },
     { q: "Serving changes one safety fact by default. Which is it?",
       o: ["Serving disables tool safety for convenience",
-          "serve mcp / serve a2a default to restricted tool safety (serve banner observed) — comfortable only because those configs declare no toolsets; with toolsets they inherit the same fail-closed denials",
+          "serve mcp / serve a2a default to restricted tool safety (serve banner observed) — comfortable only because those configs declare no toolsets; with toolsets they inherit the same refuse-by-default denials",
           "Safety is negotiated by the client on connect — and serve acp takes a --safety launch flag",
           "serve acp accepts --safety; the other surfaces do not"], a: 1,
       f: "Ex05/Ex06 observed Tool safety policy: restricted (source: serve default) live; Ex07 is the shape exception — safety is negotiated as session data (configOptions), and it accepts no launch flags at all." },
     { q: "The repo's decision rules, step one: the work splits into ROLES — plan, review, compose — and the lead should compose the answer. First move?",
       o: ["serve mcp — publish the lead as a tool",
           "serve a2a — recruit peer agents",
-          "Native sub_agents — reach for it FIRST, before any protocol machinery",
+          "Native sub_agents — reach for it FIRST, before any networking setup",
           "A custom MCP server — one tool per role"], a: 2,
-      f: "The comparison table's own words for the sub_agents row (Lesson 004). The seat you accept: the ~5-model-chat fan-out — keep per-agent max_iterations small and iterate cheap." },
+      f: "The comparison table's own words for the sub_agents row (Lesson 004). The cost you accept: the ~5-model-chat fan-out — keep per-agent max_iterations small and iterate cheap." },
     { q: "And the honest label on serve api, serve chat and docker agent share push/pull?",
       o: ["Verified green like every other example",
           "Documented as surfaces the CLI exposes, unverified on this machine — an owner next step if a use case needs them",

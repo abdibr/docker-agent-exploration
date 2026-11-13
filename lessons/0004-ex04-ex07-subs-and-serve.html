@@ -128,10 +128,10 @@
 <main>
 
 <p class="kicker">Docker Agent workspace · Lesson 004 · delegation &amp; the serving surfaces</p>
-<h1>Lesson 004 · Sub-agents &amp; the serve family — delegation, MCP/A2A/ACP seats</h1>
-<p class="sub">One flavor needs no wire at all: ex04's <code>sub_agents:</code> delegation lives inside one YAML
+<h1>Lesson 004 · Sub-agents &amp; the serve family — delegation, MCP/A2A/ACP</h1>
+<p class="sub">One flavor needs no network at all: ex04's <code>sub_agents:</code> delegation lives inside one YAML
 file. Then the direction flips — <code>serve mcp</code> (ex05), <code>serve a2a</code> (ex06), <code>serve acp</code>
-(ex07) put the same declarative config on a protocol seat. Learn the roles, the ports, and how to judge each wire.</p>
+(ex07) let other programs reach the same config over a protocol. Learn the roles, the ports, and how to judge each connection.</p>
 <div class="chips">
   <span class="chip">ex04 sub_agents</span>
   <span class="chip">ex05 serve mcp</span>
@@ -150,8 +150,7 @@ file. Then the direction flips — <code>serve mcp</code> (ex05), <code>serve a2
 
   <div class="card blue">
     <h3>What one list buys</h3>
-    <p><code>sub_agents:</code> is an array of <i>names of sibling <code>agents:</code> entries</i> (it also accepts
-    OCI refs). Listing them is what hands the lead its delegation tool.</p>
+    <p><code>sub_agents:</code> is an array of <i>names of sibling <code>agents:</code> entries</i> (it can also reference agents shared as OCI images). Listing them is what hands the lead its delegation tool.</p>
     <p><b>Lead-only, by the toolsets.</b> The planner and reviewer get <code>think</code> only — the proof is below.
     A sub-agent would need its own <code>sub_agents:</code> entry to delegate further (nested hierarchies).</p>
     <p><b>Required arguments.</b> The tool signature is exactly <code>{agent, task, expected_output}</code> — the
@@ -250,24 +249,23 @@ transfer_task response → "Revise" + the reason: the plan omits updating refere
     <p>A one-user-task run fans out into <b>~5 model chats</b> — one lead turn set plus a full nested chat per
     sub-agent — so token spend multiplies; each agent is bounded by its own <code>max_iterations:</code> (lead 12,
     subs 6 here). That fan-out is <b>why ex04 defaults to <code>glm-5.3-flash:cloud</code></b>: delegation
-    choreography (plan → forward → review → compose) is multi-hop reasoning. The README's recorded billing:
+    takes several reasoning steps in a row (plan → forward → review → compose). The README's recorded billing:
     ~$0.15 per 1M input / $0.50 per 1M output tokens — a fraction of a cent per five-chat run.</p>
     <p>The committed config <b>stays on the cloud model by default</b>; the local swap is a one-line edit for cheap
     iteration on the team shape: <code>model: gemma4:latest</code> (no app sign-in needed). The README's record: the
     same verification task did complete on local gemma4 in a rehearsal run here — <i>correctly, if verbosely,
-    several minutes versus about a minute on cloud</i>; a small model can fumble the choreography (dropping a
-    delegation, inventing the plan or verdict, looping). The <code>cloud_agentic</code> key is cosmetic after a
-    swap.</p>
+    several minutes versus about a minute on cloud</i>; a small model can drop a
+    delegation or invent the plan or verdict if the task is too loose. The <code>cloud_agentic</code> name is just a label after a swap.</p>
   </div>
 
   <div class="card teal">
-    <h3>Delegation is classified safe — the opposite of arbitrary MCP calls</h3>
-    <p>Under <code>--safety restricted</code> — the fail-closed unattended profile — <b>every
-    <code>transfer_task</code> call was auto-approved</b> on the verified run (checked empirically with a free
+    <h3>Delegation counts as safe — the opposite of ordinary MCP calls</h3>
+    <p>Under <code>--safety restricted</code> — the refuse-by-default profile for runs with nobody watching — <b>every
+    <code>transfer_task</code> call passed on its own</b> during the verified run (checked first with a free
     local-gemma4 rehearsal before the cloud run; zero denials in the transcript). Contrast Ex02: the catalog MCP
-    <code>search</code> call was <i>denied</i> under the same mode. Delegating to a <i>declared</i> sub-agent is
-    classified safe; an arbitrary containerized MCP tool is not — so ex04's one verification command keeps the
-    strict profile. <span style="font-size:.9rem;color:var(--muted)">Hold that thought — Part 02 shows what the
+    <code>search</code> call was <i>refused</i> under the same mode. Delegating to a <i>declared</i> teammate counts
+    as safe; a random containerized MCP tool does not — so ex04's one verification command keeps
+    <code>restricted</code>. <span style="font-size:.9rem;color:var(--muted)">Hold that thought — Part 02 shows what the
     serve family does with the same restricted default.</span></p>
   </div>
 
@@ -286,9 +284,9 @@ transfer_task response → "Revise" + the reason: the plan omits updating refere
 </section>
 
 <section class="part" id="p2">
-  <h2><span class="no">02</span>The serve family — five seats for the same YAML (ex05–ex07)</h2>
-  <p class="lede">Ex04 kept everything in one process. The serve family flips the agent's <i>side</i> with a single
-  verb — the config stays declarative throughout, and ex05/ex06/ex07 add no toolsets <i>on purpose</i>
+  <h2><span class="no">02</span>The serve family — five doors for the same YAML (ex05–ex07)</h2>
+  <p class="lede">Ex04 kept everything inside one program. The serve family turns the agent around with a single
+  command — the config stays a plain YAML file throughout, and ex05/ex06/ex07 add no toolsets <i>on purpose</i>
   (run-modes.md §15; phase-notes.md §6).</p>
 
   <p class="codelabel">The whole family, verbatim from run-modes.md §19 quick reference</p>
@@ -316,10 +314,10 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
       <tr><td><code>serve api</code></td><td><code>127.0.0.1:8080</code></td>
         <td><code>--auth-token</code> (bearer; empty = no auth), <code>--max-request-size</code> (413 above 1 MiB),
         <code>--session-workingdir-root</code>, <code>--pull-interval</code></td>
-        <td><span class="pill warn">documented — never probed</span></td></tr>
+        <td><span class="pill warn">documented — never tested</span></td></tr>
       <tr><td><code>serve chat</code></td><td><code>127.0.0.1:8083</code></td>
         <td>—</td>
-        <td><span class="pill warn">documented in the port map — never probed</span></td></tr>
+        <td><span class="pill warn">documented in the port map — never tested</span></td></tr>
     </tbody>
   </table>
 
@@ -332,16 +330,17 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
     <code>{response}</code>. <b>The tool's <code>description</code> is the agent's <code>description:</code>
     field</b> — the calling model reads it to decide when to invoke your agent, so write it like a tool
     description.</p>
-    <p><b>Annotations are generic, not semantic.</b> The observed tool carries <code>readOnlyHint: true</code> even
-    though a call runs a full LLM chat — do not read "no side effects" into them.</p>
-    <p><b>The answer travels twice.</b> Text <code>content</code> came back as the JSON <i>string</i> of the answer
-    while <code>structuredContent.response</code> was the typed value — prefer the typed field when your client
-    supports structured output; fall back to text otherwise.</p>
-    <p><b>The HTTP variant is stateless per MCP 2026-07-28</b> (<code>serve mcp --http</code>, default
-    <code>127.0.0.1:8081</code>): POST-only at path-agnostic endpoints (<code>/</code> and <code>/mcp</code> both
-    answer), SSE-wrapped responses, notifications acknowledged with a bare 202, <b>no <code>Mcp-Session-Id</code></b>
-    issued, GET/DELETE → 405. <code>--auth-token</code> is required for non-loopback binds unless
-    <code>--insecure-no-auth</code>.</p>
+    <p><b>Annotations are generic, not promises.</b> The observed tool carries <code>readOnlyHint: true</code> even
+    though a call runs a full LLM chat — don't read "no side effects" into them.</p>
+    <p><b>The answer arrives twice.</b> Text <code>content</code> was the answer as a plain JSON <i>string</i> while
+    <code>structuredContent.response</code> was the same answer as a typed value — prefer the typed field when your
+    client supports it; fall back to text otherwise.</p>
+    <p><b>The HTTP variant keeps no session state</b> (as of the MCP spec dated 2026-07-28)
+    (<code>serve mcp --http</code>, default
+    <code>127.0.0.1:8081</code>): POST-only at fixed paths (<code>/</code> and <code>/mcp</code> both
+    answer), streamed responses, notifications answered with a bare 202, <b>no <code>Mcp-Session-Id</code></b>
+    is issued, GET/DELETE → 405. <code>--auth-token</code> is required whenever the agent listens beyond
+    loopback, unless <code>--insecure-no-auth</code>.</p>
     <p class="tagline">Verified live (2026-11-13, v1.153.0 — ex05 README): <code>node .\probe-mcp.mjs</code> asserted
     <code>serverInfo {"name":"docker agent","version":"v1.153.0"}</code>, protocolVersion 2025-06-18, the single
     <code>root</code> tool with the agent.yaml description, and <code>tools/call</code> of "Reply with the single
@@ -355,10 +354,11 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
     <h3>serve a2a — your agent is a discoverable peer (ex06)</h3>
     <p><b>Discovery.</b> <code>GET /.well-known/agent-card.json</code> returns an A2A v1.0 card: it names the
     interface (<code>{"url":"…/invoke","protocolBinding":"JSONRPC","protocolVersion":"1.0"}</code>), advertises
-    <code>capabilities.streaming:true</code> (unexercised here), auto-generates <code>skills[0]</code> with tags
+    streaming (<code>capabilities.streaming:true</code>, not exercised here), auto-generates
+    <code>skills[0]</code> with tags
     <code>["llm","docker agent"]</code>, and its <code>version</code> is the serving <b>CLI version</b>, not a
     config field. The legacy <code>/.well-known/agent.json</code> is <b>dead → 404</b> (re-verified on v1.153.0) —
-    old-bookmark tooling looks "deployed" while discovering nothing.</p>
+    old client code can look "deployed" while discovering nothing.</p>
     <p><b>CamelCase methods only.</b> This build embeds A2A v1.0: <code>SendMessage</code>,
     <code>SendStreamingMessage</code>, <code>GetTask</code>, <code>ListTasks</code>, <code>CancelTask</code>,
     <code>SubscribeToTask</code>, <code>GetExtendedAgentCard</code>. The v0.2-style <code>message/send</code> is
@@ -366,8 +366,8 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
     message IS <code>SendMessage</code>.</p>
     <p><b>One SendMessage returns a whole task object, not a string</b>: <code>status.state</code> →
     <code>TASK_STATE_COMPLETED</code>, <code>history[]</code> echoing the user message, <code>artifacts[]</code>
-    carrying the answer, <code>contextId</code> tying the conversation, <code>metadata</code> showing cagent's
-    google-ADK extension (<code>adk_app_name</code> = the config filename). An answer to <i>forward</i>, not just
+    carrying the answer, <code>contextId</code> tying the conversation together, <code>metadata</code> from cagent's
+    underlying engine (<code>adk_app_name</code> = the config filename). An answer you can <i>forward</i>, not just
     text to display.</p>
 <div class="cmdbox"><pre><span class="com"># Read the LAST artifact — the FIRST one is cosmetic:</span>
 #   artifacts[0]     → metadata {adk_partial: true}, parts [{data:{}, …}]   ← no text, ignore it
@@ -383,13 +383,14 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
   </div>
 
   <div class="card">
-    <h3>serve acp — your agent is an editor citizen (ex07)</h3>
-    <p><b>stdio only, and the only serve surface with no flags at all</b> — no <code>--listen</code>,
+    <h3>serve acp — your agent lives inside an editor (ex07)</h3>
+    <p><b>stdio only, and the only serve door with no flags at all</b> — no <code>--listen</code>,
     <code>--http</code>, <code>--safety</code> or <code>--auth</code> (observed on both plugin versions): an ACP
-    host (an editor such as Zed) spawns the agent as a subprocess and drives it over JSON-RPC 2.0 NDJSON with a
-    session lifecycle and streamed updates — the same shape as LSP/DAP integrations. Docker Agent speaks
+    host (an editor such as Zed) starts the agent as a helper process and drives it over JSON-RPC (one message
+    per line) with a session lifecycle and streamed updates — the same pattern editors use for language
+    servers. Docker Agent speaks
     <b>ACP v1</b> (the stable line; v2 exists only as Draft).</p>
-    <p><b>The handshake, machine-verified on the wire</b> (2026-11-13, v1.153.0 — ex07 README):</p>
+    <p><b>The handshake, machine-verified in a live test</b> (2026-11-13, v1.153.0 — ex07 README):</p>
     <ol class="flow">
       <li><code>initialize</code> with <code>protocolVersion: 1</code> → negotiates <b>the number 1</b> (send the
       number, not the string "1"), <code>agentInfo: "docker agent v1.153.0"</code>,
@@ -404,62 +405,67 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
       <code>agent_message_chunk</code>) → resolves with <code>{stopReason: "end_turn"}</code>. Observed round trip:
       exactly <code>{"type":"text","text":"pong"}</code>, messageChunks=1, thoughtChunks=0.</li>
     </ol>
-    <p><b>The envelope-shape lesson (the probe's red→green story).</b> v1.145.0 carried update notifications
+    <p><b>The envelope lesson (how the probe went red, then green).</b> v1.145.0 carried update notifications
     <i>flat</i> on the params (<code>params.sessionUpdate</code> + <code>params.content</code>); v1.153.0 wraps
     them in an envelope — <code>params.update.{sessionUpdate, content, …}</code> — and adds new kinds. The first
-    probe run was <b>red</b>: the reply <code>pong</code> was already on the wire while the probe read the wrong
-    envelope — a client pinned to the flat shape sees the reply bytes but reads none of them. Parse both shapes.</p>
+    probe run <b>failed</b> even though the reply <code>pong</code> was already arriving: the probe was reading
+    the wrong shape. A client pinned to the old flat shape sees the reply bytes but reads none of them — handle
+    both shapes.</p>
     <p><b>Editor steps carry the <span class="pill warn">UNVERIFIED-ON-THIS-MACHINE</span> label.</b> No ACP host
     was installed on this machine, so the Zed walkthrough (Agent Settings → External Agents → <i>Add Custom
     Agent</i>; an <code>agent_servers</code> entry whose <code>command</code> is <code>"docker"</code> with
     <code>args</code> including <code>agent, serve, acp</code> plus the absolute config path — quoted verbatim from
     Zed's external-agents documentation as captured in the exploration notes) is the owner demo. VS Code 1.143.1
     does not speak ACP (third-party host extensions are documented; none installed or attempted). Claude Code
-    2.1.101 is an <i>MCP</i> client, not an ACP host. For your own runs: local models stream thoughts — gemma4 can
-    emit about a minute of <code>agent_thought_chunk</code> before the first <code>agent_message_chunk</code>;
-    render chunks by their <code>sessionUpdate</code> kind or a waiting client looks hung while the model thinks.</p>
+    2.1.101 is an <i>MCP</i> client, not an ACP host. For your own runs: local models stream their thinking —
+    gemma4 can emit about a minute of <code>agent_thought_chunk</code> before the first
+    <code>agent_message_chunk</code>;
+    display each chunk by its <code>sessionUpdate</code> kind, or a waiting client looks hung while the model thinks.</p>
   </div>
 
   <div class="card amber">
     <h3>The honest rows — and the shared machinery underneath</h3>
-    <p><b><code>serve api</code> (default <code>127.0.0.1:8080</code>)</b> — session-based REST
-    (<code>POST /api/sessions</code>) — and <b><code>serve chat</code> (default <code>127.0.0.1:8083</code>)</b> —
+    <p><b><code>serve api</code> (default <code>127.0.0.1:8080</code>)</b> — a session-based REST
+    interface (<code>POST /api/sessions</code>) — and <b><code>serve chat</code> (default <code>127.0.0.1:8083</code>)</b> —
     OpenAI-compatible chat completions — are documented from <code>--help</code> text and the port map and
-    <b>never probed</b> (the phase's label: "documented surfaces, unverified on this machine," flavors.md). OCI
-    share (<code>docker agent share push|pull</code>) is out of scope this phase — it needs a registry.</p>
-    <p><b>Shared behavior, observed on every probed surface.</b> The startup banner declares the policy:</p>
+    <b>never tested</b> (the phase's label: "documented surfaces, unverified on this machine," flavors.md). OCI
+    sharing (<code>docker agent share push|pull</code>) is out of scope this phase — it needs a registry.</p>
+    <p><b>Shared behavior, observed on every surface we tested.</b> The startup banner declares the policy:</p>
 <div class="cmdbox"><pre>Tool safety policy: restricted (source: serve default)</pre><button class="copybtn">Copy</button></div>
-    <p>…<b>stdout carries protocol NDJSON only</b> (all logging on stderr — the split that makes standard SDK stdio
-    transports work untouched), and on Windows cleanup must <b>kill the process tree</b>: the listener is the
-    <code>docker-agent.exe</code> <i>child</i> of the <code>docker</code> wrapper — wrapper-kill can orphan it with
-    the port squatted.</p>
+    <p>…<b>stdout carries protocol messages only</b> — one JSON line at a time, with all logs on stderr (this split is
+    what lets standard tools work unchanged); and on Windows, cleanup must <b>kill the whole process tree</b>: the
+    listener is the
+    <code>docker-agent.exe</code> <i>child</i> of the <code>docker</code> command — killing only the wrapper can leave the child
+    alive, still holding the port.</p>
 <div class="cmdbox"><pre>taskkill /pid &lt;pid&gt; /T /F</pre><button class="copybtn">Copy</button></div>
-    <p class="tagline">The probes made the gotcha an assertion: ex06's kills the tree (with a <code>netstat -ano</code>
-    fallback to the port owner) and <i>proves the port re-binds</i> before exiting 0 — a leaked tree fails the run
-    instead of haunting the next one; 8081 stays occupied until the tree is gone.</p>
+    <p class="tagline">The probes turn that gotcha into a check: ex06's kills the tree (with a <code>netstat -ano</code>
+    fallback to find the port's owner) and <i>proves the port is free again</i> before exiting 0 — a leaked process
+    fails the run instead of haunting the next one; 8081 stays occupied until the tree is gone.</p>
   </div>
 
   <div class="card teal">
-    <h3>The config stays declarative — and deliberately tool-free</h3>
+    <h3>The config stays a plain YAML file — and deliberately tool-free</h3>
     <p>ex05/ex06/ex07's agent.yaml keeps the ex01 shape (a named <code>gemma4_local</code> entry on the built-in
     <code>ollama</code> provider) with <b>no toolsets — on purpose</b>. From ex05's config comment: "this round trip
     needs no tools at all, and a tool-free agent never runs into serve's default restricted tool-safety mode." ACP
-    goes further: an editor brings capabilities with it — fs reads/writes and terminal access arrive through the
-    client's <code>clientCapabilities</code> and <code>session/request_permission</code>, not agent-side toolsets.</p>
-    <p>Add toolsets to a served agent and you inherit the fail-closed behavior Ex02 documented (restricted denies
-    unattended calls); ex06's README adds the escape — tasks that must write or run commands need
-    <code>--safety autonomous</code> on the serve command, a deliberate one-shot with the blast radius read first.</p>
-    <p><b>The version lesson across the family</b> (v1.145.0 → v1.153.0 auto-update mid-phase): MCP
+    goes further: the editor brings its own abilities — file reads/writes and terminal access arrive through the
+    editor's <code>clientCapabilities</code> and <code>session/request_permission</code> prompts, not from
+    agent-side toolsets.</p>
+    <p>Add toolsets to a served agent and you inherit the refuse-by-default behavior Ex02 documented (restricted
+    denies calls when nobody can approve them). ex06's README adds the escape: tasks that must write or run commands need
+    <code>--safety autonomous</code> on the serve command — a deliberate one-shot where you have first read
+    everything it's allowed to do.</p>
+    <p><b>The version lesson across the family</b> (the CLI auto-updated from v1.145.0 to v1.153.0 mid-phase): MCP
     <code>initialize</code> dropped the <code>logging:{}</code> capability; the A2A card gained
     <code>capabilities.pushNotifications:false</code>; ACP updates gained the envelope. Core surfaces proved stable.</p>
   </div>
 </section>
 
 <section class="part" id="p3">
-  <h2><span class="no">03</span>Judge the wire — three surfaces, three verdicts</h2>
-  <p class="lede">The Lesson 002 skill, one layer out: the transcript is now a protocol exchange, and exit codes
-  still lie — the repo's serve probes assert the wire itself (handshake fields, round-trip payload, task state, port
-  re-bound) precisely because the serve process's exit code is not trusted. Answers lock in once chosen.</p>
+  <h2><span class="no">03</span>Judge the exchange — three surfaces, three verdicts</h2>
+  <p class="lede">The Lesson 002 skill, one layer out: the transcript is now a protocol conversation, and exit codes
+  still lie — the repo's serve probes check the messages themselves (handshake fields, the reply payload, task
+  state, the port freed again) because a serve process's own exit code cannot be trusted. Answers lock in once chosen.</p>
 
   <div class="simcase" data-ok="1">
     <h3>Case A — the snake_case caller</h3>
@@ -503,9 +509,9 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
       <button class="vbtn" data-v="1">✅ Right — readOnlyHint is a binding promise of no side effects</button>
       <button class="vbtn" data-v="2">🧰 Half-right — add toolsets and restricted will prompt a human automatically</button>
     </div>
-    <div class="exp">Two claims, both wrong. One: annotations are generic, not semantic (ex05 README) — readOnlyHint:true was
-    observed even though a call runs a full LLM chat; an agent with write toolsets would still act. Two: restricted is fail-closed —
-    the mode's fallback denies instead of asking for confirmation (Ex02's exact denial text). What keeps ex05's round trip safe is
+    <div class="exp">Two claims, both wrong. One: annotations are generic, not promises (ex05 README) — readOnlyHint:true was
+    observed even though a call runs a full LLM chat; an agent with write toolsets would still act. Two: restricted
+    refuses rather than asks — the mode's fallback denies instead of asking for confirmation (Ex02's exact refusal text). What keeps ex05's round trip safe is
     that the committed config declares no toolsets at all: nothing to approve, nothing to deny.</div>
   </div>
 
@@ -523,19 +529,19 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
       fresh view. But plan for the fan-out: one task ≈ 5 model chats, bounded only by per-agent
       <code>max_iterations:</code> (12 / 6 / 6 in ex04) — which is why ex04 ships on
       <code>glm-5.3-flash:cloud</code>.</li>
-    <li><b>One verb, five seats.</b> <code>docker agent serve &lt;mode&gt;</code>: mcp (tool seat — stdio default,
-      <code>--http</code> becomes stateless 8081), a2a (peer seat — 8082, card + task lifecycle), acp (editor seat —
-      stdio, no launch flags at all), plus api (8080) and chat (8083) — those two documented, never probed.</li>
-    <li><b>Dress the wire for its reader.</b> MCP: one tool per agent, named after it, described by the agent's
-      <code>description:</code> field — annotations are generic, not semantic. A2A: CamelCase
+    <li><b>One command, five doors.</b> <code>docker agent serve &lt;mode&gt;</code>: mcp (tool door — stdio default,
+      <code>--http</code> becomes session-less 8081), a2a (agent-to-agent door — 8082, card + task lifecycle), acp (editor door —
+      stdio, no launch flags at all), plus api (8080) and chat (8083) — those two documented, never tested.</li>
+    <li><b>Speak the protocol the other side expects.</b> MCP: one tool per agent, named after it, described by the agent's
+      <code>description:</code> field — annotations are generic, not promises. A2A: CamelCase
       <code>SendMessage</code>, card at <code>/.well-known/agent-card.json</code>, read the LAST artifact. ACP:
-      negotiate the <i>number</i> 1, stream <code>session/update</code>, tolerate both envelope shapes.</li>
+      negotiate the <i>number</i> 1, stream <code>session/update</code>, and tolerate both envelope shapes.</li>
     <li><b>Serving defaults to restricted — safe only because the configs are tool-free.</b> The banner says so
-      (<code>source: serve default</code>); add toolsets and unattended calls fail closed. stdout = protocol NDJSON
-      only, stderr = logs; on Windows kill the tree, not the wrapper.</li>
-    <li><b>The probe's exit code is trustworthy by construction.</b> It asserts the protocol surface and never
-      trusts the serve process's own exit code — then <code>taskkill /pid &lt;pid&gt; /T /F</code>s the tree and,
-      in ex06, proves the port re-binds before calling it green.</li>
+      (<code>source: serve default</code>); add toolsets and unattended calls get refused. stdout = protocol messages
+      only, stderr = logs; on Windows kill the whole process tree, not just the wrapper.</li>
+    <li><b>The probe's exit code is trustworthy by design.</b> It checks the protocol messages themselves and never
+      trusts the serve process's own exit code — then <code>taskkill /pid &lt;pid&gt; /T /F</code>s the whole tree and,
+      in ex06, proves the port is free again before calling the run green.</li>
   </ol>
 
   <div class="quiz no-print">
@@ -615,7 +621,7 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
   var QUIZ = [
     { q: "Your task splits into roles — plan, review, compose. Which seat does the repo reach for first?",
       o: ["A catalog MCP toolset (type: mcp, ref: docker:…)", "sub_agents: sibling agents: entries declared under the lead", "serve a2a so other agents discover it via a card", "serve acp so an editor drives sessions"], a: 1,
-      f: "flavors.md's rule: sub_agents is multi-role work inside one config — reach for it first, before any protocol machinery. Listing the names hands the lead transfer_task." },
+      f: "flavors.md's rule: sub_agents is multi-role work inside one config — reach for it first, before any networking setup. Listing the names hands the lead transfer_task." },
     { q: "Who gets transfer_task, and what must a call supply?",
       o: ["Every agent in the config; a task only", "Only sub-agents; agent plus expected_output", "The lead only; it requires agent, task AND expected_output", "Whichever agent declares lead: true"], a: 2,
       f: "debug toolsets shows it model-free: the lead exposes think + transfer_task; planner and reviewer expose think only. The tool description demands task AND expected_output; subs delegate further only with their own sub_agents." },
@@ -629,14 +635,14 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
       o: ["The readOnlyHint annotation on the tool", "The inputSchema {message}", "The agent's description: field from agent.yaml", "The models: entry's description"], a: 2,
       f: "The tool's description is the agent's description: — write it like a tool description, because a model reads it. Annotations are generic, not semantic." },
     { q: "You add a filesystem toolset to ex05's served config. Under the serve default (restricted), what happens on an unattended call?",
-      o: ["Denied — fail-closed; that is why the committed served configs declare no toolsets", "Reads are auto-approved; writes prompt a human", "serve silently upgrades itself to autonomous", "Nothing — MCP clients bypass the safety profile"], a: 0,
-      f: "flavors.md's cross-flavor caution: serving defaults to restricted and is only comfortable because those configs declare no toolsets; a served agent with toolsets inherits the same fail-closed denial Ex02 documented (ex06's escape: --safety autonomous as a deliberate one-shot)." },
+      o: ["Denied — refuse-by-default; that is why the committed served configs declare no toolsets", "Reads are auto-approved; writes prompt a human", "serve silently upgrades itself to autonomous", "Nothing — MCP clients bypass the safety profile"], a: 0,
+      f: "flavors.md's cross-flavor caution: serving defaults to restricted and is only comfortable because those configs declare no toolsets; a served agent with toolsets inherits the same refuse-by-default denial Ex02 documented (ex06's escape: --safety autonomous as a deliberate one-shot)." },
     { q: "The ACP probe's red run: the reply pong was already on the wire. Why did the probe fail anyway?",
       o: ["protocolVersion moved from 1 to 2 between plugin builds", "session/new stopped returning a sessionId", "Update notifications moved from flat params (v1.145.0) into a params.update envelope (v1.153.0) — the probe read the wrong shape", "stopReason changed from end_turn to done"], a: 2,
       f: "ex07's red→green story: a client pinned to the flat shape sees the reply bytes but reads none of them. Parse both envelope shapes." },
     { q: "Why is probe-acp.mjs's exit 0 trustworthy, when a serve process's own exit code is not?",
       o: ["The probe runs everything twice", "It asserts the protocol surface itself — handshake fields, reply payload, stopReason — and never trusts the serve process's exit code", "It compares output against --yolo runs", "The editor signs off on the run"], a: 1,
-      f: "ex07: trustworthy by construction — the probe asserts wire evidence, not process completion; ex06's probe also proves the port re-binds before exiting 0." },
+      f: "ex07: trustworthy by design — the probe checks wire evidence, not process completion; ex06's probe also proves the port is free again before exiting 0." },
     { q: "Windows: the serve process looks dead but 127.0.0.1:8081 still refuses to bind. What happened?",
       o: ["You killed the docker wrapper, but the listener is the docker-agent.exe child — kill the tree: taskkill /pid <pid> /T /F", "Port 8081 is permanently reserved by Docker Desktop", "Only a Docker Desktop restart clears a serve listener", "A stale listener means the config must change ports"], a: 0,
       f: "Serve spawns a child docker-agent.exe that holds the listener; wrapper-kill orphans it. The probes kill the tree — ex06 asserts the port re-binds." }
@@ -688,4 +694,5 @@ docker agent serve acp  .\agent.yaml    # ACP server        (stdio)</pre><button
   });
 })();
 </script>
+</div>
 </body></html>

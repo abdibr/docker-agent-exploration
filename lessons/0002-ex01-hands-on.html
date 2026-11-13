@@ -142,8 +142,8 @@ judgment call that exit codes cannot make for you.</p>
 
 <section class="part" id="p1">
   <h2><span class="no">01</span>Four gates before any spend</h2>
-  <p class="lede">Every misbehaving run tends to trace back to a skipped gate. These four cost under
-  thirty seconds combined, and two of them are free — they touch no model at all. Tick each one as you
+  <p class="lede">Most broken runs trace back to a check that was skipped. These four take under
+  thirty seconds combined, and two of them are free — they never touch a model. Tick each one as you
   run its command; your ticks persist in this browser.</p>
 
   <div class="gate" id="gate0">
@@ -199,9 +199,9 @@ judgment call that exit codes cannot make for you.</p>
 </section>
 <section class="part" id="p2">
   <h2><span class="no">02</span>Two surfaces: look around, then verify</h2>
-  <p class="lede">The TUI is for browsing; the verification template is for proof. Ex01 is machine-verified through
-  exactly one command — the same shape every later example in this repo reuses. Run the TUI once to
-  loosen up, then switch to the template.</p>
+  <p class="lede">The chat window is for looking around; the verification command is for proof. Ex01 is verified through
+  exactly one command — the same shape every later example in this repo reuses. Run the chat once to
+  loosen up, then switch to the command.</p>
 
   <p class="codelabel">TUI — owner demo (interactive; nothing is asserted)</p>
   <div class="cmdbox no-print">
@@ -223,17 +223,17 @@ docker agent run .\agent.yaml</pre>
     <tbody>
       <tr><td><code>docker agent run .\agent.yaml</code></td>
           <td>Config file first, as the positional argument.</td>
-          <td>The config <i>is</i> the program — and <code>agent.yaml</code> is not
-              auto-discovered (only <code>docker-agent.yaml</code> would be), so name it.</td></tr>
+          <td>The config <i>is</i> the program — and the command doesn't guess filenames
+              (only <code>docker-agent.yaml</code> would be found automatically), so type it.</td></tr>
       <tr><td><code>--exec '…'</code></td>
-          <td>Headless: one task, full transcript to stdout, exit when done.</td>
+          <td>One-shot run with no chat window: it does the task, prints the full transcript, then exits.</td>
           <td>A scripted run is itself the test — the transcript is the evidence.</td></tr>
       <tr><td><i>the task wording</i></td>
-          <td>Read-only, narrow, answer lives entirely inside a file the agent must read.</td>
-          <td>Reliable for a small model; deterministic; leaves no scratch files.</td></tr>
+          <td>Read-only, narrow, and the answer lives entirely inside a file the agent must read.</td>
+          <td>Reliable for a small model; same result every time; leaves no scratch files.</td></tr>
       <tr><td><code>--safety restricted</code></td>
-          <td>Fail-closed unattended profile: safe calls auto-approved, everything else
-            silently denied, no human prompted mid-run.</td>
+          <td>Made for runs with nobody watching: safe calls pass on their own, everything else
+            quietly refused, no human prompted mid-run.</td>
           <td>This read-only task passes unattended; nothing risky slips through.</td></tr>
     </tbody>
   </table>
@@ -249,8 +249,8 @@ filesystem shell think
     <h3>🚦 Exit 0 is the <i>start</i> of judgment, not the end</h3>
     <p>A denied tool call still exits 0 — the denial exists only as a transcript line, e.g.
     <code>Tool 'write_file' is denied by the restricted safety mode…</code>. That's why the repo judges
-    every verification run on <b>exit code <i>plus</i> transcript content</b>. When you script assertions later,
-    assert on the answer lines — never on the exit code alone.</p>
+    every verification run on <b>exit code <i>plus</i> transcript content</b>. When you write automated checks later,
+    check the answer lines — never the exit code alone.</p>
   </div>
 
   <div class="card amber">
@@ -272,7 +272,7 @@ filesystem shell think
     <code>model: glm-5.3-flash:cloud</code> (same daemon, proxies to Ollama Cloud; requires the Ollama app
     signed in). A minimal <code>--exec 'Reply with the single word: pong'</code> smoke returned <code>pong</code>
     on 2026-10-19 for well under one cent. Whether the full verification template behaves identically on the
-    cloud model was <b>never probed</b> — treat that as unknown. The committed config stays on the local model;
+    cloud model was <b>never tested</b> — treat that as unknown. The committed config stays on the local model;
     rerun anything cloud-side only if <i>you</i> decide it's worth the spend.</p>
   </div>
 </section>
@@ -280,7 +280,7 @@ filesystem shell think
   <h2><span class="no">03</span>Judge the run — the skill that transfers</h2>
   <p class="lede">The repo's contract for <i>every</i> verification run in this sequence: <b>exit 0
   <i>and</i> the two correct lines in the transcript</b>. Both halves. Here's what passing looks like,
-  then three real transcripts for you to judge.</p>
+  then three real transcripts for you to judge — pick a verdict for each.</p>
 
   <p class="codelabel">The verified passing run, annotated (recorded 2026-10-19, <code>docker agent</code> v1.145.0)</p>
 <pre><span class="com"># … first tool call reads the file — with a stumble:</span>
@@ -326,11 +326,11 @@ filesystem shell think
       <button class="vbtn" data-v="1">🚫 Exit 0, but it hides a failure</button>
       <button class="vbtn" data-v="2">🧰 Setup problem — fix before spending</button>
     </div>
-    <div class="exp">Classic hidden failure. The denial exists <b>only</b> in the transcript; exit 0 lied.
-    Under <code>--safety restricted</code> the denial itself is correct fail-closed behavior — the mistake
-    was designing a verification task that must write. Narrow the task to be read-only, or approve the
-    write deliberately with <code>autonomous</code>/<code>--yolo</code> if you mean it. Note the small-model
-    loop too: five identical denied calls before giving up.</div>
+    <div class="exp">Classic hidden failure. The refusal exists <b>only</b> in the transcript; exit 0 lied.
+    Under <code>--safety restricted</code> the refusal itself is correct behavior for a run with nobody watching — the mistake
+    was designing a verification task that must write. Make the task read-only, or deliberately approve the
+    write with <code>autonomous</code>/<code>--yolo</code> if you mean it. Note the small-model
+    loop too: five identical refused calls before giving up.</div>
   </div>
 
   <div class="simcase" data-ok="2">
@@ -354,8 +354,8 @@ filesystem shell think
     <ol class="flow" style="margin-top:0">
       <li><b>Reread the transcript.</b> Denials, loops, and wrong answers live there; exit codes rarely tell the truth on their own.</li>
       <li><b><code>ollama list</code>.</b> Daemon up? Model present? Most failures on this box stop here.</li>
-      <li><b><code>docker agent debug toolsets .\agent.yaml</code>.</b> The concrete tool list — introspection catches a missing toolset that "feels" like a run bug.</li>
-      <li><b>Narrow the task.</b> Read-only, one file, a two-line answer — reliability for a small model is a task-design skill, not an incantation.</li>
+      <li><b><code>docker agent debug toolsets .\agent.yaml</code>.</b> The exact tool list — looking it up catches a missing toolset that "feels" like a run bug.</li>
+      <li><b>Narrow the task.</b> Read-only, one file, a two-line answer — reliability for a small model is a task-design skill, not a magic phrase.</li>
     </ol>
   </div>
 </section>
@@ -364,14 +364,14 @@ filesystem shell think
   <ol class="flow">
     <li><b>Four gates, every time</b> — Docker Desktop, <code>ollama list</code>, the plugin's health report
       (a Model-Runner complaint is expected and fine here), and <code>--dry-run</code>. Under thirty seconds.</li>
-    <li><b>The template is one command</b> — config first, <code>--exec '<task>'</code>, <code>--safety restricted</code>
+    <li><b>The template is one command</b> — config first, <code>--exec '&lt;task&gt;'</code>, <code>--safety restricted</code>
       — and every later example in this repo reuses exactly this shape. Learn it once here.</li>
-    <li><b>Exit 0 opens the judgment; the transcript closes it.</b> Denied calls and tool loops leave the exit
+    <li><b>Exit 0 starts the judgment; the transcript finishes it.</b> Refused calls and tool loops leave the exit
       code untouched — the transcript is where failure actually lives.</li>
     <li><b>The two lines are the pass marker</b> — <code>ollama gemma4:latest</code>, then
       <code>filesystem shell think</code>. Assert on content, never on exit code alone.</li>
-    <li><b>Self-correction is healthy; silent denials are the danger.</b> Read every transcript before you
-      believe anything — including from yourself.</li>
+    <li><b>Self-correction is healthy; silent refusals are the danger.</b> Read every transcript before you
+      believe anything — including your own runs.</li>
   </ol>
 
   <div class="quiz no-print">
@@ -401,6 +401,7 @@ filesystem shell think
   <a href="../reference/ex-map.html">Example map</a> · <a href="../NOTES.md">Workspace notes</a> ·
   <a href="index.html">Lessons</a> — previous: <a href="0001-docker-agent-mental-model.html">001&nbsp;mental&nbsp;model&nbsp;←</a></p>
 </footer>
+</div>
 
 <script>
 (function () {
@@ -478,7 +479,7 @@ filesystem shell think
       f: "It's the free gate: config validation with zero model spend. Later examples run it before every verification." },
     { q: "The verification template's --safety restricted is best described as…",
       o: ["Approves everything — that's why the task must be safe", "Prompts a human to approve each dangerous call", "Fail-closed for unattended runs: safe calls auto-approved, everything else silently denied", "A sandboxing option that containers the run"], a: 2,
-      f: "Fail-closed, no human mid-run. Denied calls show up only in the transcript — which is why the judgment needs both halves." },
+      f: "Refuse-by-default, no human mid-run. Refused calls show up only in the transcript — which is why the judgment needs both halves." },
     { q: "A run exits 0, but the transcript shows `Tool 'write_file' is denied by the restricted safety mode…`. Verdict?",
       o: ["Success — exit 0 settles it", "Not success — a denied call means the task's side effect never happened", "Success — the denial is informational", "Not success — rerun with --dry-run"], a: 1,
       f: "Denials leave the exit code untouched — Case B in Part 03. The repo judges exit code PLUS transcript content; assert on answer lines, never exit alone." },
