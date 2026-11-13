@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json
+
+## Ex04 — a native sub-agent team, zero protocol machinery: one lead plus two specialist
+## sub-agents wired through Docker Agent's built-in `sub_agents:` mechanism. Declaring
+## sub_agents gives the lead a dedicated `transfer_task` tool (lead-only) to delegate:
+## the planner turns the goal into a numbered plan, the reviewer checks the plan the
+## lead received, and the lead combines both outputs into its answer.
+## Defaults to the Ollama Cloud agentic model glm-5.3-flash:cloud (provider: ollama —
+## the same local daemon proxies :cloud models to Ollama Cloud via the app sign-in);
+## stronger reasoning handles the multi-hop delegate-plan / delegate-review choreography.
+## One-line local swap: change the `model:` line below to `gemma4:latest` (the README
+## documents the quality/routing tradeoff of that swap).
+
+models:
+  cloud_agentic:
+    provider: ollama
+    model: glm-5.3-flash:cloud
+    description: Ollama Cloud agentic model through the host Ollama daemon (localhost:11434, app signed in) - the swap point for local gemma4
+
+agents:
+  lead:
+    model: cloud_agentic
+    description: Ex04 lead coordinator - delegates planning and review to its sub-agents
+    instruction: |
+      You are Ex04, the lead coordinator in the docker_agents exploration repo. Your
+      team solves every task by delegation, not by you:
+
+      - transfer_task once to the planner: give the planner the planning part of the
+        task, phrased as one clear goal.
+      - transfer_task once to the reviewer: hand over the exact plan text you received
+        from the planner and ask the reviewer for a verdict on it.
+      - Combine the two outputs in your final answer: first the plan you received from
+        the planner, then the verdict you received from the reviewer.
+      - Never write plan steps or the verdict yourself; if a sub-agent returns nothing
+        usable, say so plainly instead of inventing content.
+    max_iterations: 12
+    toolsets:
+      - type: think
+    sub_agents:
+      - planner
+      - reviewer
+  planner:
+    model: cloud_agentic
+    description: Planning specialist - turns a goal into a short numbered plan
+    instruction: |
+      You are the planner. Return exactly the plan requested: numbered steps, one line
+      each, no preamble, no commentary, no alternatives.
+    max_iterations: 6
+    toolsets:
+      - type: think
+  reviewer:
+    model: cloud_agentic
+    description: Review specialist - checks a plan and returns a two-line verdict
+    instruction: |
+      You are the reviewer. You receive a plan text. Judge it and return a verdict of
+      exactly two lines: line 1 the word Approved or the word Revise, line 2 the single
+      reason. No preamble.
+    max_iterations: 6
+    toolsets:
+      - type: think
