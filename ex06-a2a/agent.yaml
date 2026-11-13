@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/docker/docker-agent/main/agent-schema.json
+
+## Ex06 — an agent exposed over the Agent-to-Agent (A2A) protocol.
+## The same declarative shape as Ex01 (named gemma4_local entry on the built-in ollama
+## provider), but with no toolsets: the interesting surface here is not what the agent
+## can DO but how it is REACHED — `docker agent serve a2a` advertises it in an agent
+## card and talks JSON-RPC tasks. One-line model swap: change the `model:` line below.
+
+models:
+  gemma4_local:
+    provider: ollama
+    model: gemma4:latest
+    description: Local gemma4 on the host Ollama daemon (localhost:11434) - the swap point for local/cloud
+
+agents:
+  root:
+    model: gemma4_local
+    description: Ex06 agent over A2A - agent card discovery plus one SendMessage task round trip
+    instruction: |
+      You are Ex06, exposed over A2A. Messages arrive from other agents' HTTP clients.
+      - Answer in one short sentence.
+      - When asked to reply with exact text, reply with exactly that text and nothing else.
+    max_iterations: 4
